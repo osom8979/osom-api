@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from argparse import Namespace
 from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
-from osom_work.arguments import CMD1, CMD2, CMDS, get_default_arguments
+from osom_work.apps.master import master_main
+from osom_work.apps.worker import worker_main
+from osom_work.arguments import CMD_MASTER, CMD_WORKER, CMDS, get_default_arguments
 from osom_work.logging.logging import (
     SEVERITY_NAME_DEBUG,
     logger,
@@ -12,18 +13,6 @@ from osom_work.logging.logging import (
     set_root_level,
     set_simple_logging_config,
 )
-
-
-def cmd1_main(args: Namespace, printer: Callable[..., None] = print) -> int:
-    assert args is not None
-    assert printer is not None
-    raise NotImplementedError
-
-
-def cmd2_main(args: Namespace, printer: Callable[..., None] = print) -> int:
-    assert args is not None
-    assert printer is not None
-    raise NotImplementedError
 
 
 def main(
@@ -37,9 +26,7 @@ def main(
         return 1
 
     if args.colored_logging and args.simple_logging:
-        printer(
-            "The 'colored_logging' flag and the 'simple_logging' flag cannot coexist"
-        )
+        printer("The 'colored_logging' and 'simple_logging' flags cannot coexist")
         return 1
 
     cmd = args.cmd
@@ -69,10 +56,10 @@ def main(
     logger.debug(f"Arguments: {args}")
 
     try:
-        if cmd == CMD1:
-            return cmd1_main(args, printer=printer)
-        elif cmd == CMD2:
-            return cmd2_main(args, printer=printer)
+        if cmd == CMD_MASTER:
+            return master_main(args, printer=printer)
+        elif cmd == CMD_WORKER:
+            return worker_main(args, printer=printer)
         else:
             assert False, "Inaccessible section"
     except BaseException as e:

@@ -5,4 +5,5 @@ asctime
 datefmt
 levelname
 nocov
+osom
 pythonpath

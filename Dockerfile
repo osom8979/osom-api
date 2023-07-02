@@ -24,4 +24,3 @@ RUN pip install --no-cache /app/.wheels/* && \
 USER app
 
 ENTRYPOINT ["python", "-OO", "-m", "osom_work"]
-CMD ["server"]

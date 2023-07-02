@@ -1,34 +1,32 @@
 # -*- coding: utf-8 -*-
 
-from argparse import REMAINDER, ArgumentParser, Namespace, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
 from typing import Final, List, Optional
 
 from osom_work.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 
-CMD_CLIENT: Final[str] = "client"
-CMD_MODULES: Final[str] = "modules"
-CMD_SERVER: Final[str] = "server"
+CMD_MASTER: Final[str] = "master"
+CMD_WORKER: Final[str] = "worker"
 
-PROG: Final[str] = "osom_work"
-DESCRIPTION: Final[str] = "osom work"
+PROG: Final[str] = "osom-work"
+DESCRIPTION: Final[str] = "osom master and worker"
 EPILOG: Final[str] = ""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
-CMD1 = "cmd1"
-CMD2 = "cmd2"
-CMDS = (CMD1, CMD2)
+CMDS = (CMD_MASTER, CMD_WORKER)
 
-CMD1_HELP: Final[str] = ""
-CMD1_EPILOG: Final[str] = ""
+CMD_MASTER_HELP: Final[str] = "Master node"
+CMD_MASTER_EPILOG: Final[str] = ""
 
-CMD2_HELP: Final[str] = ""
-CMD2_EPILOG: Final[str] = ""
+CMD_WORKER_HELP: Final[str] = "Worker node"
+CMD_WORKER_EPILOG: Final[str] = ""
 
 DEFAULT_BIND: Final[str] = "0.0.0.0"
 DEFAULT_PORT: Final[int] = 8080
-DEFAULT_TIMEOUT: Final[float] = 1.0
+DEFAULT_TIMEOUT: Final[float] = 8.0
+DEFAULT_BROKER: Final[str] = ""
 
 
 @lru_cache
@@ -39,13 +37,13 @@ def version() -> str:
     return __version__
 
 
-def add_cmd1_parser(subparsers) -> None:
+def add_cmd_master_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
-        name=CMD1,
-        help=CMD1_HELP,
+        name=CMD_MASTER,
+        help=CMD_MASTER_HELP,
         formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD1_EPILOG,
+        epilog=CMD_MASTER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
 
@@ -61,8 +59,37 @@ def add_cmd1_parser(subparsers) -> None:
         "-p",
         default=DEFAULT_PORT,
         metavar="port",
-        help=f"Port number (default: '{DEFAULT_PORT}')",
+        type=int,
+        help=f"Port number (default: {DEFAULT_PORT})",
     )
+    parser.add_argument(
+        "--timeout",
+        "-t",
+        default=DEFAULT_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
+    )
+    parser.add_argument(
+        "--broker",
+        "-B",
+        default=DEFAULT_BROKER,
+        metavar="bind",
+        type=str,
+        help=f"URL of the default broker used (default: '{DEFAULT_BROKER}')",
+    )
+
+
+def add_cmd_worker_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_WORKER,
+        help=CMD_WORKER_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_WORKER_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+
     parser.add_argument(
         "--timeout",
         "-t",
@@ -70,35 +97,9 @@ def add_cmd1_parser(subparsers) -> None:
         type=float,
         help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
     )
-
-
-def add_cmd2_parser(subparsers) -> None:
-    # noinspection SpellCheckingInspection
-    parser = subparsers.add_parser(
-        name=CMD2,
-        help=CMD2_HELP,
-        formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD2_EPILOG,
-    )
-    assert isinstance(parser, ArgumentParser)
-
     parser.add_argument(
-        "--config",
-        "-c",
-        default=None,
-        metavar="file",
-        help="Configuration file path",
-    )
-    parser.add_argument(
-        "module",
-        default=None,
-        nargs="?",
-        help="Module name",
-    )
-    parser.add_argument(
-        "opts",
-        nargs=REMAINDER,
-        help="Arguments of module",
+        "broker",
+        help="URL of the default broker used",
     )
 
 
@@ -151,8 +152,8 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="cmd")
-    add_cmd1_parser(subparsers)
-    add_cmd2_parser(subparsers)
+    add_cmd_master_parser(subparsers)
+    add_cmd_worker_parser(subparsers)
     return parser
 
 
