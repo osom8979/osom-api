@@ -9,6 +9,11 @@ from uvicorn import run as uvicorn_run
 app = FastAPI()
 
 
+@app.get("/health")
+async def root():
+    return {}
+
+
 def master_main(args: Namespace, printer: Callable[..., None] = print) -> int:
     assert args is not None
     assert printer is not None
