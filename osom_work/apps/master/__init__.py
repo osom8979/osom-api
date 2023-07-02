@@ -3,8 +3,8 @@
 from argparse import Namespace
 from typing import Callable
 
-from uvicorn import run as uvicorn_run
 from fastapi import FastAPI
+from uvicorn import run as uvicorn_run
 
 app = FastAPI()
 
