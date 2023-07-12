@@ -4,6 +4,7 @@
 asctime
 datefmt
 levelname
+meipass
 nocov
 osom
 pythonpath
