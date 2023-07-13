@@ -6,6 +6,8 @@ from typing import Final, List, Optional
 
 from osom_work.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 
+CMD_BOT: Final[str] = "bot"
+CMD_HEALTH: Final[str] = "health"
 CMD_MASTER: Final[str] = "master"
 CMD_WORKER: Final[str] = "worker"
 
@@ -15,7 +17,13 @@ EPILOG: Final[str] = ""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
-CMDS = (CMD_MASTER, CMD_WORKER)
+CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
+
+CMD_BOT_HELP: Final[str] = "Bot"
+CMD_BOT_EPILOG: Final[str] = ""
+
+CMD_HEALTH_HELP: Final[str] = "Healthcheck"
+CMD_HEALTH_EPILOG: Final[str] = ""
 
 CMD_MASTER_HELP: Final[str] = "Master node"
 CMD_MASTER_EPILOG: Final[str] = ""
@@ -23,10 +31,11 @@ CMD_MASTER_EPILOG: Final[str] = ""
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
+DEFAULT_SCHEME: Final[str] = "http"
+DEFAULT_HOST: Final[str] = "localhost"
 DEFAULT_BIND: Final[str] = "0.0.0.0"
 DEFAULT_PORT: Final[int] = 8080
 DEFAULT_TIMEOUT: Final[float] = 8.0
-DEFAULT_BROKER: Final[str] = ""
 
 
 @lru_cache
@@ -37,16 +46,26 @@ def version() -> str:
     return __version__
 
 
-def add_cmd_master_parser(subparsers) -> None:
-    # noinspection SpellCheckingInspection
-    parser = subparsers.add_parser(
-        name=CMD_MASTER,
-        help=CMD_MASTER_HELP,
-        formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD_MASTER_EPILOG,
+def _add_secure_argument(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--secure",
+        action="store_true",
+        default=False,
+        help="Enable secure flag",
     )
-    assert isinstance(parser, ArgumentParser)
 
+
+def _add_host_argument(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--host",
+        "-H",
+        default=DEFAULT_HOST,
+        metavar="host",
+        help=f"Host address (default: '{DEFAULT_HOST}')",
+    )
+
+
+def _add_bind_argument(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--bind",
         "-b",
@@ -54,6 +73,9 @@ def add_cmd_master_parser(subparsers) -> None:
         metavar="bind",
         help=f"Bind address (default: '{DEFAULT_BIND}')",
     )
+
+
+def _add_port_argument(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--port",
         "-p",
@@ -62,25 +84,64 @@ def add_cmd_master_parser(subparsers) -> None:
         type=int,
         help=f"Port number (default: {DEFAULT_PORT})",
     )
+
+
+def _add_timeout_argument(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--timeout",
         "-t",
         default=DEFAULT_TIMEOUT,
         metavar="sec",
         type=float,
-        help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
-    )
-    parser.add_argument(
-        "--broker",
-        "-B",
-        default=DEFAULT_BROKER,
-        metavar="bind",
-        type=str,
-        help=f"URL of the default broker used (default: '{DEFAULT_BROKER}')",
+        help=f"Common timeout in seconds (default: {DEFAULT_TIMEOUT})",
     )
 
 
-def add_cmd_worker_parser(subparsers) -> None:
+def _add_cmd_bot_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_BOT,
+        help=CMD_BOT_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_BOT_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+    _add_secure_argument(parser)
+    _add_host_argument(parser)
+    _add_port_argument(parser)
+    _add_timeout_argument(parser)
+
+
+def _add_cmd_health_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_HEALTH,
+        help=CMD_HEALTH_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_HEALTH_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+    _add_secure_argument(parser)
+    _add_host_argument(parser)
+    _add_port_argument(parser)
+    _add_timeout_argument(parser)
+
+
+def _add_cmd_master_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_MASTER,
+        help=CMD_MASTER_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_MASTER_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+    _add_bind_argument(parser)
+    _add_port_argument(parser)
+    _add_timeout_argument(parser)
+
+
+def _add_cmd_worker_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_WORKER,
@@ -89,18 +150,10 @@ def add_cmd_worker_parser(subparsers) -> None:
         epilog=CMD_WORKER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-
-    parser.add_argument(
-        "--timeout",
-        "-t",
-        default=DEFAULT_TIMEOUT,
-        type=float,
-        help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
-    )
-    parser.add_argument(
-        "broker",
-        help="URL of the default broker used",
-    )
+    _add_secure_argument(parser)
+    _add_host_argument(parser)
+    _add_port_argument(parser)
+    _add_timeout_argument(parser)
 
 
 def default_argument_parser() -> ArgumentParser:
@@ -152,8 +205,10 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="cmd")
-    add_cmd_master_parser(subparsers)
-    add_cmd_worker_parser(subparsers)
+    _add_cmd_bot_parser(subparsers)
+    _add_cmd_health_parser(subparsers)
+    _add_cmd_master_parser(subparsers)
+    _add_cmd_worker_parser(subparsers)
     return parser
 
 

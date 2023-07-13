@@ -3,9 +3,18 @@
 from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
-from osom_work.apps.master import master_main
-from osom_work.apps.worker import worker_main
-from osom_work.arguments import CMD_MASTER, CMD_WORKER, CMDS, get_default_arguments
+from osom_work.apps.bot.main import bot_main
+from osom_work.apps.health.main import health_main
+from osom_work.apps.master.main import master_main
+from osom_work.apps.worker.main import worker_main
+from osom_work.arguments import (
+    CMD_BOT,
+    CMD_HEALTH,
+    CMD_MASTER,
+    CMD_WORKER,
+    CMDS,
+    get_default_arguments,
+)
 from osom_work.logging.logging import (
     SEVERITY_NAME_DEBUG,
     logger,
@@ -55,16 +64,20 @@ def main(
 
     logger.debug(f"Arguments: {args}")
 
+    main_func = {
+        CMD_BOT: bot_main,
+        CMD_HEALTH: health_main,
+        CMD_MASTER: master_main,
+        CMD_WORKER: worker_main,
+    }
+
     try:
-        if cmd == CMD_MASTER:
-            return master_main(args, printer=printer)
-        elif cmd == CMD_WORKER:
-            return worker_main(args, printer=printer)
-        else:
-            assert False, "Inaccessible section"
+        main_func[cmd](args, printer)
     except BaseException as e:
         logger.exception(e)
         return 1
+    else:
+        return 0
 
 
 if __name__ == "__main__":
