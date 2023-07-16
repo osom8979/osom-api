@@ -3,7 +3,7 @@
 from argparse import Namespace
 from typing import Callable
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from uvicorn import run as uvicorn_run
 
 app = FastAPI()
@@ -12,6 +12,14 @@ app = FastAPI()
 @app.get("/health")
 async def health():
     return {}
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket) -> None:
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
 
 
 def master_main(args: Namespace, printer: Callable[..., None] = print) -> None:
