@@ -1,0 +1,5 @@
+SEVERITY=info
+REDIS_HOST=redis
+REDIS_PORT=6379
+FRONTEND_HOST=your.domain.com
+ACME_EMAIL=your@email.com

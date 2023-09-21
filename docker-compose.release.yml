@@ -1,0 +1,94 @@
+version: "3.3"
+
+services:
+  traefik:
+    image: "traefik:v2.10"
+    restart: always
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.osom_resolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.osom_resolver.acme.email=${ACME_EMAIL:?err}"
+      - "--certificatesresolvers.osom_resolver.acme.storage=/letsencrypt/acme.json"
+      #-"--log.level=DEBUG"
+
+  redis:
+    image: redis:7
+    restart: always
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    volumes:
+      - ./redis:/data
+    environment:
+      - TZ=Asia/Seoul
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - "redis-server"
+
+  master:
+    image: "ghcr.io/osom8979/osom-work:master"
+    restart: always
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    depends_on:
+      - traefik
+      - redis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "10"
+    deploy:
+      mode: replicated
+      replicas: 2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.osom_master.rule=Host(`${FRONTEND_HOST:?err}`)"
+      - "traefik.http.routers.osom_master.entrypoints=websecure"
+      - "traefik.http.routers.osom_master.tls.certresolver=osom_resolver"
+      - "traefik.http.services.osom_master.loadbalancer.server.port=8080"
+    environment:
+      - TZ=Asia/Seoul
+    healthcheck:
+      test: ["CMD", "python3", "-m", "osom-work", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - "master"
+
+  worker:
+    image: "ghcr.io/osom8979/osom-work:master"
+    restart: always
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    depends_on:
+      - traefik
+      - redis
+      - master
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "10"
+    deploy:
+      mode: replicated
+      replicas: 2
+    environment:
+      - TZ=Asia/Seoul
+    healthcheck:
+      test: ["CMD", "python3", "-m", "osom-work", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - "worker"

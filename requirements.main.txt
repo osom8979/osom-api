@@ -1,3 +1,8 @@
 coloredlogs>=15.0.1
-fastapi[all]>=0.99.0
-aioredis[hiredis]>=2.0.1
+fastapi[all]>=0.103.1
+orjson
+overrides>=7.4.0
+plugpack>=0.0.2
+redis>=5.0.0
+type-serialize>=1.2.1
+uvloop

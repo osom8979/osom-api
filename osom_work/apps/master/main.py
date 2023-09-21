@@ -28,4 +28,9 @@ def master_main(args: Namespace) -> None:
     assert isinstance(args.port, int)
     assert isinstance(args.timeout, float)
 
-    uvicorn_run(app, host=args.bind, port=args.port)
+    uvicorn_run(
+        app,
+        host=args.bind,
+        port=args.port,
+        server_header=False,
+    )

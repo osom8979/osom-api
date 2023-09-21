@@ -2,9 +2,18 @@
 # https://plugins.jetbrains.com/plugin/12089-dictionary
 
 asctime
+certificatesresolvers
+certresolver
 datefmt
+exposedbydefault
+ghcr
 levelname
+loadbalancer
 meipass
 nocov
 osom
 pythonpath
+tlschallenge
+traefik
+tznow
+websecure
