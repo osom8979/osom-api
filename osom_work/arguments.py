@@ -6,30 +6,29 @@ from typing import Final, List, Optional
 
 from osom_work.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 
-CMD_BOT: Final[str] = "bot"
-CMD_HEALTH: Final[str] = "health"
-CMD_MASTER: Final[str] = "master"
-CMD_WORKER: Final[str] = "worker"
-
 PROG: Final[str] = "osom-work"
 DESCRIPTION: Final[str] = "osom master and worker"
 EPILOG: Final[str] = ""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
-CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
-
+CMD_BOT: Final[str] = "bot"
 CMD_BOT_HELP: Final[str] = "Bot"
 CMD_BOT_EPILOG: Final[str] = ""
 
+CMD_HEALTH: Final[str] = "health"
 CMD_HEALTH_HELP: Final[str] = "Healthcheck"
 CMD_HEALTH_EPILOG: Final[str] = ""
 
+CMD_MASTER: Final[str] = "master"
 CMD_MASTER_HELP: Final[str] = "Master node"
 CMD_MASTER_EPILOG: Final[str] = ""
 
+CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
+
+CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_SCHEME: Final[str] = "http"
 DEFAULT_HOST: Final[str] = "localhost"
