@@ -45,16 +45,7 @@ def version() -> str:
     return __version__
 
 
-def _add_secure_argument(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--secure",
-        action="store_true",
-        default=False,
-        help="Enable secure flag",
-    )
-
-
-def _add_host_argument(parser: ArgumentParser) -> None:
+def add_http_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--host",
         "-H",
@@ -62,19 +53,6 @@ def _add_host_argument(parser: ArgumentParser) -> None:
         metavar="host",
         help=f"Host address (default: '{DEFAULT_HOST}')",
     )
-
-
-def _add_bind_argument(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--bind",
-        "-b",
-        default=DEFAULT_BIND,
-        metavar="bind",
-        help=f"Bind address (default: '{DEFAULT_BIND}')",
-    )
-
-
-def _add_port_argument(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--port",
         "-p",
@@ -83,9 +61,6 @@ def _add_port_argument(parser: ArgumentParser) -> None:
         type=int,
         help=f"Port number (default: {DEFAULT_PORT})",
     )
-
-
-def _add_timeout_argument(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--timeout",
         "-t",
@@ -105,10 +80,7 @@ def add_cmd_bot_parser(subparsers) -> None:
         epilog=CMD_BOT_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_secure_argument(parser)
-    _add_host_argument(parser)
-    _add_port_argument(parser)
-    _add_timeout_argument(parser)
+    add_http_arguments(parser)
 
 
 def add_cmd_health_parser(subparsers) -> None:
@@ -120,10 +92,7 @@ def add_cmd_health_parser(subparsers) -> None:
         epilog=CMD_HEALTH_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_secure_argument(parser)
-    _add_host_argument(parser)
-    _add_port_argument(parser)
-    _add_timeout_argument(parser)
+    add_http_arguments(parser)
 
 
 def add_cmd_master_parser(subparsers) -> None:
@@ -135,9 +104,7 @@ def add_cmd_master_parser(subparsers) -> None:
         epilog=CMD_MASTER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_bind_argument(parser)
-    _add_port_argument(parser)
-    _add_timeout_argument(parser)
+    add_http_arguments(parser)
 
 
 def add_cmd_worker_parser(subparsers) -> None:
@@ -149,10 +116,7 @@ def add_cmd_worker_parser(subparsers) -> None:
         epilog=CMD_WORKER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_secure_argument(parser)
-    _add_host_argument(parser)
-    _add_port_argument(parser)
-    _add_timeout_argument(parser)
+    add_http_arguments(parser)
 
 
 def default_argument_parser() -> ArgumentParser:
@@ -189,6 +153,13 @@ def default_argument_parser() -> ArgumentParser:
         "--rotate-logging-when",
         default="D",
         help="Rotate logging when",
+    )
+
+    parser.add_argument(
+        "--use-uvloop",
+        action="store_true",
+        default=False,
+        help="Replace the event loop with uvloop",
     )
 
     parser.add_argument(
