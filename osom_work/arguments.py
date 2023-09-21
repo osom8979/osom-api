@@ -96,7 +96,7 @@ def _add_timeout_argument(parser: ArgumentParser) -> None:
     )
 
 
-def _add_cmd_bot_parser(subparsers) -> None:
+def add_cmd_bot_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_BOT,
@@ -111,7 +111,7 @@ def _add_cmd_bot_parser(subparsers) -> None:
     _add_timeout_argument(parser)
 
 
-def _add_cmd_health_parser(subparsers) -> None:
+def add_cmd_health_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_HEALTH,
@@ -126,7 +126,7 @@ def _add_cmd_health_parser(subparsers) -> None:
     _add_timeout_argument(parser)
 
 
-def _add_cmd_master_parser(subparsers) -> None:
+def add_cmd_master_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_MASTER,
@@ -140,7 +140,7 @@ def _add_cmd_master_parser(subparsers) -> None:
     _add_timeout_argument(parser)
 
 
-def _add_cmd_worker_parser(subparsers) -> None:
+def add_cmd_worker_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_WORKER,
@@ -162,20 +162,35 @@ def default_argument_parser() -> ArgumentParser:
         epilog=EPILOG,
         formatter_class=RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
+
+    logging_group = parser.add_mutually_exclusive_group()
+    logging_group.add_argument(
         "--colored-logging",
         "-c",
         action="store_true",
         default=False,
         help="Use colored logging",
     )
-    parser.add_argument(
+    logging_group.add_argument(
         "--simple-logging",
         "-s",
         action="store_true",
         default=False,
         help="Use simple logging",
     )
+
+    parser.add_argument(
+        "--rotate-logging",
+        "-r",
+        default=None,
+        help="Rotate logging prefix",
+    )
+    parser.add_argument(
+        "--rotate-logging-when",
+        default="D",
+        help="Rotate logging when",
+    )
+
     parser.add_argument(
         "--severity",
         choices=SEVERITIES,
@@ -204,10 +219,10 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="cmd")
-    _add_cmd_bot_parser(subparsers)
-    _add_cmd_health_parser(subparsers)
-    _add_cmd_master_parser(subparsers)
-    _add_cmd_worker_parser(subparsers)
+    add_cmd_bot_parser(subparsers)
+    add_cmd_health_parser(subparsers)
+    add_cmd_master_parser(subparsers)
+    add_cmd_worker_parser(subparsers)
     return parser
 
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from typing import Callable
 
 from fastapi import FastAPI, WebSocket
 from uvicorn import run as uvicorn_run
@@ -22,9 +21,8 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         await websocket.send_text(f"Message text was: {data}")
 
 
-def master_main(args: Namespace, printer: Callable[..., None] = print) -> None:
+def master_main(args: Namespace) -> None:
     assert args is not None
-    assert printer is not None
 
     assert isinstance(args.bind, str)
     assert isinstance(args.port, int)
