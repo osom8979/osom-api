@@ -22,7 +22,7 @@ class _AttachSharedMemoryContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sm.close()
-        _unregister_shared_memory_tracker(self.sm)
+        # _unregister_shared_memory_tracker(self.sm)
 
 
 def attach_shared_memory(name: str):

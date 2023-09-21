@@ -2,7 +2,7 @@
 
 from contextlib import contextmanager
 from multiprocessing.shared_memory import SharedMemory
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 from uuid import uuid4
 
 from osom_work.memory.shared_memory_utils import (
@@ -19,8 +19,6 @@ class SharedMemoryTestInfo(NamedTuple):
 
 @contextmanager
 def register_shared_memory(disable=False):
-    sm: Optional[SharedMemory]
-
     if disable:
         test_sm_data = str()
         test_sm_pass_bytes = bytes()
@@ -33,11 +31,13 @@ def register_shared_memory(disable=False):
         test_sm_name = sm.name
 
     try:
-        if sm:
+        if sm is not None:
+            assert isinstance(sm, SharedMemory)
             sm.buf[:] = test_sm_pass_bytes
         yield SharedMemoryTestInfo(test_sm_name, test_sm_data)
     finally:
-        if sm:
+        if sm is not None:
+            assert isinstance(sm, SharedMemory)
             destroy_shared_memory(sm)
 
 

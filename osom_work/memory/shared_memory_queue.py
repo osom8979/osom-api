@@ -13,7 +13,7 @@ SHARED_MEMORY_INFINITY_QUEUE: Final[int] = 0
 
 
 class Written(NamedTuple):
-    sm_name: str
+    name: str
     offset: int
     end: int
 
@@ -23,10 +23,13 @@ class Written(NamedTuple):
 
 
 class SharedMemoryQueue:
+    _waiting: Deque[SharedMemory]
+    _working: Dict[str, SharedMemory]
+
     def __init__(self, max_queue=SHARED_MEMORY_INFINITY_QUEUE):
         self._max_queue = max_queue
-        self._waiting: Deque[SharedMemory] = deque()
-        self._working: Dict[str, SharedMemory] = dict()
+        self._waiting = deque()
+        self._working = dict()
 
     @property
     def max_queue(self) -> int:
@@ -94,7 +97,6 @@ class SharedMemoryQueue:
             return bytes(sm.buf[offset:end])
 
     class RentalManager:
-
         __slots__ = ("_sm", "_smq")
 
         def __init__(self, sm: SharedMemory, smq: "SharedMemoryQueue"):
@@ -111,7 +113,6 @@ class SharedMemoryQueue:
         return self.RentalManager(self.secure_worker(buffer_byte), self)
 
     class MultiRentalManager:
-
         __slots__ = ("_sms", "_smq")
 
         def __init__(self, sms: Dict[str, SharedMemory], smq: "SharedMemoryQueue"):
