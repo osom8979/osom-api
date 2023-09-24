@@ -1,0 +1,40 @@
+version: "3.3"
+
+services:
+  redis:
+    image: redis:7
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    networks:
+      - osom-net
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    volumes:
+      - ./redis:/data
+      - ./keys/ca.crt:/usr/local/etc/redis/redis-server.crt
+      - ./keys/private.key:/usr/local/etc/redis/redis-server.key
+      - ./keys/ca.crt:/usr/local/etc/redis/ca.crt
+    environment:
+      - TZ=Asia/Seoul
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      redis-server
+      --tls-port 6379
+      --port 0
+      --tls-cert-file /usr/local/etc/redis/redis-server.crt
+      --tls-key-file /usr/local/etc/redis/redis-server.key
+      --tls-ca-cert-file /usr/local/etc/redis/ca.crt
+      --tls-dh-params-file /usr/local/etc/redis/redis.dh
+      --tls-auth-clients no
+      --tls-replication yes
+
+networks:
+  osom-net:
+    external: true

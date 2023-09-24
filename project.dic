@@ -5,8 +5,10 @@ asctime
 certificatesresolvers
 certresolver
 datefmt
+dhsize
 exposedbydefault
 ghcr
+keysize
 levelname
 loadbalancer
 meipass

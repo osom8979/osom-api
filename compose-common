@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+
+if ! command -v openssl &> /dev/null; then
+    opm-println-error "Not found openssl command"
+    exit 1
+fi
+if ! command -v docker &> /dev/null; then
+    opm-println-error "Not found docker command"
+    exit 1
+fi
+if ! command -v sed &> /dev/null; then
+    opm-println-error "Not found sed command"
+    exit 1
+fi
+
+NETWORK_NAME=osom-net
+ENV_SRC="$ROOT_DIR/env-template"
+ENV_DEST="$ROOT_DIR/.env"
+USER_UID=$(id -u)
+USER_GID=$(id -g)
+
+if ! docker network inspect "$NETWORK_NAME" &> /dev/null; then
+    echo "Create docker network: '$NETWORK_NAME'"
+    docker network create --driver bridge "$NETWORK_NAME"
+fi
+
+if [[ ! -f "$ENV_DEST" ]]; then
+    echo "Create an environment file: $ENV_DEST"
+    sed -e "s/@USER_UID@/$USER_UID/g" \
+        -e "s/@USER_GID@/$USER_GID/g" \
+        "$ENV_SRC" > "$ENV_DEST"
+fi
+
+DAYS=365
+KEYSIZE=4096
+DHSIZE=2048
+COMMON_NAME=osom-redis
+KEYS_DIR="$ROOT_DIR/.keys"
+PRIVATE_FILE="$KEYS_DIR/private.key"
+REQUEST_FILE="$KEYS_DIR/request.csr"
+CERTIFICATE_FILE="$KEYS_DIR/ca.crt"
+DH_FILE="$KEYS_DIR/params.dh"
+
+if [[ ! -d "$KEYS_DIR" ]]; then
+    mkdir -vp "$KEYS_DIR"
+fi
+
+openssl genrsa -out tests/tls/ca.key 4096
+openssl req \
+    -x509 -new -nodes -sha256 \
+    -key tests/tls/ca.key \
+    -days 3650 \
+    -subj '/O=Redis Test/CN=Certificate Authority' \
+    -out tests/tls/ca.crt
+
+if [[ ! -f "$PRIVATE_FILE" ]]; then
+    echo "Generate RSA Private key: $PRIVATE_FILE"
+    openssl genrsa -out "$PRIVATE_FILE" "$KEYSIZE"
+fi
+
+if [[ ! -f "$REQUEST_FILE" ]]; then
+    echo "Create the certificate signing request: $REQUEST_FILE"
+    openssl req -new -sha256 \
+        -key "$PRIVATE_FILE" \
+        -out "$REQUEST_FILE" \
+        -subj "/CN=${COMMON_NAME}"
+fi
+
+if [[ ! -f "$CERTIFICATE_FILE" ]]; then
+    echo "Sign the certificate using the private key and CSR: $CERTIFICATE_FILE"
+    openssl x509 -req -sha256 \
+        -days "$DAYS" \
+        -in "$REQUEST_FILE" \
+        -signkey "$PRIVATE_FILE" \
+        -out "$CERTIFICATE_FILE"
+fi
+
+if [[ ! -f "$DH_FILE" ]]; then
+    echo "Generate DH params file: $PRIVATE_FILE"
+    openssl dhparam -out "$DH_FILE" "$DHSIZE"
+fi
