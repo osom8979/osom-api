@@ -6,6 +6,7 @@ certificatesresolvers
 certresolver
 datefmt
 dhsize
+encipherment
 exposedbydefault
 ghcr
 keysize
@@ -15,6 +16,7 @@ meipass
 nocov
 osom
 pythonpath
+requirepass
 tlschallenge
 traefik
 tznow

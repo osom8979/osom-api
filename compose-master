@@ -2,6 +2,4 @@
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
 
-source "$ROOT_DIR/compose-common"
-
 docker compose -p osom-master -f "$ROOT_DIR/docker-compose.master.yml" "$@"

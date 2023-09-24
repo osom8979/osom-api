@@ -4,9 +4,19 @@ services:
   traefik:
     image: "traefik:v2.10"
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    hostname: osom-traefik
+    networks:
+      - osom-net
     ports:
+      - "80:80"
       - "443:443"
       - "8080:8080"
+    user: ${USER_UID:?err}:${USER_GID:?err}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
@@ -14,40 +24,31 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.osom_resolver.acme.tlschallenge=true"
       - "--certificatesresolvers.osom_resolver.acme.email=${ACME_EMAIL:?err}"
       - "--certificatesresolvers.osom_resolver.acme.storage=/letsencrypt/acme.json"
       #-"--log.level=DEBUG"
 
-  redis:
-    image: redis:7
-    restart: always
-    user: ${USER_UID:?err}:${USER_GID:?err}
-    volumes:
-      - ./redis:/data
-    environment:
-      - TZ=Asia/Seoul
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    command:
-      - "redis-server"
-
   master:
     image: "ghcr.io/osom8979/osom-api:master"
     restart: always
-    user: ${USER_UID:?err}:${USER_GID:?err}
     depends_on:
       - traefik
       - redis
     logging:
       driver: "json-file"
       options:
-        max-size: "1m"
+        max-size: "10m"
         max-file: "10"
+    hostname: osom-traefik
+    networks:
+      - osom-net
+    user: ${USER_UID:?err}:${USER_GID:?err}
     deploy:
       mode: replicated
       replicas: 2
@@ -64,5 +65,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    command:
-      - "master"
+    command: >
+      master
+      --redis-host ${REDIS_HOST:?err}
+      --redis-port ${REDIS_PORT:?err}
+      --redis-database ${REDIS_DATABASE:?err}
+      --redis-password ${REDIS_PASSWORD:?err}
+
+networks:
+  osom-net:
+    external: true

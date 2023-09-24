@@ -9,14 +9,18 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    hostname: osom-redis
     networks:
       - osom-net
+    ports:
+      - "16379:16379"
     user: ${USER_UID:?err}:${USER_GID:?err}
     volumes:
       - ./redis:/data
-      - ./keys/ca.crt:/usr/local/etc/redis/redis-server.crt
-      - ./keys/private.key:/usr/local/etc/redis/redis-server.key
-      - ./keys/ca.crt:/usr/local/etc/redis/ca.crt
+      - ./cert/ca.crt:/usr/local/etc/redis/ca.crt
+      - ./cert/redis.key:/usr/local/etc/redis/redis.key
+      - ./cert/redis.crt:/usr/local/etc/redis/redis.crt
+      - ./cert/params.dh:/usr/local/etc/redis/params.dh
     environment:
       - TZ=Asia/Seoul
     healthcheck:
@@ -26,14 +30,15 @@ services:
       retries: 5
     command: >
       redis-server
-      --tls-port 6379
-      --port 0
-      --tls-cert-file /usr/local/etc/redis/redis-server.crt
-      --tls-key-file /usr/local/etc/redis/redis-server.key
+      --tls-port 16379
+      --port 6379
+      --tls-cert-file /usr/local/etc/redis/redis.crt
+      --tls-key-file /usr/local/etc/redis/redis.key
       --tls-ca-cert-file /usr/local/etc/redis/ca.crt
-      --tls-dh-params-file /usr/local/etc/redis/redis.dh
+      --tls-dh-params-file /usr/local/etc/redis/params.dh
       --tls-auth-clients no
       --tls-replication yes
+      --requirepass ${REDIS_PASSWORD:?err}
 
 networks:
   osom-net:

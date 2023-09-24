@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+
+if ! command -v openssl &> /dev/null; then
+    opm-println-error "Not found openssl command"
+    exit 1
+fi
+
+DAYS=365
+KEYSIZE=4096
+DHSIZE=2048
+CERT_DIR="$ROOT_DIR/cert"
+
+CA_PRIVATE_FILE="$CERT_DIR/ca.key"
+CA_CERTIFICATE_FILE="$CERT_DIR/ca.crt"
+CA_SERIAL_FILE="$CERT_DIR/ca.srl"
+
+REDIS_PRIVATE_FILE="$CERT_DIR/redis.key"
+REDIS_REQUEST_FILE="$CERT_DIR/redis.csr"
+REDIS_CERTIFICATE_FILE="$CERT_DIR/redis.crt"
+
+DH_FILE="$CERT_DIR/params.dh"
+
+mkdir -vp "$CERT_DIR"
+
+echo "Generate CA RSA Private key file: $CA_PRIVATE_FILE"
+openssl genrsa -out "$CA_PRIVATE_FILE" "$KEYSIZE"
+
+echo "Generate CA Certificate file: $CA_PRIVATE_FILE"
+openssl req -x509 -new -nodes -sha256 \
+    -key "$CA_PRIVATE_FILE" \
+    -days "$DAYS" \
+    -subj '/O=Redis/CN=CertificateAuthority' \
+    -out "$CA_CERTIFICATE_FILE"
+
+echo "Generate server RSA private key file: $REDIS_PRIVATE_FILE"
+openssl genrsa -out "$REDIS_PRIVATE_FILE" "$KEYSIZE"
+
+echo "Generate server CSR file: $REDIS_REQUEST_FILE"
+openssl req -new -sha256 \
+    -subj "/O=Redis/CN=Generic" \
+    -key "$REDIS_PRIVATE_FILE" \
+    -out "$REDIS_REQUEST_FILE"
+
+echo "Sign the server certificate file: $REDIS_CERTIFICATE_FILE"
+openssl x509 -req -sha256 \
+    -CA "$CA_CERTIFICATE_FILE" \
+    -CAkey "$CA_PRIVATE_FILE" \
+    -CAserial "$CA_SERIAL_FILE" \
+    -CAcreateserial \
+    -days "$DAYS" \
+    -in "$REDIS_REQUEST_FILE" \
+    -out "$REDIS_CERTIFICATE_FILE"
+
+echo "Generate DH params file: $DH_FILE"
+openssl dhparam -out "$DH_FILE" "$DHSIZE" 2> /dev/null
