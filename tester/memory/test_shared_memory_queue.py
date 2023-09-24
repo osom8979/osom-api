@@ -3,7 +3,7 @@
 from multiprocessing.shared_memory import SharedMemory
 from unittest import TestCase, main
 
-from osom_work.memory.shared_memory_queue import SharedMemoryQueue
+from osom_api.memory.shared_memory_queue import SharedMemoryQueue
 
 
 class SharedMemoryQueueTestCase(TestCase):

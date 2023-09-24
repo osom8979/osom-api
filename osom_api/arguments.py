@@ -4,9 +4,9 @@ from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
 from typing import Final, List, Optional
 
-from osom_work.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
+from osom_api.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 
-PROG: Final[str] = "osom-work"
+PROG: Final[str] = "osom-api"
 DESCRIPTION: Final[str] = "osom master and worker"
 EPILOG: Final[str] = ""
 
@@ -40,7 +40,7 @@ DEFAULT_TIMEOUT: Final[float] = 8.0
 @lru_cache
 def version() -> str:
     # [IMPORTANT] Avoid 'circular import' issues
-    from osom_work import __version__
+    from osom_api import __version__
 
     return __version__
 

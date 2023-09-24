@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
 
-from osom_work.parse.env_parse import (
+from osom_api.parse.env_parse import (
     ENVIRONMENT_FILE_PREFIX,
     ENVIRONMENT_FILE_SUFFIX,
     ENVIRONMENT_PREFIX,
@@ -12,7 +12,7 @@ from osom_work.parse.env_parse import (
     get_env,
     get_file_env,
 )
-from osom_work.system.environ import exchange_env
+from osom_api.system.environ import exchange_env
 
 
 class GetEnvNamespaceEnvironTestCase(TestCase):

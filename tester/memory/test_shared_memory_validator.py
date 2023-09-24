@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_work.memory.shared_memory_validator import (
+from osom_api.memory.shared_memory_validator import (
     SharedMemoryTestInfo,
     register_shared_memory,
     validate_shared_memory,

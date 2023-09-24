@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_work.chrono.datetime import tznow
+from osom_api.chrono.datetime import tznow
 
 
 class DatetimeTestCase(TestCase):

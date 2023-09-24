@@ -2,7 +2,7 @@
 
 from typing import Dict, Final, Optional
 
-from osom_work.system.environ import environ_dict
+from osom_api.system.environ import environ_dict
 
 ENVIRONMENT_PREFIX: Final[str] = "OSOM_"
 ENVIRONMENT_SUFFIX: Final[str] = ""

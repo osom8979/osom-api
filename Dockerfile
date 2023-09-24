@@ -23,4 +23,4 @@ RUN pip install --no-cache /app/.wheels/* && \
     adduser --no-create-home --shell /bin/false --disabled-password --uid 1001 --system --group app
 USER app
 
-ENTRYPOINT ["python", "-OO", "-m", "osom_work"]
+ENTRYPOINT ["python", "-OO", "-m", "osom_api"]

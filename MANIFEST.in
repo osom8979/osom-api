@@ -1,5 +1,5 @@
 include requirements*.txt
 include README.md
 include LICENSE
-recursive-include osom_work/assets *
-recursive-include osom_work/www *
+recursive-include osom_api/assets *
+recursive-include osom_api/www *

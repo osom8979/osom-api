@@ -73,7 +73,7 @@ DEFAULT_LOGGING_CONFIG = {
             "style": SIMPLE_STYLE,
         },
         "color": {
-            "class": "osom_work.logging.colored_formatter.ColoredFormatter",
+            "class": "osom_api.logging.colored_formatter.ColoredFormatter",
             "format": DEFAULT_FORMAT,
             "datefmt": DEFAULT_DATEFMT,
             "style": DEFAULT_STYLE,
@@ -116,7 +116,7 @@ DEFAULT_LOGGING_CONFIG = {
     },
 }
 
-DEFAULT_LOGGER_NAME = "osom_work"
+DEFAULT_LOGGER_NAME = "osom_api"
 
 logger = getLogger(DEFAULT_LOGGER_NAME)
 
@@ -196,7 +196,7 @@ def set_default_logging_config() -> None:
 
 
 def add_colored_formatter_logging_config(level=DEBUG) -> None:
-    from osom_work.logging.colored_formatter import ColoredFormatter
+    from osom_api.logging.colored_formatter import ColoredFormatter
 
     formatter = ColoredFormatter(
         fmt=DEFAULT_FORMAT,

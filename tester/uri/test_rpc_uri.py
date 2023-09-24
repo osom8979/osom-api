@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_work.uri.rpc_uri import (
+from osom_api.uri.rpc_uri import (
     RpcDnsAddress,
     RpcIpv4Addresses,
     RpcIpv6Addresses,

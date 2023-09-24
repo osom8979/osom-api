@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, WebSocket
 
-from osom_work.apps.master.config import Config
+from osom_api.apps.master.config import Config
 
 
 class Context:

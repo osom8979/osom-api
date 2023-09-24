@@ -27,6 +27,6 @@ ARGS=("--config-file=${ROOT_DIR}/mypy.ini")
 print_message "mypy ${ARGS[*]}"
 
 "$ROOT_DIR/python" -m mypy "${ARGS[@]}" \
-    "$ROOT_DIR/osom_work/" \
+    "$ROOT_DIR/osom_api/" \
     "$ROOT_DIR/tester/" \
     "$ROOT_DIR/setup.py"

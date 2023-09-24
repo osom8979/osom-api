@@ -17,9 +17,10 @@ fi
 source "$ACTIVATE_PATH"
 
 cd "$ROOT_DIR" && pyinstaller \
+    --name "osom_api" \
     --onefile \
     --clean \
     --noconsole \
-    --add-data "osom_work/assets:assets" \
-    --add-data "osom_work/www:www" \
+    --add-data "osom_api/assets:assets" \
+    --add-data "osom_api/www:www" \
     "$ROOT_DIR/main.py"

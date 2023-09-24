@@ -4,7 +4,7 @@ import os
 from tempfile import NamedTemporaryFile
 from unittest import TestCase, main
 
-from osom_work.parse.cfg_parse import (
+from osom_api.parse.cfg_parse import (
     CFG_SECTION,
     get_cfg_section_by_path,
     get_cfg_section_by_text,

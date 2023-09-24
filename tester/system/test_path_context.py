@@ -3,7 +3,7 @@
 import sys
 from unittest import TestCase, main
 
-from osom_work.system.path_context import PathContext
+from osom_api.system.path_context import PathContext
 
 
 class PathContextTestCase(TestCase):

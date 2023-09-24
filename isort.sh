@@ -68,6 +68,6 @@ fi
 print_message "isort ${ARGS[*]}"
 
 "$ROOT_DIR/python" -m isort "${ARGS[@]}" \
-    "$ROOT_DIR/osom_work/" \
+    "$ROOT_DIR/osom_api/" \
     "$ROOT_DIR/tester/" \
     "$ROOT_DIR/setup.py"

@@ -6,8 +6,8 @@ from io import StringIO
 from socket import AF_INET, AF_INET6
 from typing import Final, List, NamedTuple, Optional, Tuple, Union
 
-from osom_work.uri.address_family import get_ip_address_family
-from osom_work.uri.host_port import (
+from osom_api.uri.address_family import get_ip_address_family
+from osom_api.uri.host_port import (
     CLOSING_IPV6,
     OPENING_IPV6,
     OPENING_PORT,

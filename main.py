@@ -10,7 +10,7 @@ SOURCE_DIR = os.path.dirname(SOURCE_PATH)
 os.chdir(SOURCE_DIR)
 sys.path.append(SOURCE_DIR)
 
-from osom_work.entrypoint import main  # noqa
+from osom_api.entrypoint import main  # noqa
 
 if __name__ == "__main__":
     sys.exit(main())

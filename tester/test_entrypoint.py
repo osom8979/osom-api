@@ -4,8 +4,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest import TestCase, main
 
-from osom_work.arguments import version
-from osom_work.entrypoint import main as entrypoint_main
+from osom_api.arguments import version
+from osom_api.entrypoint import main as entrypoint_main
 
 
 class EntrypointTestCase(TestCase):

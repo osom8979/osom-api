@@ -37,7 +37,7 @@ services:
       - "redis-server"
 
   master:
-    image: "ghcr.io/osom8979/osom-work:master"
+    image: "ghcr.io/osom8979/osom-api:master"
     restart: always
     user: ${USER_UID:?err}:${USER_GID:?err}
     depends_on:
@@ -60,7 +60,7 @@ services:
     environment:
       - TZ=Asia/Seoul
     healthcheck:
-      test: ["CMD", "python3", "-m", "osom-work", "health"]
+      test: ["CMD", "python3", "-m", "osom-api", "health"]
       interval: 10s
       timeout: 5s
       retries: 5

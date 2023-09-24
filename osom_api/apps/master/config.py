@@ -6,8 +6,8 @@ from typing import Final, List, Optional
 
 from uvicorn.config import LoopSetupType
 
-from osom_work.arguments import DEFAULT_HOST, DEFAULT_PORT, DEFAULT_TIMEOUT
-from osom_work.logging.logging import logger
+from osom_api.arguments import DEFAULT_HOST, DEFAULT_PORT, DEFAULT_TIMEOUT
+from osom_api.logging.logging import logger
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 

@@ -2,13 +2,13 @@
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
 
-CODE="import osom_work; print(osom_work.__version__)"
+CODE="import osom_api; print(osom_api.__version__)"
 if ! VERSION=$("$ROOT_DIR/python" -c "$CODE"); then
     echo "Python code execution failed ($?)" 1>&2
     exit 1
 fi
 
-NAME="osom-work"
+NAME="osom-api"
 TAG="$NAME:$VERSION"
 LATEST="$NAME:latest"
 

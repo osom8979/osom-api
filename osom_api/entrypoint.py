@@ -3,9 +3,9 @@
 from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
-from osom_work.apps import run_app
-from osom_work.arguments import CMDS, get_default_arguments
-from osom_work.logging.logging import (
+from osom_api.apps import run_app
+from osom_api.arguments import CMDS, get_default_arguments
+from osom_api.logging.logging import (
     SEVERITY_NAME_DEBUG,
     add_colored_formatter_logging_config,
     add_rotate_file_logging_config,

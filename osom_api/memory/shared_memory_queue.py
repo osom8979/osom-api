@@ -4,7 +4,7 @@ from collections import deque
 from multiprocessing.shared_memory import SharedMemory
 from typing import Deque, Dict, Final, NamedTuple, Optional, Union
 
-from osom_work.memory.shared_memory_utils import (
+from osom_api.memory.shared_memory_utils import (
     create_shared_memory,
     destroy_shared_memory,
 )

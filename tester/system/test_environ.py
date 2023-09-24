@@ -4,7 +4,7 @@ import os
 from typing import Final
 from unittest import TestCase, main
 
-from osom_work.system.environ import environ_dict, exchange_env
+from osom_api.system.environ import environ_dict, exchange_env
 
 TEST_RECC_HTTP_BIND: Final[str] = "TEST_RECC_HTTP_BIND"
 
