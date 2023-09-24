@@ -14,6 +14,7 @@ HOST=localhost
 PORT=
 DATABASE=
 PASSWORD=
+ENV_PASS=0
 TLS=0
 
 USAGE="
@@ -24,9 +25,11 @@ Available options are:
   -h, --host        Host address (default: '$HOST')
   -p, --port        Port number (default: $DEFAULT_PORT / TLS mode default: $TLS_PORT)
   -t, --tls         Enable TLS mode.
-  -d, --database    Database index
+  -n, -d, --database
+                    Database index
   -a, --auth, --password
                     Auth Password
+  --env-pass        Use .env Password
   --                Stop handling options.
 "
 
@@ -73,12 +76,16 @@ while [[ -n $1 ]]; do
         TLS=1
         shift
         ;;
-    -d|--database)
+    -n|-d|--database)
         DATABASE=$2
-        shift
+        shift 2
         ;;
     -a|--auth|--password)
         PASSWORD=$2
+        shift 2
+        ;;
+    --env-pass)
+        ENV_PASS=1
         shift
         ;;
     --)
@@ -107,6 +114,10 @@ ARGS=(
 
 if [[ -n $DATABASE ]]; then
     ARGS+=(-n "$DATABASE")
+fi
+
+if [[ -z $PASSWORD && $ENV_PASS -ne 0 ]]; then
+    PASSWORD=$(source "$ROOT_DIR/.env" && echo "$REDIS_PASSWORD")
 fi
 
 if [[ -n $PASSWORD ]]; then
