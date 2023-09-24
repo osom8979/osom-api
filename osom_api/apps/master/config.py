@@ -2,14 +2,17 @@
 
 from argparse import Namespace
 from copy import deepcopy
-from typing import Final, List, Optional
+from typing import List, Optional
 
 from uvicorn.config import LoopSetupType
 
-from osom_api.arguments import DEFAULT_HOST, DEFAULT_PORT, DEFAULT_TIMEOUT
+from osom_api.arguments import (
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+    DEFAULT_TIMEOUT,
+    PRINTER_ATTR_KEY,
+)
 from osom_api.logging.logging import logger
-
-PRINTER_ATTR_KEY: Final[str] = "_printer"
 
 
 class Config:
@@ -97,8 +100,8 @@ class Config:
     def verbose(self) -> int:
         return self._verbose
 
-    def print(self, *args, **kwargs) -> None:
-        self._printer(*args, **kwargs)
+    def print(self, *args, **kwargs):
+        return self._printer(*args, **kwargs)
 
     def as_logging_lines(self) -> List[str]:
         return [

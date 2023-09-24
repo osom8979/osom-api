@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from argparse import SUPPRESS, ArgumentParser, Namespace, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
-from gettext import gettext as _
 from typing import Final, List, Optional
 
 from osom_api.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
@@ -34,11 +33,14 @@ CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
 DEFAULT_HOST: Final[str] = "localhost"
 DEFAULT_PORT: Final[int] = 8080
 DEFAULT_TIMEOUT: Final[float] = 8.0
+DEFAULT_HEALTHCHECK_URI: Final[str] = f"http://localhost:{DEFAULT_PORT}/health"
 
 DEFAULT_REDIS_HOST: Final[str] = "localhost"
 DEFAULT_REDIS_PORT: Final[int] = 6379
 DEFAULT_REDIS_DATABASE: Final[int] = 0
 DEFAULT_REDIS_TIMEOUT: Final[float] = 8.0
+
+PRINTER_ATTR_KEY: Final[str] = "_printer"
 
 
 @lru_cache
@@ -52,14 +54,12 @@ def version() -> str:
 def add_http_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--host",
-        "-h",
         default=DEFAULT_HOST,
         metavar="host",
         help=f"Host address (default: '{DEFAULT_HOST}')",
     )
     parser.add_argument(
         "--port",
-        "-p",
         default=DEFAULT_PORT,
         metavar="port",
         type=int,
@@ -67,7 +67,6 @@ def add_http_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--timeout",
-        "-t",
         default=DEFAULT_TIMEOUT,
         metavar="sec",
         type=float,
@@ -134,6 +133,51 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
     )
 
 
+def add_s3_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--s3-endpoint",
+        default=None,
+        metavar="url",
+        help="S3 Endpoint URL",
+    )
+    parser.add_argument(
+        "--s3-access",
+        default=None,
+        metavar="key",
+        help="S3 Access Key ID",
+    )
+    parser.add_argument(
+        "--s3-secret",
+        default=None,
+        metavar="key",
+        help="S3 Secret Access Key",
+    )
+
+
+def add_supabase_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--supabase-url",
+        default=None,
+        metavar="url",
+        help="Supabase Project URL",
+    )
+    parser.add_argument(
+        "--supabase-anon",
+        default=None,
+        metavar="key",
+        help="Supabase Anon Key",
+    )
+
+
+def add_telegram_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--telegram-token",
+        default=None,
+        metavar="token",
+        help="Telegram API Token",
+    )
+
+
 def add_cmd_bot_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
@@ -141,10 +185,12 @@ def add_cmd_bot_parser(subparsers) -> None:
         help=CMD_BOT_HELP,
         formatter_class=RawDescriptionHelpFormatter,
         epilog=CMD_BOT_EPILOG,
-        add_help=False,
     )
     assert isinstance(parser, ArgumentParser)
     add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
+    add_telegram_arguments(parser)
 
 
 def add_cmd_health_parser(subparsers) -> None:
@@ -154,10 +200,21 @@ def add_cmd_health_parser(subparsers) -> None:
         help=CMD_HEALTH_HELP,
         formatter_class=RawDescriptionHelpFormatter,
         epilog=CMD_HEALTH_EPILOG,
-        add_help=False,
     )
     assert isinstance(parser, ArgumentParser)
-    add_http_arguments(parser)
+    parser.add_argument(
+        "--timeout",
+        default=DEFAULT_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=f"Common timeout in seconds (default: {DEFAULT_TIMEOUT})",
+    )
+    parser.add_argument(
+        "uri",
+        default=DEFAULT_HEALTHCHECK_URI,
+        nargs="?",
+        help=f"Healthcheck URI (default: '{DEFAULT_HEALTHCHECK_URI}')",
+    )
 
 
 def add_cmd_master_parser(subparsers) -> None:
@@ -167,11 +224,12 @@ def add_cmd_master_parser(subparsers) -> None:
         help=CMD_MASTER_HELP,
         formatter_class=RawDescriptionHelpFormatter,
         epilog=CMD_MASTER_EPILOG,
-        add_help=False,
     )
     assert isinstance(parser, ArgumentParser)
     add_http_arguments(parser)
     add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
 
 
 def add_cmd_worker_parser(subparsers) -> None:
@@ -181,10 +239,11 @@ def add_cmd_worker_parser(subparsers) -> None:
         help=CMD_WORKER_HELP,
         formatter_class=RawDescriptionHelpFormatter,
         epilog=CMD_WORKER_EPILOG,
-        add_help=False,
     )
     assert isinstance(parser, ArgumentParser)
     add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
 
 
 def default_argument_parser() -> ArgumentParser:
@@ -193,7 +252,6 @@ def default_argument_parser() -> ArgumentParser:
         description=DESCRIPTION,
         epilog=EPILOG,
         formatter_class=RawDescriptionHelpFormatter,
-        add_help=False,
     )
 
     logging_group = parser.add_mutually_exclusive_group()
@@ -256,12 +314,6 @@ def default_argument_parser() -> ArgumentParser:
         "-V",
         action="version",
         version=version(),
-    )
-    parser.add_argument(
-        "--help",
-        action="help",
-        default=SUPPRESS,
-        help=_("show this help message and exit"),
     )
 
     subparsers = parser.add_subparsers(dest="cmd")

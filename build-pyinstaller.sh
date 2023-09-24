@@ -17,7 +17,7 @@ fi
 source "$ACTIVATE_PATH"
 
 cd "$ROOT_DIR" && pyinstaller \
-    --name "osom_api" \
+    --name "osom-api" \
     --onefile \
     --clean \
     --noconsole \

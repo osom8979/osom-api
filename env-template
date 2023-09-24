@@ -1,13 +1,22 @@
+# logging
 SEVERITY=info
 
+# redis client
 REDIS_HOST=osom-redis
 REDIS_PORT=6379
 REDIS_TIMEOUT=8.0
 REDIS_DATABASE=0
 REDIS_PASSWORD=@REDIS_PASSWORD@
 
+# master
+HTTP_HOST=localhost
+HTTP_PORT=8080
+HTTP_TIMEOUT=8.0
+
+# traefik
 FRONTEND_HOST=your.domain.com
 ACME_EMAIL=your@email.com
 
+# user/group
 USER_UID=@USER_UID@
 USER_GID=@USER_GID@

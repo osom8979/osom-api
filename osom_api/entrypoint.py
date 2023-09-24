@@ -4,7 +4,7 @@ from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
 from osom_api.apps import run_app
-from osom_api.arguments import CMDS, get_default_arguments
+from osom_api.arguments import CMDS, PRINTER_ATTR_KEY, get_default_arguments
 from osom_api.logging.logging import (
     SEVERITY_NAME_DEBUG,
     add_colored_formatter_logging_config,
@@ -20,6 +20,9 @@ def main(
     printer: Callable[..., None] = print,
 ) -> int:
     args = get_default_arguments(cmdline)
+
+    if not hasattr(args, PRINTER_ATTR_KEY):
+        setattr(args, PRINTER_ATTR_KEY, printer)
 
     if not args.cmd:
         printer("The command does not exist")

@@ -9,6 +9,7 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    user: ${USER_UID:?err}:${USER_GID:?err}
     ports:
       - "443:443"
       - "8080:8080"
@@ -34,13 +35,11 @@ services:
     restart: always
     depends_on:
       - traefik
-      - redis
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "10"
-    hostname: osom-traefik
     networks:
       - osom-net
     user: ${USER_UID:?err}:${USER_GID:?err}
@@ -52,11 +51,11 @@ services:
       - "traefik.http.routers.osom_master.rule=Host(`${FRONTEND_HOST:?err}`)"
       - "traefik.http.routers.osom_master.entrypoints=websecure"
       - "traefik.http.routers.osom_master.tls.certresolver=osom_resolver"
-      - "traefik.http.services.osom_master.loadbalancer.server.port=8080"
+      - "traefik.http.services.osom_master.loadbalancer.server.port=${HTTP_PORT:?err}"
     environment:
       - TZ=Asia/Seoul
     healthcheck:
-      test: ["CMD", "python3", "-m", "osom-api", "health"]
+      test: ["CMD", "python3", "-m", "osom-api", "health", "http://${HTTP_HOST:?err}:${HTTP_PORT:?err}/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,8 +63,12 @@ services:
       master
       --redis-host ${REDIS_HOST:?err}
       --redis-port ${REDIS_PORT:?err}
+      --redis-timeout ${REDIS_TIMEOUT:?err}
       --redis-database ${REDIS_DATABASE:?err}
       --redis-password ${REDIS_PASSWORD:?err}
+      --host ${HTTP_HOST:?err}
+      --port ${HTTP_PORT:?err}
+      --timeout ${HTTP_TIMEOUT:?err}
 
 networks:
   osom-net:

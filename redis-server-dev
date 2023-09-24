@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if ! command -v docker &> /dev/null; then
+    opm-println-error "Not found docker command"
+    exit 1
+fi
+
+docker run --rm -it -p 6379:6379 redis:7 redis-server
