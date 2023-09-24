@@ -107,6 +107,10 @@ if [[ -z $PORT ]]; then
     fi
 fi
 
+declare -a DOCKER_ARGS
+declare -a ARGS
+
+DOCKER_ARGS=()
 ARGS=(
     -h "$HOST"
     -p "$PORT"
@@ -121,10 +125,11 @@ if [[ -z $PASSWORD && $ENV_PASS -ne 0 ]]; then
 fi
 
 if [[ -n $PASSWORD ]]; then
-    ARGS+=(-a "$PASSWORD")
+    DOCKER_ARGS+=(-e "REDISCLI_AUTH=$PASSWORD")
 fi
 
 if [[ $TLS -ne 0 ]]; then
+    DOCKER_ARGS+=(-v "$ROOT_DIR/cert:/cert")
     ARGS+=(
         --tls
         --cacert /cert/ca.crt
@@ -133,4 +138,8 @@ if [[ $TLS -ne 0 ]]; then
     )
 fi
 
-docker run --rm -it -v "$ROOT_DIR/cert:/cert" redis:7 redis-cli "${ARGS[@]}"
+docker run --rm -it \
+    "${DOCKER_ARGS[@]}" \
+    redis:7 \
+    redis-cli \
+    "${ARGS[@]}"
