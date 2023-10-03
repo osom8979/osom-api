@@ -15,8 +15,12 @@ loadbalancer
 meipass
 nocov
 osom
+pmessage
+psubscribe
+punsubscribe
 pythonpath
 rediscli
+rediss
 requirepass
 tlschallenge
 traefik

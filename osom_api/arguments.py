@@ -38,7 +38,9 @@ DEFAULT_HEALTHCHECK_URI: Final[str] = f"http://localhost:{DEFAULT_PORT}/health"
 DEFAULT_REDIS_HOST: Final[str] = "localhost"
 DEFAULT_REDIS_PORT: Final[int] = 6379
 DEFAULT_REDIS_DATABASE: Final[int] = 0
-DEFAULT_REDIS_TIMEOUT: Final[float] = 8.0
+DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
+DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 8.0
+DEFAULT_REDIS_RECONNECT_DELAY: Final[float] = 8.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 
@@ -89,14 +91,6 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
         help=f"Redis port number (default: {DEFAULT_REDIS_PORT})",
     )
     parser.add_argument(
-        "--redis-timeout",
-        default=DEFAULT_REDIS_TIMEOUT,
-        metavar="sec",
-        type=float,
-        help=f"Redis timeout in seconds (default: {DEFAULT_REDIS_TIMEOUT:.2f})",
-    )
-
-    parser.add_argument(
         "--redis-database",
         default=DEFAULT_REDIS_DATABASE,
         metavar="index",
@@ -130,6 +124,37 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
         "--redis-key",
         default=None,
         help="Private key file to authenticate with",
+    )
+
+    parser.add_argument(
+        "--redis-connection-timeout",
+        default=DEFAULT_REDIS_CONNECTION_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=(
+            f"Redis connection timeout in seconds "
+            f"(default: {DEFAULT_REDIS_CONNECTION_TIMEOUT:.2f})"
+        ),
+    )
+    parser.add_argument(
+        "--redis-subscribe-timeout",
+        default=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=(
+            f"Redis subscribe timeout in seconds "
+            f"(default: {DEFAULT_REDIS_SUBSCRIBE_TIMEOUT:.2f})"
+        ),
+    )
+    parser.add_argument(
+        "--redis-reconnect-delay",
+        default=DEFAULT_REDIS_RECONNECT_DELAY,
+        metavar="sec",
+        type=float,
+        help=(
+            f"Reconnection waiting time when redis connection fails "
+            f"(default: {DEFAULT_REDIS_RECONNECT_DELAY:.2f})"
+        ),
     )
 
 
