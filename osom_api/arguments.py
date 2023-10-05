@@ -40,7 +40,6 @@ DEFAULT_REDIS_PORT: Final[int] = 6379
 DEFAULT_REDIS_DATABASE: Final[int] = 0
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
 DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 8.0
-DEFAULT_REDIS_RECONNECT_DELAY: Final[float] = 8.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 
@@ -144,16 +143,6 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
         help=(
             f"Redis subscribe timeout in seconds "
             f"(default: {DEFAULT_REDIS_SUBSCRIBE_TIMEOUT:.2f})"
-        ),
-    )
-    parser.add_argument(
-        "--redis-reconnect-delay",
-        default=DEFAULT_REDIS_RECONNECT_DELAY,
-        metavar="sec",
-        type=float,
-        help=(
-            f"Reconnection waiting time when redis connection fails "
-            f"(default: {DEFAULT_REDIS_RECONNECT_DELAY:.2f})"
         ),
     )
 
