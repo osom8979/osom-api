@@ -28,25 +28,26 @@ REDIS_CONNECTION_TIMEOUT=8.0
 REDIS_SUBSCRIBE_TIMEOUT=8.0
 
 # s3
-S3_ENDPOINT=
-S3_ACCESS=
-S3_SECRET=
-S3_REGION=
+S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+S3_ACCESS=<access-key-id>
+S3_SECRET=<access-key-secret>
+S3_REGION=apac
+S3_BUCKET=osom-s3
 
 # supabase
-SUPABASE_URL=
-SUPABASE_KEY=
+SUPABASE_URL=https://<reference-id>.supabase.co
+SUPABASE_KEY=<project-api-key>
 
 # telegram
-TELEGRAM_TOKEN=
+TELEGRAM_TOKEN=<telegram-token>
 
 # healthcheck
 HEALTHCHECK_TIMEOUT=8.0
 HEALTHCHECK_URI=http://localhost:8080/health
 
 # traefik
-FRONTEND_HOST=your.domain.com
-ACME_EMAIL=your@email.com
+FRONTEND_HOST=<your.domain.com>
+ACME_EMAIL=<your@email.com>
 
 # user/group
 USER_UID=@USER_UID@

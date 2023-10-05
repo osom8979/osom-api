@@ -198,6 +198,12 @@ def add_s3_arguments(parser: ArgumentParser) -> None:
         metavar="region",
         help="S3 Region Name",
     )
+    parser.add_argument(
+        "--s3-bucket",
+        default=defval("S3_BUCKET"),
+        metavar="bucket",
+        help="S3 Bucket Name",
+    )
 
 
 def add_supabase_arguments(parser: ArgumentParser) -> None:

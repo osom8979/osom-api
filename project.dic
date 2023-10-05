@@ -4,6 +4,7 @@
 asctime
 certificatesresolvers
 certresolver
+cloudflarestorage
 datefmt
 defval
 dhsize
