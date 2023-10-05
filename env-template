@@ -1,17 +1,48 @@
-# logging
+# global
+COLORED_LOGGING=True
+SIMPLE_LOGGING=False
+USE_UVLOOP=False
 SEVERITY=info
+DEBUG=True
+VERBOSE=2
 
-# redis client
-REDIS_HOST=osom-redis
-REDIS_PORT=6379
-REDIS_TIMEOUT=8.0
-REDIS_DATABASE=0
-REDIS_PASSWORD=@REDIS_PASSWORD@
-
-# master
+# http
 HTTP_HOST=localhost
 HTTP_PORT=8080
 HTTP_TIMEOUT=8.0
+
+# redis
+REDIS_HOST=osom-redis
+REDIS_PORT=6379
+REDIS_DATABASE=0
+REDIS_PASSWORD=@REDIS_PASSWORD@
+
+# redis tls
+REDIS_USE_TLS=False
+REDIS_CA_CERT=cert/ca.crt
+REDIS_CERT=cert/redis.crt
+REDIS_KEY=cert/redis.key
+
+# redis socket
+REDIS_CONNECTION_TIMEOUT=8.0
+REDIS_SUBSCRIBE_TIMEOUT=8.0
+
+# s3
+S3_ENDPOINT=
+S3_ACCESS=
+S3_SECRET=
+S3_REGION=
+
+# supabase
+SUPABASE_URL=
+SUPABASE_KEY=
+
+# telegram
+TELEGRAM_TOKEN=
+
+# healthcheck
+HEALTHCHECK_TIMEOUT=8.0
+HEALTHCHECK_URI=http://localhost:8080/health
 
 # traefik
 FRONTEND_HOST=your.domain.com
