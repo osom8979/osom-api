@@ -54,21 +54,21 @@ services:
       - "traefik.http.services.osom_master.loadbalancer.server.port=${HTTP_PORT:?err}"
     environment:
       - TZ=Asia/Seoul
+      - "REDIS_HOST=${REDIS_HOST:?err}"
+      - "REDIS_PORT=${REDIS_PORT:?err}"
+      - "REDIS_TIMEOUT=${REDIS_TIMEOUT:?err}"
+      - "REDIS_DATABASE=${REDIS_DATABASE:?err}"
+      - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
+      - "HTTP_HOST=${HTTP_HOST:?err}"
+      - "HTTP_PORT=${HTTP_PORT:?err}"
+      - "HTTP_TIMEOUT=${HTTP_TIMEOUT:?err}"
+      - "HEALTHCHECK_URI=http://localhost:${HTTP_PORT:?err}/health"
     healthcheck:
-      test: ["CMD", "python3", "-m", "osom-api", "health", "http://${HTTP_HOST:?err}:${HTTP_PORT:?err}/health"]
+      test: ["CMD", "python3", "-m", "osom-api", "health"]
       interval: 10s
       timeout: 5s
       retries: 5
-    command: >
-      master
-      --redis-host ${REDIS_HOST:?err}
-      --redis-port ${REDIS_PORT:?err}
-      --redis-timeout ${REDIS_TIMEOUT:?err}
-      --redis-database ${REDIS_DATABASE:?err}
-      --redis-password ${REDIS_PASSWORD:?err}
-      --host ${HTTP_HOST:?err}
-      --port ${HTTP_PORT:?err}
-      --timeout ${HTTP_TIMEOUT:?err}
+    command: master
 
 networks:
   osom-net:

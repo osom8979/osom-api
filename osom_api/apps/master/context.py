@@ -42,8 +42,8 @@ class Context:
 
         uvicorn_run(
             self._app,
-            host=self._config.host,
-            port=self._config.port,
+            host=self._config.http_host,
+            port=self._config.http_port,
             loop=self._config.loop_setup_type,
             lifespan="on",
             proxy_headers=False,

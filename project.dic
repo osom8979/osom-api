@@ -5,6 +5,7 @@ asctime
 certificatesresolvers
 certresolver
 datefmt
+defval
 dhsize
 encipherment
 exposedbydefault
