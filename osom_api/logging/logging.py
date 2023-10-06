@@ -14,8 +14,9 @@ from logging import (
 )
 from logging import config as logging_config
 from logging import getLogger
+from logging.handlers import TimedRotatingFileHandler
 from sys import stdout
-from typing import Final, Literal, Optional, Union
+from typing import Final, Literal, Optional, Sequence, Union, get_args
 
 SEVERITY_NAME_CRITICAL = "critical"
 SEVERITY_NAME_FATAL = "fatal"
@@ -43,6 +44,9 @@ LoggingStyleLiteral = Literal["%", "{", "$"]
 TimedRotatingWhenLiteral = Literal[
     "S", "M", "H", "D", "W0", "W1", "W2", "W3", "W4", "W5", "W6", "midnight"
 ]  # W0=Monday
+
+TIMED_ROTATING_WHEN: Final[Sequence[str]] = get_args(TimedRotatingWhenLiteral)
+DEFAULT_TIMED_ROTATING_WHEN: Final[str] = "D"
 
 DEFAULT_SIMPLE_LOGGING_FORMAT: Final[str] = "{levelname[0]} [{name}] {message}"
 DEFAULT_SIMPLE_LOGGING_STYLE: Final[LoggingStyleLiteral] = "{"
@@ -195,7 +199,26 @@ def set_default_logging_config() -> None:
     logging_config.dictConfig(DEFAULT_LOGGING_CONFIG)
 
 
-def add_colored_formatter_logging_config(level=DEBUG) -> None:
+def add_default_rotate_file_logging(
+    prefix: str,
+    when: Union[str, TimedRotatingWhenLiteral] = DEFAULT_TIMED_ROTATING_WHEN,
+    level=DEBUG,
+) -> None:
+    formatter = Formatter(
+        fmt=DEFAULT_FORMAT,
+        datefmt=DEFAULT_DATEFMT,
+        style=DEFAULT_STYLE,
+    )
+
+    handler = TimedRotatingFileHandler(prefix, when)
+    handler.suffix = "%Y%m%d_%H%M%S.log"
+    handler.setFormatter(formatter)
+    handler.setLevel(level)
+
+    getLogger().addHandler(handler)
+
+
+def add_default_colored_logging(level=DEBUG) -> None:
     from osom_api.logging.colored_formatter import ColoredFormatter
 
     formatter = ColoredFormatter(
@@ -211,28 +234,21 @@ def add_colored_formatter_logging_config(level=DEBUG) -> None:
     getLogger().addHandler(handler)
 
 
-def add_rotate_file_logging_config(
-    prefix: str,
-    when: Union[str, TimedRotatingWhenLiteral] = "D",
-    level=DEBUG,
-) -> None:
-    from logging.handlers import TimedRotatingFileHandler
-
+def add_default_logging(level=DEBUG) -> None:
     formatter = Formatter(
         fmt=DEFAULT_FORMAT,
         datefmt=DEFAULT_DATEFMT,
         style=DEFAULT_STYLE,
     )
 
-    handler = TimedRotatingFileHandler(prefix, when)
-    handler.suffix = "%Y%m%d_%H%M%S.log"
+    handler = StreamHandler(stdout)
     handler.setFormatter(formatter)
     handler.setLevel(level)
 
     getLogger().addHandler(handler)
 
 
-def add_simple_logging_config(level=DEBUG) -> None:
+def add_simple_logging(level=DEBUG) -> None:
     formatter = Formatter(
         fmt=DEFAULT_SIMPLE_LOGGING_FORMAT,
         style=DEFAULT_SIMPLE_LOGGING_STYLE,

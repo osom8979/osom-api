@@ -2,11 +2,15 @@
 
 from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
-from os import environ
-from typing import Final, List, Optional, Union
+from typing import Final, List, Optional
 
-from osom_api.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
-from osom_api.types.string.to_boolean import string_to_boolean
+from osom_api.logging.logging import (
+    DEFAULT_TIMED_ROTATING_WHEN,
+    SEVERITIES,
+    SEVERITY_NAME_INFO,
+    TIMED_ROTATING_WHEN,
+)
+from osom_api.system.environ import get_typed_environ_value as defval
 
 PROG: Final[str] = "osom-api"
 DESCRIPTION: Final[str] = "osom master and worker"
@@ -45,35 +49,7 @@ DEFAULT_REDIS_DATABASE: Final[int] = 0
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
 DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 8.0
 
-REDIS_CONNECTION_TIMEOUT_HELP = (
-    f"Redis connection timeout in seconds "
-    f"(default: {DEFAULT_REDIS_CONNECTION_TIMEOUT:.2f})"
-)
-REDIS_SUBSCRIBE_TIMEOUT_HELP = (
-    f"Redis subscribe timeout in seconds "
-    f"(default: {DEFAULT_REDIS_SUBSCRIBE_TIMEOUT:.2f})"
-)
-
 PRINTER_ATTR_KEY: Final[str] = "_printer"
-
-DefaultTypes = Optional[Union[str, bool, int, float]]
-
-
-def defval(key: str, default: DefaultTypes = None) -> DefaultTypes:
-    if default is None:
-        return environ.get(key)
-
-    value = environ.get(key, str(default))
-    if isinstance(default, str):
-        return value
-    elif isinstance(default, bool):
-        return string_to_boolean(value)
-    elif isinstance(default, int):
-        return int(value)
-    elif isinstance(default, float):
-        return float(value)
-    else:
-        raise TypeError(f"Unsupported default type: {type(default).__name__}")
 
 
 @lru_cache
@@ -157,19 +133,28 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
         help="Private key file to authenticate with",
     )
 
+    redis_connection_timeout_help = (
+        f"Redis connection timeout in seconds "
+        f"(default: {DEFAULT_REDIS_CONNECTION_TIMEOUT:.2f})"
+    )
     parser.add_argument(
         "--redis-connection-timeout",
         default=defval("REDIS_CONNECTION_TIMEOUT", DEFAULT_REDIS_CONNECTION_TIMEOUT),
         metavar="sec",
         type=float,
-        help=REDIS_CONNECTION_TIMEOUT_HELP,
+        help=redis_connection_timeout_help,
+    )
+
+    redis_subscribe_timeout_help = (
+        f"Redis subscribe timeout in seconds "
+        f"(default: {DEFAULT_REDIS_SUBSCRIBE_TIMEOUT:.2f})"
     )
     parser.add_argument(
         "--redis-subscribe-timeout",
         default=defval("REDIS_SUBSCRIBE_TIMEOUT", DEFAULT_REDIS_SUBSCRIBE_TIMEOUT),
         metavar="sec",
         type=float,
-        help=REDIS_SUBSCRIBE_TIMEOUT_HELP,
+        help=redis_subscribe_timeout_help,
     )
 
 
@@ -316,6 +301,12 @@ def default_argument_parser() -> ArgumentParser:
         help="Use colored logging",
     )
     logging_group.add_argument(
+        "--default-logging",
+        action="store_true",
+        default=defval("DEFAULT_LOGGING", False),
+        help="Use default logging",
+    )
+    logging_group.add_argument(
         "--simple-logging",
         "-s",
         action="store_true",
@@ -324,15 +315,15 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
-        "--rotate-logging",
-        "-r",
-        default=None,
+        "--rotate-logging-prefix",
+        default=defval("ROTATE_LOGGING_PREFIX", ""),
         help="Rotate logging prefix",
     )
     parser.add_argument(
         "--rotate-logging-when",
-        default="D",
-        help="Rotate logging when",
+        choices=TIMED_ROTATING_WHEN,
+        default=defval("ROTATE_LOGGING_WHEN", DEFAULT_TIMED_ROTATING_WHEN),
+        help=f"Rotate logging when (default: '{DEFAULT_TIMED_ROTATING_WHEN}')",
     )
 
     parser.add_argument(
