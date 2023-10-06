@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 from asyncio import Event, create_task
 from asyncio.exceptions import CancelledError
-from typing import Final, Optional, Sequence
+from typing import Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub
@@ -19,23 +19,6 @@ from osom_api.arguments import (
 from osom_api.logging.logging import logger
 from osom_api.mq.message import Message
 from osom_api.mq.utils import redis_address
-
-DEFAULT_TASK_NAME: Final[str] = "MqTask"
-
-
-class MqAlreadyOpenError(RuntimeError):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-
-class MqNotOpenError(RuntimeError):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-
-class MqRedisIsNoneError(RuntimeError):
-    def __init__(self, *args):
-        super().__init__(*args)
 
 
 class MqClientCallback(metaclass=ABCMeta):
@@ -63,7 +46,7 @@ class MqClient:
         subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
         callback: Optional[MqClientCallback] = None,
         done: Optional[Event] = None,
-        task_name=DEFAULT_TASK_NAME,
+        task_name: Optional[str] = None,
     ):
         self._redis = from_url(
             redis_address(host, port, database, password, use_tls),
@@ -75,7 +58,10 @@ class MqClient:
         self._subscribe_timeout = subscribe_timeout
         self._callback = callback
         self._done = done if done is not None else Event()
-        self._task = create_task(self._redis_main(), name=task_name)
+        self._task = create_task(
+            self._redis_main(),
+            name=task_name if task_name else self.__class__.__name__,
+        )
 
     @property
     def subscribe_paths(self) -> Sequence[bytes]:
