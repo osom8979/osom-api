@@ -10,14 +10,14 @@ from overrides import override
 from supabase import create_client
 from supabase.client import ClientOptions as SupabaseClientOptions
 
-from osom_api.apps.master.config import Config
+from osom_api.apps.master.config import MasterConfig
 from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
 
 
 class Context(MqClientCallback):
     def __init__(self, args: Namespace):
-        self._config = Config.from_namespace(args)
+        self._config = MasterConfig.from_namespace(args)
 
         self._router = APIRouter()
         self._router.add_api_route("/health", self.health, methods=["GET"])
