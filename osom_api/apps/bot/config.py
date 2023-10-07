@@ -2,7 +2,7 @@
 
 from argparse import Namespace
 
-from osom_api.config.common_config import CommonConfig
+from osom_api.common.config import CommonConfig
 
 
 class BotConfig(CommonConfig):

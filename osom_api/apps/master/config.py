@@ -9,7 +9,7 @@ from osom_api.arguments import (
     DEFAULT_HTTP_PORT,
     DEFAULT_HTTP_TIMEOUT,
 )
-from osom_api.config.common_config import CommonConfig
+from osom_api.common.config import CommonConfig
 
 
 class MasterConfig(CommonConfig):

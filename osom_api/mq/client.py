@@ -27,15 +27,15 @@ from osom_api.mq.path import get_global_broadcast_bytes_path
 from osom_api.mq.utils import redis_address
 
 
-def _redis_file_validation_logging(name: str, file: Optional[str] = None) -> None:
+def validation_redis_file(name: str, file: Optional[str] = None) -> None:
     if not file:
-        logger.warning(f"Redis TLS {name} file is not defined")
+        raise ValueError(f"Redis TLS {name} file is not defined")
     elif not path.exists(file):
-        logger.warning(f"Redis TLS {name} file is not exists")
+        raise FileNotFoundError(f"Redis TLS {name} file is not exists")
     elif not path.isfile(file):
-        logger.warning(f"Redis TLS {name} file is not file type")
+        raise FileNotFoundError(f"Redis TLS {name} file is not file type")
     elif not access(file, R_OK):
-        logger.warning(f"Redis TLS {name} file is not readable")
+        raise PermissionError(f"Redis TLS {name} file is not readable")
 
 
 class MqClientCallback(metaclass=ABCMeta):
@@ -85,9 +85,9 @@ class MqClient:
             logger.debug(f"Redis TLS CA cert file: '{ca_cert_path}'")
 
         if use_tls:
-            _redis_file_validation_logging("Key", key_path)
-            _redis_file_validation_logging("Cert", cert_path)
-            _redis_file_validation_logging("CA/Cert", ca_cert_path)
+            validation_redis_file("Key", key_path)
+            validation_redis_file("Cert", cert_path)
+            validation_redis_file("CA/Cert", ca_cert_path)
 
         self._redis = from_url(
             address,
