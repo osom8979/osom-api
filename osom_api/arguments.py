@@ -38,7 +38,7 @@ CMD_WORKER_EPILOG: Final[str] = ""
 CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_HTTP_HOST: Final[str] = "localhost"
-DEFAULT_HTTP_PORT: Final[int] = 8080
+DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
 DEFAULT_HEALTHCHECK_TIMEOUT: Final[float] = 8.0

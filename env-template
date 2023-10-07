@@ -10,12 +10,12 @@ DEBUG=False
 VERBOSE=0
 
 # proxy
-HTTP_PROXY=http://localhost:8081/
-HTTPS_PROXY=http://localhost:8081/
+HTTP_PROXY=http://localhost:8080/
+HTTPS_PROXY=http://localhost:8080/
 
 # http
-HTTP_HOST=localhost
-HTTP_PORT=8080
+HTTP_HOST=0.0.0.0
+HTTP_PORT=10503
 HTTP_TIMEOUT=8.0
 
 # redis
@@ -51,7 +51,7 @@ TELEGRAM_TOKEN=<telegram-token>
 
 # healthcheck
 HEALTHCHECK_TIMEOUT=8.0
-HEALTHCHECK_URI=http://localhost:8080/health
+HEALTHCHECK_URI=http://localhost:10503/health
 
 # traefik
 FRONTEND_HOST=<your.domain.com>
