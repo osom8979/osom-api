@@ -5,6 +5,7 @@ from typing import Callable, List, Optional
 
 from osom_api.apps import run_app
 from osom_api.arguments import CMDS, PRINTER_ATTR_KEY, get_default_arguments
+from osom_api.logging.clear import clear_root_handlers_in_realtime_logging
 from osom_api.logging.logging import (
     SEVERITY_NAME_DEBUG,
     add_default_colored_logging,
@@ -49,6 +50,8 @@ def main(
     severity = args.severity
     debug = args.debug
     verbose = args.verbose
+
+    clear_root_handlers_in_realtime_logging()
 
     if colored_logging:
         add_default_colored_logging()

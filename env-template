@@ -9,6 +9,10 @@ SEVERITY=debug
 DEBUG=False
 VERBOSE=0
 
+# proxy
+HTTP_PROXY=http://localhost:8081/
+HTTPS_PROXY=http://localhost:8081/
+
 # http
 HTTP_HOST=localhost
 HTTP_PORT=8080

@@ -2,11 +2,16 @@
 
 from argparse import Namespace
 from contextlib import asynccontextmanager
+from signal import SIGINT, raise_signal
 
+from boto3 import resource as boto3_resource
 from fastapi import APIRouter, FastAPI, WebSocket
 from overrides import override
+from supabase import create_client
+from supabase.client import ClientOptions as SupabaseClientOptions
 
 from osom_api.apps.master.config import Config
+from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
 
 
@@ -39,6 +44,22 @@ class Context(MqClientCallback):
             debug=self._config.debug,
             verbose=self._config.verbose,
         )
+        self._supabase = create_client(
+            supabase_url=self._config.supabase_url,
+            supabase_key=self._config.supabase_key,
+            options=SupabaseClientOptions(
+                auto_refresh_token=True,
+                persist_session=True,
+            ),
+        )
+        self._s3 = boto3_resource(
+            service_name="s3",
+            endpoint_url=self._config.s3_endpoint,
+            aws_access_key_id=self._config.s3_access,
+            aws_secret_access_key=self._config.s3_secret,
+            region_name=self._config.s3_region,
+        )
+        self._s3_bucket = self._config.s3_bucket
 
     @asynccontextmanager
     async def _lifespan(self, app):
@@ -46,6 +67,10 @@ class Context(MqClientCallback):
         await self._mq.open()
         yield
         await self._mq.close()
+
+    @staticmethod
+    def raise_interrupt_signal() -> None:
+        raise_signal(SIGINT)
 
     async def health(self):
         assert self
@@ -60,15 +85,15 @@ class Context(MqClientCallback):
 
     @override
     async def on_mq_connect(self) -> None:
-        pass
+        logger.info("Connection to redis was successful!")
 
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
-        pass
+        logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
 
     @override
     async def on_mq_done(self) -> None:
-        pass
+        logger.info("The Redis subscription task is completed")
 
     def run(self) -> None:
         from uvicorn import run as uvicorn_run
@@ -79,7 +104,8 @@ class Context(MqClientCallback):
             port=self._config.http_port,
             loop=self._config.loop_setup_type,
             lifespan="on",
-            log_level=self._config.severity,
+            log_config=None,
+            log_level=None,
             access_log=True,
             proxy_headers=False,
             server_header=False,
