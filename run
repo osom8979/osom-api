@@ -2,10 +2,4 @@
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
 
-if [[ -f "$ROOT_DIR/.env" ]]; then
-    set -o allexport
-    source "$ROOT_DIR/.env"
-    set +o allexport
-fi
-
 "$ROOT_DIR/python" "$ROOT_DIR/main.py" "$@"

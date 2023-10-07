@@ -28,14 +28,15 @@ REDIS_KEY=cert/redis.key
 
 # redis socket
 REDIS_CONNECTION_TIMEOUT=8.0
-REDIS_SUBSCRIBE_TIMEOUT=8.0
+REDIS_SUBSCRIBE_TIMEOUT=4.0
+REDIS_CLOSE_TIMEOUT=12.0
 
 # s3
 S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 S3_ACCESS=<access-key-id>
 S3_SECRET=<access-key-secret>
-S3_REGION=apac
-S3_BUCKET=osom-s3
+S3_REGION=<region>  # Must be one of: wnam, enam, weur, eeur, apac, auto
+S3_BUCKET=<bucket>
 
 # supabase
 SUPABASE_URL=https://<reference-id>.supabase.co

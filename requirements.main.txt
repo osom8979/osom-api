@@ -1,8 +1,9 @@
-coloredlogs>=15.0.1
 fastapi[all]>=0.103.2
-orjson
+redis>=5.0.1
+coloredlogs>=15.0.1
 overrides>=7.4.0
 plugpack>=0.0.2
-redis>=5.0.1
 type-serialize>=1.2.1
+orjson
+python-dotenv
 uvloop

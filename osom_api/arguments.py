@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
+from os import getcwd, path
 from typing import Final, List, Optional
 
 from osom_api.logging.logging import (
@@ -47,9 +48,16 @@ DEFAULT_REDIS_HOST: Final[str] = "localhost"
 DEFAULT_REDIS_PORT: Final[int] = 6379
 DEFAULT_REDIS_DATABASE: Final[int] = 0
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
-DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 8.0
+DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 4.0
+DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
+
+DOTENV_FILENAME: Final[str] = ".env.local"
+
+VERBOSE_LEVEL_0: Final[int] = 0
+VERBOSE_LEVEL_1: Final[int] = 1
+VERBOSE_LEVEL_2: Final[int] = 2
 
 
 @lru_cache
@@ -155,6 +163,18 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
         metavar="sec",
         type=float,
         help=redis_subscribe_timeout_help,
+    )
+
+    redis_close_timeout_help = (
+        f"Redis close timeout in seconds "
+        f"(default: {DEFAULT_REDIS_CLOSE_TIMEOUT:.2f})"
+    )
+    parser.add_argument(
+        "--redis-close-timeout",
+        default=defval("REDIS_CLOSE_TIMEOUT", DEFAULT_REDIS_CLOSE_TIMEOUT),
+        metavar="sec",
+        type=float,
+        help=redis_close_timeout_help,
     )
 
 
@@ -368,9 +388,23 @@ def default_argument_parser() -> ArgumentParser:
     return parser
 
 
+def _load_dotenv(filename=DOTENV_FILENAME) -> None:
+    dotenv_path = path.join(getcwd(), filename)
+    if not path.isfile(dotenv_path):
+        return
+
+    from dotenv import load_dotenv
+
+    load_dotenv(dotenv_path)
+
+
 def get_default_arguments(
     cmdline: Optional[List[str]] = None,
     namespace: Optional[Namespace] = None,
+    load_dotenv=False,
 ) -> Namespace:
+    if load_dotenv:
+        _load_dotenv()
+
     parser = default_argument_parser()
     return parser.parse_known_args(cmdline, namespace)[0]

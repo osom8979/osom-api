@@ -8,6 +8,8 @@ cloudflarestorage
 datefmt
 defval
 dhsize
+eeur
+enam
 encipherment
 exposedbydefault
 ghcr
@@ -28,3 +30,5 @@ tlschallenge
 traefik
 tznow
 websecure
+weur
+wnam

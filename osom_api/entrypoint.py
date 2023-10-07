@@ -19,8 +19,9 @@ from osom_api.logging.logging import (
 def main(
     cmdline: Optional[List[str]] = None,
     printer: Callable[..., None] = print,
+    load_dotenv=False,
 ) -> int:
-    args = get_default_arguments(cmdline)
+    args = get_default_arguments(cmdline, load_dotenv=load_dotenv)
 
     if not hasattr(args, PRINTER_ATTR_KEY):
         setattr(args, PRINTER_ATTR_KEY, printer)
