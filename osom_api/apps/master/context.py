@@ -11,7 +11,7 @@ from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 
 
-class Context(CommonContext):
+class MasterContext(CommonContext):
     def __init__(self, args: Namespace):
         self._config = MasterConfig.from_namespace(args)
         super().__init__(self._config)

@@ -2,8 +2,8 @@
 
 from argparse import Namespace
 
-from osom_api.apps.master.context import Context
+from osom_api.apps.master.context import MasterContext
 
 
 def master_main(args: Namespace) -> None:
-    Context(args).run()
+    MasterContext(args).run()
