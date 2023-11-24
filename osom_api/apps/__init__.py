@@ -33,15 +33,10 @@ def run_app(cmd: str, args: Namespace) -> int:
         app(args)
     except CancelledError:
         logger.debug("An cancelled signal was detected")
-        return 0
     except KeyboardInterrupt:
         logger.warning("An interrupt signal was detected")
-        return 0
-    except Exception as e:
-        logger.exception(e)
-        return 1
     except BaseException as e:
         logger.exception(e)
         return 1
-    else:
-        return 0
+
+    return 0

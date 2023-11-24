@@ -14,6 +14,8 @@ from osom_api.logging.logging import logger
 class MasterContext(CommonContext):
     def __init__(self, args: Namespace):
         self._config = MasterConfig.from_namespace(args)
+        self._config.logging_params()
+
         super().__init__(self._config)
 
         self._router = APIRouter()

@@ -31,7 +31,7 @@ services:
       #-"--log.level=DEBUG"
 
   master:
-    image: "ghcr.io/osom8979/osom-api:master"
+    image: "ghcr.io/osom8979/osom-api:latest"
     restart: always
     depends_on:
       - traefik
@@ -54,11 +54,7 @@ services:
       - "traefik.http.services.osom_master.loadbalancer.server.port=${HTTP_PORT:?err}"
     environment:
       - "TZ=Asia/Seoul"
-      - "COLORED_LOGGING=${COLORED_LOGGING:?err}"
-      - "DEFAULT_LOGGING=${DEFAULT_LOGGING:?err}"
-      - "SIMPLE_LOGGING=${SIMPLE_LOGGING:?err}"
-      - "ROTATE_LOGGING_PREFIX=${ROTATE_LOGGING_PREFIX:?err}"
-      - "ROTATE_LOGGING_WHEN=${ROTATE_LOGGING_WHEN:?err}"
+      - "COLORED_LOGGING=True"
       - "USE_UVLOOP=${USE_UVLOOP:?err}"
       - "SEVERITY=${SEVERITY:?err}"
       - "DEBUG=${DEBUG:?err}"
@@ -68,12 +64,9 @@ services:
       - "HTTP_TIMEOUT=${HTTP_TIMEOUT:?err}"
       - "REDIS_HOST=${REDIS_HOST:?err}"
       - "REDIS_PORT=${REDIS_PORT:?err}"
-      - "REDIS_TIMEOUT=${REDIS_TIMEOUT:?err}"
       - "REDIS_DATABASE=${REDIS_DATABASE:?err}"
       - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
       - "REDIS_USE_TLS=False"
-      - "REDIS_CONNECTION_TIMEOUT=${REDIS_CONNECTION_TIMEOUT:?err}"
-      - "REDIS_SUBSCRIBE_TIMEOUT=${REDIS_SUBSCRIBE_TIMEOUT:?err}"
       - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
       - "S3_ACCESS=${S3_ACCESS:?err}"
       - "S3_SECRET=${S3_SECRET:?err}"
@@ -81,7 +74,6 @@ services:
       - "S3_BUCKET=${S3_BUCKET:?err}"
       - "SUPABASE_URL=${SUPABASE_URL:?err}"
       - "SUPABASE_KEY=${SUPABASE_KEY:?err}"
-      - "TELEGRAM_TOKEN=${TELEGRAM_TOKEN:?err}"
       - "HEALTHCHECK_TIMEOUT=${HEALTHCHECK_TIMEOUT:?err}"
       - "HEALTHCHECK_URI=http://localhost:${HTTP_PORT:?err}/health"
     healthcheck:

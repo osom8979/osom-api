@@ -37,7 +37,7 @@ CMD_WORKER_EPILOG: Final[str] = ""
 
 CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
 
-DEFAULT_HTTP_HOST: Final[str] = "localhost"
+DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
@@ -388,8 +388,7 @@ def default_argument_parser() -> ArgumentParser:
     return parser
 
 
-def _load_dotenv(filename=DOTENV_FILENAME) -> None:
-    dotenv_path = path.join(getcwd(), filename)
+def _load_dotenv(dotenv_path: str) -> None:
     if not path.isfile(dotenv_path):
         return
 
@@ -404,7 +403,8 @@ def get_default_arguments(
     load_dotenv=False,
 ) -> Namespace:
     if load_dotenv:
-        _load_dotenv()
+        dotenv_path = path.join(getcwd(), DOTENV_FILENAME)
+        _load_dotenv(dotenv_path)
 
     parser = default_argument_parser()
     return parser.parse_known_args(cmdline, namespace)[0]
