@@ -9,7 +9,6 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
-    user: ${USER_UID:?err}:${USER_GID:?err}
     ports:
       - "443:443"
       - "8080:8080"
