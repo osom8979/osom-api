@@ -89,6 +89,12 @@ def add_http_arguments(parser: ArgumentParser) -> None:
         type=float,
         help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
+    parser.add_argument(
+        "--hide-healthcheck-logging",
+        action="store_true",
+        default=defval("HIDE_HEALTHCHECK_LOGGING", False),
+        help="Filter the access log for healthcheck",
+    )
 
 
 def add_redis_arguments(parser: ArgumentParser) -> None:

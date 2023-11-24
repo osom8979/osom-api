@@ -8,6 +8,7 @@ from overrides import override
 
 from osom_api.apps.master.config import MasterConfig
 from osom_api.common.context import CommonContext
+from osom_api.logging.access_filter import hide_health_logging
 from osom_api.logging.logging import logger
 
 
@@ -56,7 +57,11 @@ class MasterContext(CommonContext):
         logger.info("The Redis subscription task is completed")
 
     def run(self) -> None:
+        # noinspection PyPackageRequirements
         from uvicorn import run as uvicorn_run
+
+        if self._config.hide_healthcheck_logging:
+            hide_health_logging()
 
         uvicorn_run(
             self._app,

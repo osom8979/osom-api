@@ -58,6 +58,7 @@ services:
     environment:
       - "TZ=Asia/Seoul"
       - "COLORED_LOGGING=True"
+      - "HIDE_HEALTHCHECK_LOGGING=True"
       - "USE_UVLOOP=${USE_UVLOOP:?err}"
       - "SEVERITY=${SEVERITY:?err}"
       - "DEBUG=${DEBUG:?err}"
