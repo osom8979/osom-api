@@ -30,15 +30,16 @@ services:
       retries: 5
     command: >
       redis-server
-      --tls-port 16379
       --port 6379
-      --tls-cert-file /usr/local/etc/redis/redis.crt
-      --tls-key-file /usr/local/etc/redis/redis.key
+      --tls-port 16379
+      --requirepass ${REDIS_PASSWORD:?err}
       --tls-ca-cert-file /usr/local/etc/redis/ca.crt
       --tls-dh-params-file /usr/local/etc/redis/params.dh
+      --tls-cert-file /usr/local/etc/redis/redis.crt
+      --tls-key-file /usr/local/etc/redis/redis.key
       --tls-auth-clients no
       --tls-replication yes
-      --requirepass ${REDIS_PASSWORD:?err}
+      --loglevel verbose
 
 networks:
   osom-net:

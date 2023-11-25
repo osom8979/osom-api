@@ -75,4 +75,5 @@ class MasterContext(CommonContext):
             proxy_headers=False,
             server_header=False,
             date_header=False,
+            forwarded_allow_ips="*",
         )
