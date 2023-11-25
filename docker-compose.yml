@@ -10,14 +10,20 @@ services:
         max-size: "10m"
         max-file: "10"
     networks:
-      - traefik-net
+      - osom-net
     ports:
       - "443:443"
       - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
     command:
+      - "--ping=true"
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -31,10 +37,51 @@ services:
       - "--certificatesresolvers.osom_resolver.acme.storage=/letsencrypt/acme.json"
       #- "--log.level=DEBUG"
 
+  redis:
+    image: redis:7
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    hostname: osom-redis
+    networks:
+      - osom-net
+    ports:
+      - "16379:16379"
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    volumes:
+      - ./redis:/data
+      - ./cert/ca.crt:/usr/local/etc/redis/ca.crt
+      - ./cert/params.dh:/usr/local/etc/redis/params.dh
+      - ./cert/redis.key:/usr/local/etc/redis/redis.key
+      - ./cert/redis.crt:/usr/local/etc/redis/redis.crt
+    environment:
+      - TZ=Asia/Seoul
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+    command: >
+      redis-server
+      --port 6379
+      --tls-port 16379
+      --requirepass ${REDIS_PASSWORD:?err}
+      --tls-ca-cert-file /usr/local/etc/redis/ca.crt
+      --tls-dh-params-file /usr/local/etc/redis/params.dh
+      --tls-cert-file /usr/local/etc/redis/redis.crt
+      --tls-key-file /usr/local/etc/redis/redis.key
+      --tls-auth-clients no
+      --tls-replication yes
+      --loglevel verbose
+
   master:
     image: "ghcr.io/osom8979/osom-api:latest"
     restart: always
     depends_on:
+      - redis
       - traefik
     logging:
       driver: "json-file"
@@ -42,7 +89,6 @@ services:
         max-size: "10m"
         max-file: "10"
     networks:
-      - traefik-net
       - osom-net
     user: ${USER_UID:?err}:${USER_GID:?err}
     deploy:
@@ -50,25 +96,18 @@ services:
       replicas: 2
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=osom-net"
       - "traefik.http.routers.osom_master.rule=Host(`${FRONTEND_HOST:?err}`)"
       - "traefik.http.routers.osom_master.entrypoints=websecure"
       - "traefik.http.routers.osom_master.tls.certresolver=osom_resolver"
-      - "traefik.http.services.osom_master.loadbalancer.server.port=${HTTP_PORT:?err}"
+      - "traefik.http.services.osom_master.loadbalancer.server.port=10503"
     environment:
       - "TZ=Asia/Seoul"
       - "COLORED_LOGGING=True"
       - "HIDE_HEALTHCHECK_LOGGING=True"
-      - "USE_UVLOOP=${USE_UVLOOP:?err}"
-      - "SEVERITY=${SEVERITY:?err}"
-      - "DEBUG=${DEBUG:?err}"
-      - "VERBOSE=${VERBOSE:?err}"
-      - "HTTP_HOST=${HTTP_HOST:?err}"
-      - "HTTP_PORT=${HTTP_PORT:?err}"
-      - "HTTP_TIMEOUT=${HTTP_TIMEOUT:?err}"
-      - "REDIS_HOST=${REDIS_HOST:?err}"
-      - "REDIS_PORT=${REDIS_PORT:?err}"
-      - "REDIS_DATABASE=${REDIS_DATABASE:?err}"
+      - "USE_UVLOOP=True"
+      - "SEVERITY=info"
+      - "REDIS_HOST=osom-redis"
       - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
       - "REDIS_USE_TLS=False"
       - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
@@ -78,17 +117,13 @@ services:
       - "S3_BUCKET=${S3_BUCKET:?err}"
       - "SUPABASE_URL=${SUPABASE_URL:?err}"
       - "SUPABASE_KEY=${SUPABASE_KEY:?err}"
-      - "HEALTHCHECK_TIMEOUT=${HEALTHCHECK_TIMEOUT:?err}"
-      - "HEALTHCHECK_URI=http://localhost:${HTTP_PORT:?err}/health"
     healthcheck:
       test: ["CMD", "python3", "-m", "osom_api", "health"]
       interval: 10s
-      timeout: 5s
+      timeout: 8s
       retries: 5
     command: master
 
 networks:
-  traefik-net:
-    driver: bridge
   osom-net:
-    external: true
+    driver: bridge

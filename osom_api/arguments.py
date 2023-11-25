@@ -41,7 +41,7 @@ DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
-DEFAULT_HEALTHCHECK_TIMEOUT: Final[float] = 8.0
+DEFAULT_HEALTHCHECK_TIMEOUT: Final[float] = 4.0
 DEFAULT_HEALTHCHECK_URI: Final[str] = f"http://localhost:{DEFAULT_HTTP_PORT}/health"
 
 DEFAULT_REDIS_HOST: Final[str] = "localhost"
@@ -395,9 +395,6 @@ def default_argument_parser() -> ArgumentParser:
 
 
 def _load_dotenv(dotenv_path: str) -> None:
-    if not path.isfile(dotenv_path):
-        return
-
     from dotenv import load_dotenv
 
     load_dotenv(dotenv_path)
@@ -410,7 +407,8 @@ def get_default_arguments(
 ) -> Namespace:
     if load_dotenv:
         dotenv_path = path.join(getcwd(), DOTENV_FILENAME)
-        _load_dotenv(dotenv_path)
+        if path.isfile(dotenv_path):
+            _load_dotenv(dotenv_path)
 
     parser = default_argument_parser()
     return parser.parse_known_args(cmdline, namespace)[0]
