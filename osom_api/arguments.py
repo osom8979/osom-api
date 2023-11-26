@@ -53,7 +53,7 @@ DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 
-DOTENV_FILENAME: Final[str] = ".env.local"
+DOTENV_FILENAME: Final[str] = ".env"
 
 VERBOSE_LEVEL_0: Final[int] = 0
 VERBOSE_LEVEL_1: Final[int] = 1

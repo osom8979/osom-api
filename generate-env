@@ -10,7 +10,7 @@ if ! command -v openssl &> /dev/null; then
 fi
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
-ENV_SRC="$ROOT_DIR/env.local"
+ENV_SRC="$ROOT_DIR/env-template"
 ENV_DEST="$ROOT_DIR/.env"
 
 if [[ ! -f "$ENV_DEST" ]]; then

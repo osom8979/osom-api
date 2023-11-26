@@ -75,7 +75,6 @@ services:
       --tls-key-file /usr/local/etc/redis/redis.key
       --tls-auth-clients no
       --tls-replication yes
-      --loglevel verbose
 
   master:
     image: "ghcr.io/osom8979/osom-api:latest"

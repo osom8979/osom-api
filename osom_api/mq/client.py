@@ -169,9 +169,14 @@ class MqClient:
                 await shield_any(self._callback.on_mq_subscribe(channel, data), logger)
 
     async def _redis_main(self) -> None:
-        logger.debug("Redis PING ...")
-        await self._redis.ping()
-        logger.info("Redis PONG!")
+        try:
+            logger.debug("Redis PING ...")
+            await self._redis.ping()
+        except BaseException as e:
+            logger.error(f"Redis PING error: {e}")
+            raise
+        else:
+            logger.info("Redis PONG!")
 
         if self._callback is not None:
             await self._callback.on_mq_connect()

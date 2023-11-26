@@ -139,6 +139,8 @@ if [[ $TLS -ne 0 ]]; then
 fi
 
 docker run --rm -it \
+    --network host \
+    -u "$(id -u):$(id -g)" \
     "${DOCKER_ARGS[@]}" \
     redis:7 \
     redis-cli \

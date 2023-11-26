@@ -4,8 +4,9 @@ from functools import lru_cache, reduce
 from typing import Final
 
 PATH_SEPARATOR: Final[str] = "/"
-PATH_ROOT: Final[str] = f"{PATH_SEPARATOR}osom{PATH_SEPARATOR}api"
 PATH_ENCODE: Final[str] = "Latin1"
+PATH_ROOT: Final[str] = f"{PATH_SEPARATOR}osom{PATH_SEPARATOR}api"
+assert PATH_ROOT == "/osom/api"
 
 
 def join_path(*paths: str, separator=PATH_SEPARATOR, root=PATH_SEPARATOR) -> str:
