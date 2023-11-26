@@ -8,7 +8,7 @@ if ! VERSION=$("$ROOT_DIR/python" -c "$CODE"); then
     exit 1
 fi
 
-NAME="osom-api"
+NAME="ghcr.io/osom8979/osom-api"
 TAG="$NAME:$VERSION"
 LATEST="$NAME:latest"
 
