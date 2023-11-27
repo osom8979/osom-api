@@ -1,6 +1,7 @@
 fastapi[all]>=0.104.1
 redis>=5.0.1
 boto3>=1.29.6
+supabase>=2.1.0
 coloredlogs>=15.0.1
 overrides>=7.4.0
 plugpack>=0.0.2
@@ -8,13 +9,3 @@ type-serialize>=1.2.1
 orjson
 python-dotenv
 uvloop
-
-## ----------------------------------------------
-httpx==0.24.1
-supabase==2.1.0
-python-telegram-bot==20.5
-# supafunc 0.3.1 requires httpx<0.25.0,>=0.24.0
-# supabase 2.1.0 requires httpx<0.25.0,>=0.24.0
-# postgrest 0.11.0 requires httpx<0.25.0,>=0.24.0
-# python-telegram-bot 20.5 requires httpx~=0.24.1
-## ----------------------------------------------

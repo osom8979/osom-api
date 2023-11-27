@@ -96,4 +96,4 @@ class CommonContext(MqClientCallback):
 
     @override
     async def on_mq_done(self) -> None:
-        logger.info("The Redis subscription task is completed")
+        logger.warning("The Redis subscription task is completed")
