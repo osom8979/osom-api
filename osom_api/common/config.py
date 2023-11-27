@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from type_serialize.inspect.member import get_public_instance_attributes
 
@@ -14,7 +14,7 @@ from osom_api.arguments import (
     DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     DEFAULT_SEVERITY,
 )
-from osom_api.logging.logging import logger
+from osom_api.logging.logging import DEBUG, convert_level_number, logger
 
 
 class CommonConfig:
@@ -102,6 +102,22 @@ class CommonConfig:
     def namespace_to_dict(args: Namespace) -> Dict[str, Any]:
         return {k: v for k, v in get_public_instance_attributes(args)}
 
+    @property
+    def valid_supabase_params(self) -> bool:
+        return all((self.supabase_url, self.supabase_key))
+
+    @property
+    def valid_s3_params(self) -> bool:
+        return all(
+            (
+                self.s3_endpoint,
+                self.s3_access,
+                self.s3_secret,
+                self.s3_region,
+                self.s3_bucket,
+            )
+        )
+
     def print(self, *args, **kwargs):
         return self.printer(*args, **kwargs)
 
@@ -113,6 +129,6 @@ class CommonConfig:
             result.append(f"{name}: {value}")
         return result
 
-    def logging_params(self) -> None:
+    def logging_params(self, level: Union[str, int] = DEBUG) -> None:
         for line in self.as_logging_lines():
-            logger.info(line)
+            logger.log(convert_level_number(level), line)

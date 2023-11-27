@@ -132,6 +132,32 @@ class MqClient:
         except BaseException as e:  # noqa
             logger.exception(e)
 
+    async def _redis_main(self) -> None:
+        try:
+            logger.debug("Redis PING ...")
+            await self._redis.ping()
+        except BaseException as e:
+            logger.error(f"Redis PING error: {e}")
+            raise
+        else:
+            logger.info("Redis PONG!")
+
+        if self._callback is not None:
+            await self._callback.on_mq_connect()
+
+        try:
+            pubsub = self._redis.pubsub()
+            try:
+                await self._redis_subscribe_main(pubsub)
+            finally:
+                await pubsub.close()
+        except CancelledError:
+            raise
+        except BaseException as e:
+            logger.error(e)
+        finally:
+            await self._redis.close()
+
     async def _redis_subscribe_main(self, pubsub: PubSub) -> None:
         subscribe_paths = (get_global_broadcast_bytes_path(),)
 
@@ -167,32 +193,6 @@ class MqClient:
 
             if self._callback is not None:
                 await shield_any(self._callback.on_mq_subscribe(channel, data), logger)
-
-    async def _redis_main(self) -> None:
-        try:
-            logger.debug("Redis PING ...")
-            await self._redis.ping()
-        except BaseException as e:
-            logger.error(f"Redis PING error: {e}")
-            raise
-        else:
-            logger.info("Redis PONG!")
-
-        if self._callback is not None:
-            await self._callback.on_mq_connect()
-
-        try:
-            pubsub = self._redis.pubsub()
-            try:
-                await self._redis_subscribe_main(pubsub)
-            finally:
-                await pubsub.close()
-        except CancelledError:
-            raise
-        except BaseException as e:
-            logger.error(e)
-        finally:
-            await self._redis.close()
 
     async def exists(self, key: str) -> bool:
         exists = 1 == await self._redis.exists(key)
