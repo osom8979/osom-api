@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 COPY . .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/.wheels -r requirements.txt && \
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/.wheels -r requirements.main.txt && \
     python setup.py bdist_wheel && \
     cp dist/*.whl /app/.wheels
 
@@ -21,6 +21,6 @@ RUN pip install --no-cache /app/.wheels/* && \
     rm -rf /app/.wheels && \
     addgroup --gid 1001 --system app && \
     adduser --no-create-home --shell /bin/false --disabled-password --uid 1001 --system --group app
-USER app
+USER app:app
 
 ENTRYPOINT ["python", "-OO", "-m", "osom_api"]
