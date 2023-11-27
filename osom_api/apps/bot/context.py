@@ -46,7 +46,7 @@ class BotContext(CommonContext):
 
     @override
     async def on_mq_done(self) -> None:
-        logger.info("The Redis subscription task is completed")
+        logger.warning("Redis task is done")
 
     async def on_help(self, message: Message) -> None:
         await message.answer(self._osom_version)

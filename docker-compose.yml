@@ -103,7 +103,6 @@ services:
     environment:
       - "TZ=Asia/Seoul"
       - "COLORED_LOGGING=True"
-      - "HIDE_HEALTHCHECK_LOGGING=True"
       - "USE_UVLOOP=True"
       - "SEVERITY=info"
       - "REDIS_HOST=osom-redis"
@@ -116,12 +115,31 @@ services:
       - "S3_BUCKET=${S3_BUCKET:?err}"
       - "SUPABASE_URL=${SUPABASE_URL:?err}"
       - "SUPABASE_KEY=${SUPABASE_KEY:?err}"
-    healthcheck:
-      test: ["CMD", "python3", "-m", "osom_api", "health"]
-      interval: 10s
-      timeout: 8s
-      retries: 5
     command: master
+
+  bot:
+    image: "ghcr.io/osom8979/osom-api:latest"
+    restart: always
+    depends_on:
+      - redis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    networks:
+      - osom-net
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    environment:
+      - "TZ=Asia/Seoul"
+      - "COLORED_LOGGING=True"
+      - "USE_UVLOOP=True"
+      - "SEVERITY=info"
+      - "REDIS_HOST=osom-redis"
+      - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
+      - "REDIS_USE_TLS=False"
+      - "TELEGRAM_TOKEN=${TELEGRAM_TOKEN:?err}"
+    command: bot
 
 networks:
   osom-net:

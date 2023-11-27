@@ -23,10 +23,6 @@ CMD_BOT: Final[str] = "bot"
 CMD_BOT_HELP: Final[str] = "Bot"
 CMD_BOT_EPILOG: Final[str] = ""
 
-CMD_HEALTH: Final[str] = "health"
-CMD_HEALTH_HELP: Final[str] = "Healthcheck"
-CMD_HEALTH_EPILOG: Final[str] = ""
-
 CMD_MASTER: Final[str] = "master"
 CMD_MASTER_HELP: Final[str] = "Master node"
 CMD_MASTER_EPILOG: Final[str] = ""
@@ -35,14 +31,11 @@ CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
-CMDS = (CMD_BOT, CMD_HEALTH, CMD_MASTER, CMD_WORKER)
+CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
-
-DEFAULT_HEALTHCHECK_TIMEOUT: Final[float] = 4.0
-DEFAULT_HEALTHCHECK_URI: Final[str] = f"http://localhost:{DEFAULT_HTTP_PORT}/health"
 
 DEFAULT_REDIS_HOST: Final[str] = "localhost"
 DEFAULT_REDIS_PORT: Final[int] = 6379
@@ -88,12 +81,6 @@ def add_http_arguments(parser: ArgumentParser) -> None:
         metavar="sec",
         type=float,
         help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
-    )
-    parser.add_argument(
-        "--hide-healthcheck-logging",
-        action="store_true",
-        default=defval("HIDE_HEALTHCHECK_LOGGING", False),
-        help="Filter the access log for healthcheck",
     )
 
 
@@ -256,31 +243,6 @@ def add_cmd_bot_parser(subparsers) -> None:
     add_telegram_arguments(parser)
 
 
-def add_cmd_health_parser(subparsers) -> None:
-    # noinspection SpellCheckingInspection
-    parser = subparsers.add_parser(
-        name=CMD_HEALTH,
-        help=CMD_HEALTH_HELP,
-        formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD_HEALTH_EPILOG,
-    )
-    assert isinstance(parser, ArgumentParser)
-
-    parser.add_argument(
-        "--timeout",
-        default=defval("HEALTHCHECK_TIMEOUT", DEFAULT_HEALTHCHECK_TIMEOUT),
-        metavar="sec",
-        type=float,
-        help=f"Common timeout in seconds (default: {DEFAULT_HEALTHCHECK_TIMEOUT})",
-    )
-    parser.add_argument(
-        "uri",
-        default=defval("HEALTHCHECK_URI", DEFAULT_HEALTHCHECK_URI),
-        nargs="?",
-        help=f"Healthcheck URI (default: '{DEFAULT_HEALTHCHECK_URI}')",
-    )
-
-
 def add_cmd_master_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
@@ -388,7 +350,6 @@ def default_argument_parser() -> ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="cmd")
     add_cmd_bot_parser(subparsers)
-    add_cmd_health_parser(subparsers)
     add_cmd_master_parser(subparsers)
     add_cmd_worker_parser(subparsers)
     return parser
