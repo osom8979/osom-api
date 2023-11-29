@@ -78,25 +78,27 @@ class MqClient:
         logger.info(f"Redis connection address: {address}")
 
         if debug and verbose >= VL2:
-            logger.debug(f"Redis Password: '{password}'")
+            logger.debug(f"Redis Password: {password}")
             logger.debug(f"Redis TLS: {use_tls}")
-            logger.debug(f"Redis TLS key file: '{key_path}'")
-            logger.debug(f"Redis TLS cert file: '{cert_path}'")
-            logger.debug(f"Redis TLS CA cert file: '{ca_cert_path}'")
+            logger.debug(f"Redis TLS key file: {key_path}")
+            logger.debug(f"Redis TLS cert file: {cert_path}")
+            logger.debug(f"Redis TLS CA cert file: {ca_cert_path}")
+
+        redis_kwargs = dict()
+        redis_kwargs["socket_connect_timeout"] = connection_timeout
+
+        if password:
+            redis_kwargs["password"] = password
 
         if use_tls:
             validation_redis_file("Key", key_path)
             validation_redis_file("Cert", cert_path)
             validation_redis_file("CA/Cert", ca_cert_path)
+            redis_kwargs["ssl_keyfile"] = key_path
+            redis_kwargs["ssl_certfile"] = cert_path
+            redis_kwargs["ssl_ca_certs"] = ca_cert_path
 
-        self._redis = from_url(
-            address,
-            password=password,
-            ssl_keyfile=key_path,
-            ssl_certfile=cert_path,
-            ssl_ca_certs=ca_cert_path,
-            socket_connect_timeout=connection_timeout,
-        )
+        self._redis = from_url(address, **redis_kwargs)
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
         self._callback = callback
