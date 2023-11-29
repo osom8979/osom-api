@@ -11,7 +11,7 @@ from osom_api.logging.logging import (
     SEVERITY_NAME_INFO,
     TIMED_ROTATING_WHEN,
 )
-from osom_api.system.environ import get_typed_environ_value as defval
+from osom_api.system.environ import get_typed_environ_value as get_eval
 
 PROG: Final[str] = "osom-api"
 DESCRIPTION: Final[str] = "osom master and worker"
@@ -64,20 +64,20 @@ def version() -> str:
 def add_http_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--http-host",
-        default=defval("HTTP_HOST", DEFAULT_HTTP_HOST),
+        default=get_eval("HTTP_HOST", DEFAULT_HTTP_HOST),
         metavar="host",
         help=f"Host address (default: '{DEFAULT_HTTP_HOST}')",
     )
     parser.add_argument(
         "--http-port",
-        default=defval("HTTP_PORT", DEFAULT_HTTP_PORT),
+        default=get_eval("HTTP_PORT", DEFAULT_HTTP_PORT),
         metavar="port",
         type=int,
         help=f"Port number (default: {DEFAULT_HTTP_PORT})",
     )
     parser.add_argument(
         "--http-timeout",
-        default=defval("HTTP_TIMEOUT", DEFAULT_HTTP_TIMEOUT),
+        default=get_eval("HTTP_TIMEOUT", DEFAULT_HTTP_TIMEOUT),
         metavar="sec",
         type=float,
         help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
@@ -87,27 +87,27 @@ def add_http_arguments(parser: ArgumentParser) -> None:
 def add_redis_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--redis-host",
-        default=defval("REDIS_HOST", DEFAULT_REDIS_HOST),
+        default=get_eval("REDIS_HOST", DEFAULT_REDIS_HOST),
         metavar="host",
         help=f"Redis host address (default: '{DEFAULT_REDIS_HOST}')",
     )
     parser.add_argument(
         "--redis-port",
-        default=defval("REDIS_PORT", DEFAULT_REDIS_PORT),
+        default=get_eval("REDIS_PORT", DEFAULT_REDIS_PORT),
         metavar="port",
         type=int,
         help=f"Redis port number (default: {DEFAULT_REDIS_PORT})",
     )
     parser.add_argument(
         "--redis-database",
-        default=defval("REDIS_DATABASE", DEFAULT_REDIS_DATABASE),
+        default=get_eval("REDIS_DATABASE", DEFAULT_REDIS_DATABASE),
         metavar="index",
         type=int,
         help=f"Redis database index (default: {DEFAULT_REDIS_DATABASE})",
     )
     parser.add_argument(
         "--redis-password",
-        default=defval("REDIS_PASSWORD"),
+        default=get_eval("REDIS_PASSWORD"),
         metavar="passwd",
         help="Redis password",
     )
@@ -115,22 +115,22 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--redis-use-tls",
         action="store_true",
-        default=defval("REDIS_USE_TLS", False),
+        default=get_eval("REDIS_USE_TLS", False),
         help="Enable redis TLS mode",
     )
     parser.add_argument(
         "--redis-ca-cert",
-        default=defval("REDIS_CA_CERT"),
+        default=get_eval("REDIS_CA_CERT"),
         help="CA Certificate file to verify with",
     )
     parser.add_argument(
         "--redis-cert",
-        default=defval("REDIS_CERT"),
+        default=get_eval("REDIS_CERT"),
         help="Client certificate to authenticate with",
     )
     parser.add_argument(
         "--redis-key",
-        default=defval("REDIS_KEY"),
+        default=get_eval("REDIS_KEY"),
         help="Private key file to authenticate with",
     )
 
@@ -140,7 +140,7 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--redis-connection-timeout",
-        default=defval("REDIS_CONNECTION_TIMEOUT", DEFAULT_REDIS_CONNECTION_TIMEOUT),
+        default=get_eval("REDIS_CONNECTION_TIMEOUT", DEFAULT_REDIS_CONNECTION_TIMEOUT),
         metavar="sec",
         type=float,
         help=redis_connection_timeout_help,
@@ -152,7 +152,7 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--redis-subscribe-timeout",
-        default=defval("REDIS_SUBSCRIBE_TIMEOUT", DEFAULT_REDIS_SUBSCRIBE_TIMEOUT),
+        default=get_eval("REDIS_SUBSCRIBE_TIMEOUT", DEFAULT_REDIS_SUBSCRIBE_TIMEOUT),
         metavar="sec",
         type=float,
         help=redis_subscribe_timeout_help,
@@ -164,7 +164,7 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--redis-close-timeout",
-        default=defval("REDIS_CLOSE_TIMEOUT", DEFAULT_REDIS_CLOSE_TIMEOUT),
+        default=get_eval("REDIS_CLOSE_TIMEOUT", DEFAULT_REDIS_CLOSE_TIMEOUT),
         metavar="sec",
         type=float,
         help=redis_close_timeout_help,
@@ -174,31 +174,31 @@ def add_redis_arguments(parser: ArgumentParser) -> None:
 def add_s3_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--s3-endpoint",
-        default=defval("S3_ENDPOINT"),
+        default=get_eval("S3_ENDPOINT"),
         metavar="url",
         help="S3 Endpoint URL",
     )
     parser.add_argument(
         "--s3-access",
-        default=defval("S3_ACCESS"),
+        default=get_eval("S3_ACCESS"),
         metavar="key",
         help="S3 Access Key ID",
     )
     parser.add_argument(
         "--s3-secret",
-        default=defval("S3_SECRET"),
+        default=get_eval("S3_SECRET"),
         metavar="key",
         help="S3 Secret Access Key",
     )
     parser.add_argument(
         "--s3-region",
-        default=defval("S3_REGION"),
+        default=get_eval("S3_REGION"),
         metavar="region",
         help="S3 Region Name",
     )
     parser.add_argument(
         "--s3-bucket",
-        default=defval("S3_BUCKET"),
+        default=get_eval("S3_BUCKET"),
         metavar="bucket",
         help="S3 Bucket Name",
     )
@@ -207,13 +207,13 @@ def add_s3_arguments(parser: ArgumentParser) -> None:
 def add_supabase_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--supabase-url",
-        default=defval("SUPABASE_URL"),
+        default=get_eval("SUPABASE_URL"),
         metavar="url",
         help="Supabase Project URL",
     )
     parser.add_argument(
         "--supabase-key",
-        default=defval("SUPABASE_KEY"),
+        default=get_eval("SUPABASE_KEY"),
         metavar="key",
         help="Supabase Anon Key",
     )
@@ -222,7 +222,7 @@ def add_supabase_arguments(parser: ArgumentParser) -> None:
 def add_telegram_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--telegram-token",
-        default=defval("TELEGRAM_TOKEN"),
+        default=get_eval("TELEGRAM_TOKEN"),
         metavar="token",
         help="Telegram API Token",
     )
@@ -285,45 +285,45 @@ def default_argument_parser() -> ArgumentParser:
         "--colored-logging",
         "-c",
         action="store_true",
-        default=defval("COLORED_LOGGING", False),
+        default=get_eval("COLORED_LOGGING", False),
         help="Use colored logging",
     )
     logging_group.add_argument(
         "--default-logging",
         action="store_true",
-        default=defval("DEFAULT_LOGGING", False),
+        default=get_eval("DEFAULT_LOGGING", False),
         help="Use default logging",
     )
     logging_group.add_argument(
         "--simple-logging",
         "-s",
         action="store_true",
-        default=defval("SIMPLE_LOGGING", False),
+        default=get_eval("SIMPLE_LOGGING", False),
         help="Use simple logging",
     )
 
     parser.add_argument(
         "--rotate-logging-prefix",
-        default=defval("ROTATE_LOGGING_PREFIX", ""),
+        default=get_eval("ROTATE_LOGGING_PREFIX", ""),
         help="Rotate logging prefix",
     )
     parser.add_argument(
         "--rotate-logging-when",
         choices=TIMED_ROTATING_WHEN,
-        default=defval("ROTATE_LOGGING_WHEN", DEFAULT_TIMED_ROTATING_WHEN),
+        default=get_eval("ROTATE_LOGGING_WHEN", DEFAULT_TIMED_ROTATING_WHEN),
         help=f"Rotate logging when (default: '{DEFAULT_TIMED_ROTATING_WHEN}')",
     )
 
     parser.add_argument(
         "--use-uvloop",
         action="store_true",
-        default=defval("USE_UVLOOP", False),
+        default=get_eval("USE_UVLOOP", False),
         help="Replace the event loop with uvloop",
     )
     parser.add_argument(
         "--severity",
         choices=SEVERITIES,
-        default=defval("SEVERITY", DEFAULT_SEVERITY),
+        default=get_eval("SEVERITY", DEFAULT_SEVERITY),
         help=f"Logging severity (default: '{DEFAULT_SEVERITY}')",
     )
 
@@ -331,14 +331,14 @@ def default_argument_parser() -> ArgumentParser:
         "--debug",
         "-d",
         action="store_true",
-        default=defval("DEBUG", False),
+        default=get_eval("DEBUG", False),
         help="Enable debugging mode and change logging severity to 'DEBUG'",
     )
     parser.add_argument(
         "--verbose",
         "-v",
         action="count",
-        default=defval("VERBOSE", 0),
+        default=get_eval("VERBOSE", 0),
         help="Be more verbose/talkative during the operation",
     )
     parser.add_argument(

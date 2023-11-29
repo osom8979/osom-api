@@ -142,7 +142,7 @@ class MqClient:
             logger.error(f"Redis PING error: {e}")
             raise
         else:
-            logger.info("Redis PONG!")
+            logger.info("Redis PING->PONG!")
 
         if self._callback is not None:
             await self._callback.on_mq_connect()
