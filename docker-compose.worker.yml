@@ -1,0 +1,32 @@
+version: "3.3"
+
+services:
+  worker:
+    image: "ghcr.io/osom8979/osom-api:latest"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    command: worker
+    environment:
+      - "TZ=${TZ:?err}"
+      - "COLORED_LOGGING=${COLORED_LOGGING:?err}"
+      - "DEFAULT_LOGGING=${DEFAULT_LOGGING:?err}"
+      - "SIMPLE_LOGGING=${SIMPLE_LOGGING:?err}"
+      - "USE_UVLOOP=${USE_UVLOOP:?err}"
+      - "SEVERITY=${SEVERITY:?err}"
+      - "REDIS_HOST=${REDIS_HOST:?err}"
+      - "REDIS_PORT=${REDIS_PORT:?err}"
+      - "REDIS_DATABASE=${REDIS_DATABASE:?err}"
+      - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
+      - "REDIS_USE_TLS=${REDIS_USE_TLS:?err}"
+      - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
+      - "S3_ACCESS=${S3_ACCESS:?err}"
+      - "S3_SECRET=${S3_SECRET:?err}"
+      - "S3_REGION=${S3_REGION:?err}"
+      - "S3_BUCKET=${S3_BUCKET:?err}"
+      - "SUPABASE_URL=${SUPABASE_URL:?err}"
+      - "SUPABASE_KEY=${SUPABASE_KEY:?err}"

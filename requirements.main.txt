@@ -1,4 +1,3 @@
-fastapi[all]>=0.104.1
 redis>=5.0.1
 boto3>=1.29.6
 supabase>=2.1.0

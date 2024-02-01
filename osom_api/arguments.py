@@ -17,21 +17,17 @@ PROG: Final[str] = "osom-api"
 DESCRIPTION: Final[str] = "osom master and worker"
 EPILOG: Final[str] = ""
 
-DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
-
 CMD_BOT: Final[str] = "bot"
 CMD_BOT_HELP: Final[str] = "Bot"
 CMD_BOT_EPILOG: Final[str] = ""
-
-CMD_MASTER: Final[str] = "master"
-CMD_MASTER_HELP: Final[str] = "Master node"
-CMD_MASTER_EPILOG: Final[str] = ""
 
 CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
-CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
+CMDS = (CMD_BOT, CMD_WORKER)
+
+DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
@@ -59,29 +55,6 @@ def version() -> str:
     from osom_api import __version__
 
     return __version__
-
-
-def add_http_arguments(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--http-host",
-        default=get_eval("HTTP_HOST", DEFAULT_HTTP_HOST),
-        metavar="host",
-        help=f"Host address (default: '{DEFAULT_HTTP_HOST}')",
-    )
-    parser.add_argument(
-        "--http-port",
-        default=get_eval("HTTP_PORT", DEFAULT_HTTP_PORT),
-        metavar="port",
-        type=int,
-        help=f"Port number (default: {DEFAULT_HTTP_PORT})",
-    )
-    parser.add_argument(
-        "--http-timeout",
-        default=get_eval("HTTP_TIMEOUT", DEFAULT_HTTP_TIMEOUT),
-        metavar="sec",
-        type=float,
-        help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
-    )
 
 
 def add_redis_arguments(parser: ArgumentParser) -> None:
@@ -243,21 +216,6 @@ def add_cmd_bot_parser(subparsers) -> None:
     add_telegram_arguments(parser)
 
 
-def add_cmd_master_parser(subparsers) -> None:
-    # noinspection SpellCheckingInspection
-    parser = subparsers.add_parser(
-        name=CMD_MASTER,
-        help=CMD_MASTER_HELP,
-        formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD_MASTER_EPILOG,
-    )
-    assert isinstance(parser, ArgumentParser)
-    add_http_arguments(parser)
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
-
-
 def add_cmd_worker_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
@@ -350,7 +308,6 @@ def default_argument_parser() -> ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="cmd")
     add_cmd_bot_parser(subparsers)
-    add_cmd_master_parser(subparsers)
     add_cmd_worker_parser(subparsers)
     return parser
 

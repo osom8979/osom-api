@@ -1,17 +1,22 @@
-# redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DATABASE=0
-REDIS_PASSWORD=@REDIS_PASSWORD@
+# system
+TZ=Asia/Seoul
 
-# redis tls
-REDIS_USE_TLS=False
-REDIS_CA_CERT=cert/ca.crt
-REDIS_CERT=cert/redis.crt
-REDIS_KEY=cert/redis.key
+# common
+COLORED_LOGGING=True
+DEFAULT_LOGGING=False
+SIMPLE_LOGGING=False
+USE_UVLOOP=True
+SEVERITY=info
+
+# redis
+REDIS_HOST=<endpoint>
+REDIS_PORT=<port>
+REDIS_DATABASE=0
+REDIS_PASSWORD=<password>
+REDIS_USE_TLS=True
 
 # s3
-S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+S3_ENDPOINT=<endpoint>
 S3_ACCESS=<access-key-id>
 S3_SECRET=<access-key-secret>
 S3_REGION=<region>  # Must be one of: wnam, enam, weur, eeur, apac, auto
@@ -27,7 +32,3 @@ TELEGRAM_TOKEN=<telegram-token>
 # traefik
 FRONTEND_HOST=<your.domain.com>
 ACME_EMAIL=<your@email.com>
-
-# user/group
-USER_UID=@USER_UID@
-USER_GID=@USER_GID@
