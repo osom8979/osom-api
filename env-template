@@ -28,7 +28,3 @@ SUPABASE_KEY=<project-api-key>
 
 # telegram
 TELEGRAM_TOKEN=<telegram-token>
-
-# traefik
-FRONTEND_HOST=<your.domain.com>
-ACME_EMAIL=<your@email.com>

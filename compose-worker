@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#shellcheck disable=SC2034
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+USER_UID=$(id -u)
+USER_GID=$(id -g)
+export USER_UID
+export USER_GID
+
+docker compose -p ddrm-worker -f "$ROOT_DIR/docker-compose.worker.yml" "$@"
