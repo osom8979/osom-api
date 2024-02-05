@@ -5,7 +5,7 @@ from asyncio import Event, Task, create_task, get_running_loop, run_coroutine_th
 from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
 from os import R_OK, access, path
-from typing import Optional
+from typing import Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub
@@ -187,8 +187,18 @@ class MqClient:
         logger.info(f"Left PUSH '{key}' -> {value!r}")
         await self._redis.lpush(key, value)
 
-    async def brpop_bytes(self, key: str, timeout: Optional[int] = None) -> bytes:
+    async def brpop_bytes(
+        self,
+        key: str,
+        timeout: Optional[int] = None,
+    ) -> Optional[Sequence[bytes]]:
         value = await self._redis.brpop(key, timeout)
-        assert isinstance(value, bytes)
-        logger.info(f"Blocking Right POP '{key}' -> {value!r}")
+
+        if value is None:
+            logger.debug(f"Blocking Right POP '{key}' timeout")
+            return None
+
+        assert isinstance(value, tuple)
+        assert len(value) % 2 == 0 and len(value) >= 2
+        logger.info(f"Blocking Right POP '{key}' -> {value}")
         return value

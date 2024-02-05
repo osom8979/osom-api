@@ -32,3 +32,9 @@ BROADCAST_BYTES: Final[bytes] = BROADCAST_PATH.encode(PATH_ENCODE)
 
 QUEUE_PATH: Final[str] = join_path(PATH_ROOT, "queue")
 QUEUE_BYTES: Final[bytes] = QUEUE_PATH.encode(PATH_ENCODE)
+
+QUEUE_COMMON_PATH: Final[str] = join_path(QUEUE_PATH, "queue")
+QUEUE_COMMON_BYTES: Final[bytes] = QUEUE_COMMON_PATH.encode(PATH_ENCODE)
+
+RESPONSE_PATH: Final[str] = join_path(PATH_ROOT, "response")
+RESPONSE_BYTES: Final[bytes] = RESPONSE_PATH.encode(PATH_ENCODE)
