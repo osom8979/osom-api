@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
-from os import getcwd, path
+from os import R_OK, access, getcwd, path
 from typing import Final, List, Optional
 
 from osom_api.logging.logging import (
@@ -33,6 +33,8 @@ CMD_WORKER_EPILOG: Final[str] = ""
 
 CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
 
+DEFAULT_DOTENV_FILENAME: Final[str] = ".env"
+
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
@@ -42,8 +44,6 @@ DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
-
-DOTENV_FILENAME: Final[str] = ".env"
 
 VERBOSE_LEVEL_0: Final[int] = 0
 VERBOSE_LEVEL_1: Final[int] = 1
@@ -56,6 +56,21 @@ def version() -> str:
     from osom_api import __version__
 
     return __version__
+
+
+def add_dotenv_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--no-dotenv",
+        action="store_true",
+        default=get_eval("NO_DOTENV", False),
+        help="Do not use dot-env file",
+    )
+    parser.add_argument(
+        "--dotenv-path",
+        default=get_eval("DOTENV_PATH", path.join(getcwd(), DEFAULT_DOTENV_FILENAME)),
+        metavar="file",
+        help=f"Specifies the dot-env file (default: '{DEFAULT_DOTENV_FILENAME}')",
+    )
 
 
 def add_http_arguments(parser: ArgumentParser) -> None:
@@ -238,6 +253,8 @@ def default_argument_parser() -> ArgumentParser:
         formatter_class=RawDescriptionHelpFormatter,
     )
 
+    add_dotenv_arguments(parser)
+
     logging_group = parser.add_mutually_exclusive_group()
     logging_group.add_argument(
         "--colored-logging",
@@ -263,6 +280,7 @@ def default_argument_parser() -> ArgumentParser:
     parser.add_argument(
         "--rotate-logging-prefix",
         default=get_eval("ROTATE_LOGGING_PREFIX", ""),
+        metavar="prefix",
         help="Rotate logging prefix",
     )
     parser.add_argument(
@@ -313,21 +331,54 @@ def default_argument_parser() -> ArgumentParser:
     return parser
 
 
-def _load_dotenv(dotenv_path: str) -> None:
-    from dotenv import load_dotenv
+def _load_dotenv(
+    cmdline: Optional[List[str]] = None,
+    namespace: Optional[Namespace] = None,
+) -> None:
+    parser = ArgumentParser(add_help=False, allow_abbrev=False, exit_on_error=False)
+    add_dotenv_arguments(parser)
+    args = parser.parse_known_args(cmdline, namespace)[0]
 
-    load_dotenv(dotenv_path)
+    assert isinstance(args.no_dotenv, bool)
+    assert isinstance(args.dotenv_path, str)
+
+    if args.no_dotenv:
+        return
+    if not path.isfile(args.dotenv_path):
+        return
+    if not access(args.dotenv_path, R_OK):
+        return
+
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(args.dotenv_path)
+    except ModuleNotFoundError:
+        pass
+
+
+def _remove_dotenv_attrs(namespace: Namespace) -> Namespace:
+    assert isinstance(namespace.no_dotenv, bool)
+    assert isinstance(namespace.dotenv_path, str)
+
+    del namespace.no_dotenv
+    del namespace.dotenv_path
+
+    assert not hasattr(namespace, "no_dotenv")
+    assert not hasattr(namespace, "dotenv_path")
+
+    return namespace
 
 
 def get_default_arguments(
     cmdline: Optional[List[str]] = None,
     namespace: Optional[Namespace] = None,
-    load_dotenv=False,
 ) -> Namespace:
-    if load_dotenv:
-        dotenv_path = path.join(getcwd(), DOTENV_FILENAME)
-        if path.isfile(dotenv_path):
-            _load_dotenv(dotenv_path)
+    # [IMPORTANT] Dotenv related options are processed first.
+    _load_dotenv(cmdline, namespace)
 
     parser = default_argument_parser()
-    return parser.parse_known_args(cmdline, namespace)[0]
+    args = parser.parse_known_args(cmdline, namespace)[0]
+
+    # Remove unnecessary dotenv attrs
+    return _remove_dotenv_attrs(args)

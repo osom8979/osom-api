@@ -13,4 +13,4 @@ sys.path.append(SOURCE_DIR)
 from osom_api.entrypoint import main  # noqa
 
 if __name__ == "__main__":
-    sys.exit(main(load_dotenv=True))
+    sys.exit(main())
