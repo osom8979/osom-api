@@ -192,10 +192,11 @@ class MqClient:
         key: str,
         timeout: Optional[int] = None,
     ) -> Optional[Sequence[bytes]]:
+        logger.debug(f"Blocking Right POP '{key}' {timeout}s ...")
         value = await self._redis.brpop(key, timeout)
 
         if value is None:
-            logger.debug(f"Blocking Right POP '{key}' timeout")
+            logger.debug(f"Blocking Right POP '{key}' ... timeout!")
             return None
 
         assert isinstance(value, tuple)

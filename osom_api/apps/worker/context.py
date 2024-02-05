@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from asyncio.exceptions import CancelledError
 from argparse import Namespace
 
 from overrides import override
@@ -7,6 +8,16 @@ from type_serialize.json import dumps, loads
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands.progress.create import ProgressCreate
+from osom_api.apps.worker.exceptions import (
+    EmptyApiError,
+    NoMessageIdError,
+    PacketDumpError,
+    NotFoundCommandKeyError,
+    CommandRuntimeError,
+    PacketLoadError,
+    PollingTimeoutError,
+    WorkerError,
+)
 from osom_api.common.config import CommonConfig
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
@@ -34,28 +45,53 @@ class WorkerContext(CommonContext):
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
 
-    async def start_polling(self) -> None:
-        while True:
-            logger.debug("Blocking Right POP ...")
-            packet = await self.mq.brpop_bytes(QUEUE_PATH, 10)
-            if packet is None:
-                continue
+    async def polling_iter(self) -> None:
+        packet = await self.mq.brpop_bytes(QUEUE_PATH, 10)
+        if packet is None:
+            raise PollingTimeoutError()
 
+        try:
             request = loads(packet[1], WorkerRequest)
             assert isinstance(request, WorkerRequest)
-            message_api = request.api
-            message_id = request.id
-            message_data = request.data
+        except BaseException as e:
+            raise PacketLoadError() from e
 
-            command = self._commands.get(message_api)
-            if command is None:
+        if request.api:
+            raise EmptyApiError()
+
+        command = self._commands.get(request.api)
+        if command is None:
+            raise NotFoundCommandKeyError()
+
+        try:
+            result = await command.run(request.data, self)
+        except BaseException as e:
+            raise CommandRuntimeError() from e
+
+        if not request.id:
+            raise NoMessageIdError()
+
+        response_path = f"{RESPONSE_PATH}/{request.id}"
+        try:
+            response_data = dumps(result)
+            assert isinstance(response_data, bytes)
+        except BaseException as e:
+            raise PacketDumpError() from e
+
+        await self.mq.lpush_bytes(response_path, response_data)
+
+    async def start_polling(self) -> None:
+        while True:
+            try:
+                await self.polling_iter()
+            except WorkerError as e:
                 continue
-
-            result = await command.run(message_data, self)
-            if message_id:
-                response_path = f"{RESPONSE_PATH}/{message_id}"
-                response_data = dumps(result)
-                await self.mq.lpush_bytes(response_path, response_data)
+            except CancelledError:
+                logger.warning("A Cancel signal was detected.")
+                break
+            except BaseException as e:
+                logger.exception(e)
+                break
 
     async def main(self) -> None:
         await self.common_open()
