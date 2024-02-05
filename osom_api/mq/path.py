@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from functools import lru_cache, reduce
+from functools import reduce
 from typing import Final
 
 PATH_SEPARATOR: Final[str] = "/"
@@ -27,11 +27,8 @@ def join_path(*paths: str, separator=PATH_SEPARATOR, root=PATH_SEPARATOR) -> str
     return reduce(_join, paths, root)
 
 
-@lru_cache
-def get_global_broadcast_path() -> str:
-    return join_path(PATH_ROOT, "global", "broadcast")
+BROADCAST_PATH: Final[str] = join_path(PATH_ROOT, "broadcast")
+BROADCAST_BYTES: Final[bytes] = BROADCAST_PATH.encode(PATH_ENCODE)
 
-
-@lru_cache
-def get_global_broadcast_bytes_path() -> bytes:
-    return get_global_broadcast_path().encode(PATH_ENCODE)
+QUEUE_PATH: Final[str] = join_path(PATH_ROOT, "queue")
+QUEUE_BYTES: Final[bytes] = QUEUE_PATH.encode(PATH_ENCODE)

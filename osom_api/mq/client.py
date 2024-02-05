@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 from asyncio import Event, Task, create_task, get_running_loop, run_coroutine_threadsafe
 from asyncio.exceptions import CancelledError, TimeoutError
-from asyncio.timeouts import timeout
+from asyncio.timeouts import timeout as async_timeout
 from os import R_OK, access, path
 from typing import Optional
 
@@ -20,7 +20,7 @@ from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.logging.logging import logger
 from osom_api.mq.message import Message
-from osom_api.mq.path import get_global_broadcast_bytes_path
+from osom_api.mq.path import BROADCAST_BYTES
 
 
 def validation_redis_file(name: str, file: Optional[str] = None) -> None:
@@ -84,7 +84,7 @@ class MqClient:
         assert self._task is not None
         self._done.set()
         try:
-            async with timeout(self._close_timeout):
+            async with async_timeout(self._close_timeout):
                 await self._task
         except TimeoutError as e:
             self._task.set_exception(e)
@@ -127,7 +127,7 @@ class MqClient:
             await self._redis.close()
 
     async def _redis_subscribe_main(self, pubsub: PubSub) -> None:
-        subscribe_paths = (get_global_broadcast_bytes_path(),)
+        subscribe_paths = (BROADCAST_BYTES,)
 
         logger.debug("Requesting a subscription ...")
         await pubsub.subscribe(*subscribe_paths)
@@ -182,3 +182,13 @@ class MqClient:
 
     async def set_str(self, key: str, value: str) -> None:
         await self.set_bytes(key, value.encode("utf8"))
+
+    async def lpush_bytes(self, key: str, value: bytes) -> None:
+        logger.info(f"Left PUSH '{key}' -> {value!r}")
+        await self._redis.lpush(key, value)
+
+    async def brpop_bytes(self, key: str, timeout: Optional[int] = None) -> bytes:
+        value = await self._redis.brpop(key, timeout)
+        assert isinstance(value, bytes)
+        logger.info(f"Blocking Right POP '{key}' -> {value!r}")
+        return value

@@ -53,6 +53,11 @@ class CommonConfig:
         self.printer = printer
         self.kwargs = kwargs
 
+    @classmethod
+    def from_namespace(cls, args: Namespace):
+        cls.assert_common_properties(args)
+        return cls(**cls.namespace_to_dict(args))
+
     @staticmethod
     def assert_common_properties(args: Namespace) -> None:
         assert isinstance(args.redis_url, (type(None), str))
