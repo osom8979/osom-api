@@ -6,10 +6,13 @@ from typing import Any, Dict, List, Optional, Union
 from type_serialize.inspect.member import get_public_instance_attributes
 
 from osom_api.arguments import (
+    DEFAULT_REDIS_BLOCKING_TIMEOUT,
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_CONNECTION_TIMEOUT,
     DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     DEFAULT_SEVERITY,
+    DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
+    DEFAULT_SUPABASE_STORAGE_TIMEOUT,
 )
 from osom_api.logging.logging import DEBUG, convert_level_number, logger
 
@@ -20,6 +23,7 @@ class CommonConfig:
         redis_url: Optional[str] = None,
         redis_connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
         redis_subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
+        redis_blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
         redis_close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
         s3_endpoint: Optional[str] = None,
         s3_access: Optional[str] = None,
@@ -28,6 +32,8 @@ class CommonConfig:
         s3_bucket: Optional[str] = None,
         supabase_url: Optional[str] = None,
         supabase_key: Optional[str] = None,
+        supabase_postgrest_timeout=DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
+        supabase_storage_timeout=DEFAULT_SUPABASE_STORAGE_TIMEOUT,
         severity=DEFAULT_SEVERITY,
         use_uvloop=False,
         debug=False,
@@ -38,6 +44,7 @@ class CommonConfig:
         self.redis_url = redis_url
         self.redis_connection_timeout = redis_connection_timeout
         self.redis_subscribe_timeout = redis_subscribe_timeout
+        self.redis_blocking_timeout = redis_blocking_timeout
         self.redis_close_timeout = redis_close_timeout
         self.s3_endpoint = s3_endpoint
         self.s3_access = s3_access
@@ -46,6 +53,8 @@ class CommonConfig:
         self.s3_bucket = s3_bucket
         self.supabase_url = supabase_url
         self.supabase_key = supabase_key
+        self.supabase_postgrest_timeout = supabase_postgrest_timeout
+        self.supabase_storage_timeout = supabase_storage_timeout
         self.severity = severity
         self.use_uvloop = use_uvloop
         self.debug = debug
@@ -63,6 +72,7 @@ class CommonConfig:
         assert isinstance(args.redis_url, (type(None), str))
         assert isinstance(args.redis_connection_timeout, float)
         assert isinstance(args.redis_subscribe_timeout, float)
+        assert isinstance(args.redis_blocking_timeout, float)
         assert isinstance(args.redis_close_timeout, float)
 
         assert isinstance(args.s3_endpoint, (type(None), str))
@@ -73,6 +83,8 @@ class CommonConfig:
 
         assert isinstance(args.supabase_url, (type(None), str))
         assert isinstance(args.supabase_key, (type(None), str))
+        assert isinstance(args.supabase_postgrest_timeout, float)
+        assert isinstance(args.supabase_storage_timeout, float)
 
         assert isinstance(args.severity, str)
         assert isinstance(args.use_uvloop, bool)

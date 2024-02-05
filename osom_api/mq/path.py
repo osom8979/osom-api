@@ -5,8 +5,6 @@ from typing import Final
 
 PATH_SEPARATOR: Final[str] = "/"
 PATH_ENCODE: Final[str] = "Latin1"
-PATH_ROOT: Final[str] = f"{PATH_SEPARATOR}osom{PATH_SEPARATOR}api"
-assert PATH_ROOT == "/osom/api"
 
 
 def join_path(*paths: str, separator=PATH_SEPARATOR, root=PATH_SEPARATOR) -> str:
@@ -27,14 +25,12 @@ def join_path(*paths: str, separator=PATH_SEPARATOR, root=PATH_SEPARATOR) -> str
     return reduce(_join, paths, root)
 
 
-BROADCAST_PATH: Final[str] = join_path(PATH_ROOT, "broadcast")
-BROADCAST_BYTES: Final[bytes] = BROADCAST_PATH.encode(PATH_ENCODE)
+def encode_path(path: str) -> bytes:
+    return path.encode(PATH_ENCODE)
 
-QUEUE_PATH: Final[str] = join_path(PATH_ROOT, "queue")
-QUEUE_BYTES: Final[bytes] = QUEUE_PATH.encode(PATH_ENCODE)
 
-QUEUE_COMMON_PATH: Final[str] = join_path(QUEUE_PATH, "queue")
-QUEUE_COMMON_BYTES: Final[bytes] = QUEUE_COMMON_PATH.encode(PATH_ENCODE)
-
-RESPONSE_PATH: Final[str] = join_path(PATH_ROOT, "response")
-RESPONSE_BYTES: Final[bytes] = RESPONSE_PATH.encode(PATH_ENCODE)
+PATH_ROOT: Final[str] = "/osom/api"
+QUEUE_PATH: Final[str] = "/osom/api/queue"
+QUEUE_COMMON_PATH: Final[str] = "/osom/api/queue/common"
+RESPONSE_PATH: Final[str] = "/osom/api/response"
+BROADCAST_PATH: Final[str] = "/osom/api/broadcast"

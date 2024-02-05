@@ -41,7 +41,13 @@ DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
 DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 4.0
+DEFAULT_REDIS_BLOCKING_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
+
+DEFAULT_SUPABASE_AUTO_REFRESH_TOKEN: Final[bool] = True
+DEFAULT_SUPABASE_PERSIST_SESSION: Final[bool] = True
+DEFAULT_SUPABASE_POSTGREST_TIMEOUT: Final[float] = 8.0
+DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 
@@ -96,48 +102,46 @@ def add_http_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def add_redis_arguments(parser: ArgumentParser) -> None:
+def add_redis_arguments(
+    parser: ArgumentParser,
+    connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
+    subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
+    blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
+    close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
+) -> None:
     parser.add_argument(
         "--redis-url",
         default=get_eval("REDIS_URL"),
         metavar="url",
         help="Redis URL",
     )
-
-    redis_connection_timeout_help = (
-        f"Redis connection timeout in seconds "
-        f"(default: {DEFAULT_REDIS_CONNECTION_TIMEOUT:.2f})"
-    )
     parser.add_argument(
         "--redis-connection-timeout",
-        default=get_eval("REDIS_CONNECTION_TIMEOUT", DEFAULT_REDIS_CONNECTION_TIMEOUT),
+        default=get_eval("REDIS_CONNECTION_TIMEOUT", connection_timeout),
         metavar="sec",
         type=float,
-        help=redis_connection_timeout_help,
-    )
-
-    redis_subscribe_timeout_help = (
-        f"Redis subscribe timeout in seconds "
-        f"(default: {DEFAULT_REDIS_SUBSCRIBE_TIMEOUT:.2f})"
+        help=f"Redis connection timeout in seconds (default: {connection_timeout:.2f})",
     )
     parser.add_argument(
         "--redis-subscribe-timeout",
-        default=get_eval("REDIS_SUBSCRIBE_TIMEOUT", DEFAULT_REDIS_SUBSCRIBE_TIMEOUT),
+        default=get_eval("REDIS_SUBSCRIBE_TIMEOUT", subscribe_timeout),
         metavar="sec",
         type=float,
-        help=redis_subscribe_timeout_help,
+        help=f"Redis subscribe timeout in seconds (default: {subscribe_timeout:.2f})",
     )
-
-    redis_close_timeout_help = (
-        f"Redis close timeout in seconds "
-        f"(default: {DEFAULT_REDIS_CLOSE_TIMEOUT:.2f})"
+    parser.add_argument(
+        "--redis-blocking-timeout",
+        default=get_eval("REDIS_BLOCKING_TIMEOUT", blocking_timeout),
+        metavar="sec",
+        type=float,
+        help=f"Redis blocking timeout in seconds (default: {blocking_timeout:.2f})",
     )
     parser.add_argument(
         "--redis-close-timeout",
-        default=get_eval("REDIS_CLOSE_TIMEOUT", DEFAULT_REDIS_CLOSE_TIMEOUT),
+        default=get_eval("REDIS_CLOSE_TIMEOUT", close_timeout),
         metavar="sec",
         type=float,
-        help=redis_close_timeout_help,
+        help=f"Redis close timeout in seconds (default: {close_timeout:.2f})",
     )
 
 
@@ -174,7 +178,11 @@ def add_s3_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def add_supabase_arguments(parser: ArgumentParser) -> None:
+def add_supabase_arguments(
+    parser: ArgumentParser,
+    postgrest_timeout=DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
+    storage_timeout=DEFAULT_SUPABASE_STORAGE_TIMEOUT,
+) -> None:
     supabase_url = get_eval("SUPABASE_URL", get_eval("NEXT_PUBLIC_SUPABASE_URL", ""))
     supabase_key = get_eval("SUPABASE_KEY", get_eval("SUPABASE_SERVICE_ROLE_KEY", ""))
 
@@ -189,6 +197,21 @@ def add_supabase_arguments(parser: ArgumentParser) -> None:
         default=supabase_key if supabase_key else None,
         metavar="key",
         help="Supabase service_role Key",
+    )
+
+    parser.add_argument(
+        "--supabase-postgrest-timeout",
+        default=get_eval("SUPABASE_POSTGREST_TIMEOUT", postgrest_timeout),
+        metavar="sec",
+        type=float,
+        help=f"SyncPostgrestClient timeout. (default: {postgrest_timeout:.2f})",
+    )
+    parser.add_argument(
+        "--supabase-storage-timeout",
+        default=get_eval("SUPABASE_STORAGE_TIMEOUT", storage_timeout),
+        metavar="sec",
+        type=float,
+        help=f"SyncStorageClient timeout. (default: {storage_timeout:.2f})",
     )
 
 

@@ -20,7 +20,7 @@ from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.logging.logging import logger
 from osom_api.mq.message import Message
-from osom_api.mq.path import BROADCAST_BYTES
+from osom_api.mq.path import BROADCAST_PATH, encode_path
 
 
 def validation_redis_file(name: str, file: Optional[str] = None) -> None:
@@ -127,7 +127,7 @@ class MqClient:
             await self._redis.close()
 
     async def _redis_subscribe_main(self, pubsub: PubSub) -> None:
-        subscribe_paths = (BROADCAST_BYTES,)
+        subscribe_paths = (encode_path(BROADCAST_PATH),)
 
         logger.debug("Requesting a subscription ...")
         await pubsub.subscribe(*subscribe_paths)

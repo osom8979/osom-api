@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from asyncio.exceptions import CancelledError
 from argparse import Namespace
+from asyncio.exceptions import CancelledError
+from math import floor
+from typing import Optional
 
 from overrides import override
 from type_serialize.json import dumps, loads
@@ -9,11 +11,11 @@ from type_serialize.json import dumps, loads
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands.progress.create import ProgressCreate
 from osom_api.apps.worker.exceptions import (
+    CommandRuntimeError,
     EmptyApiError,
     NoMessageIdError,
-    PacketDumpError,
     NotFoundCommandKeyError,
-    CommandRuntimeError,
+    PacketDumpError,
     PacketLoadError,
     PollingTimeoutError,
     WorkerError,
@@ -21,7 +23,7 @@ from osom_api.apps.worker.exceptions import (
 from osom_api.common.config import CommonConfig
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
-from osom_api.mq.path import QUEUE_PATH, RESPONSE_PATH
+from osom_api.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH
 from osom_api.mq.protocol.worker import WorkerRequest
 
 
@@ -45,8 +47,8 @@ class WorkerContext(CommonContext):
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
 
-    async def polling_iter(self) -> None:
-        packet = await self.mq.brpop_bytes(QUEUE_PATH, 10)
+    async def polling_iter(self, timeout: Optional[int] = None) -> None:
+        packet = await self.mq.brpop_bytes(QUEUE_COMMON_PATH, timeout)
         if packet is None:
             raise PollingTimeoutError()
 
@@ -83,8 +85,9 @@ class WorkerContext(CommonContext):
     async def start_polling(self) -> None:
         while True:
             try:
-                await self.polling_iter()
-            except WorkerError as e:
+                timeout_seconds = floor(self._config.redis_blocking_timeout)
+                await self.polling_iter(timeout_seconds)
+            except WorkerError:
                 continue
             except CancelledError:
                 logger.warning("A Cancel signal was detected.")

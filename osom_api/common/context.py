@@ -43,8 +43,8 @@ class CommonContext(MqClientCallback):
                 options=SupabaseClientOptions(
                     auto_refresh_token=True,
                     persist_session=True,
-                    postgrest_client_timeout=10,
-                    storage_client_timeout=10,
+                    postgrest_client_timeout=config.supabase_postgrest_timeout,
+                    storage_client_timeout=config.supabase_storage_timeout,
                 ),
             )
 
