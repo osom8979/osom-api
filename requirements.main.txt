@@ -1,11 +1,13 @@
+fastapi[all]>=0.109.2
 redis>=5.0.1
-boto3>=1.29.6
-supabase>=2.1.0
-aiogram>=3.2.0
+boto3>=1.34.34
+supabase>=2.3.4
+aiogram>=3.3.0
 coloredlogs>=15.0.1
-overrides>=7.4.0
+overrides>=7.7.0
 plugpack>=0.0.2
 type-serialize>=1.2.1
 orjson
 python-dotenv
 uvloop
+uvicorn

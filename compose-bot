@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
-USER_UID=$(id -u)
-USER_GID=$(id -g)
-export USER_UID
-export USER_GID
 
 docker compose -p ddrm-bot -f "$ROOT_DIR/docker-compose.bot.yml" "$@"

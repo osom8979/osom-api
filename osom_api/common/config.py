@@ -8,9 +8,6 @@ from type_serialize.inspect.member import get_public_instance_attributes
 from osom_api.arguments import (
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_CONNECTION_TIMEOUT,
-    DEFAULT_REDIS_DATABASE,
-    DEFAULT_REDIS_HOST,
-    DEFAULT_REDIS_PORT,
     DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     DEFAULT_SEVERITY,
 )
@@ -20,14 +17,7 @@ from osom_api.logging.logging import DEBUG, convert_level_number, logger
 class CommonConfig:
     def __init__(
         self,
-        redis_host=DEFAULT_REDIS_HOST,
-        redis_port=DEFAULT_REDIS_PORT,
-        redis_database=DEFAULT_REDIS_DATABASE,
-        redis_password: Optional[str] = None,
-        redis_use_tls=False,
-        redis_ca_cert: Optional[str] = None,
-        redis_cert: Optional[str] = None,
-        redis_key: Optional[str] = None,
+        redis_url: Optional[str] = None,
         redis_connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
         redis_subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
         redis_close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
@@ -45,14 +35,7 @@ class CommonConfig:
         printer=print,
         **kwargs,
     ):
-        self.redis_host = redis_host
-        self.redis_port = redis_port
-        self.redis_database = redis_database
-        self.redis_password = redis_password
-        self.redis_use_tls = redis_use_tls
-        self.redis_ca_cert = redis_ca_cert
-        self.redis_cert = redis_cert
-        self.redis_key = redis_key
+        self.redis_url = redis_url
         self.redis_connection_timeout = redis_connection_timeout
         self.redis_subscribe_timeout = redis_subscribe_timeout
         self.redis_close_timeout = redis_close_timeout
@@ -72,14 +55,7 @@ class CommonConfig:
 
     @staticmethod
     def assert_common_properties(args: Namespace) -> None:
-        assert isinstance(args.redis_host, (type(None), str))
-        assert isinstance(args.redis_port, int)
-        assert isinstance(args.redis_database, int)
-        assert isinstance(args.redis_password, (type(None), str))
-        assert isinstance(args.redis_use_tls, bool)
-        assert isinstance(args.redis_ca_cert, (type(None), str))
-        assert isinstance(args.redis_cert, (type(None), str))
-        assert isinstance(args.redis_key, (type(None), str))
+        assert isinstance(args.redis_url, (type(None), str))
         assert isinstance(args.redis_connection_timeout, float)
         assert isinstance(args.redis_subscribe_timeout, float)
         assert isinstance(args.redis_close_timeout, float)

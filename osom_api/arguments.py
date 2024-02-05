@@ -17,25 +17,26 @@ PROG: Final[str] = "osom-api"
 DESCRIPTION: Final[str] = "osom master and worker"
 EPILOG: Final[str] = ""
 
+DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
+
 CMD_BOT: Final[str] = "bot"
 CMD_BOT_HELP: Final[str] = "Bot"
 CMD_BOT_EPILOG: Final[str] = ""
+
+CMD_MASTER: Final[str] = "master"
+CMD_MASTER_HELP: Final[str] = "Master node"
+CMD_MASTER_EPILOG: Final[str] = ""
 
 CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
-CMDS = (CMD_BOT, CMD_WORKER)
-
-DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
+CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
-DEFAULT_REDIS_HOST: Final[str] = "localhost"
-DEFAULT_REDIS_PORT: Final[int] = 6379
-DEFAULT_REDIS_DATABASE: Final[int] = 0
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
 DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
@@ -57,54 +58,35 @@ def version() -> str:
     return __version__
 
 
-def add_redis_arguments(parser: ArgumentParser) -> None:
+def add_http_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "--redis-host",
-        default=get_eval("REDIS_HOST", DEFAULT_REDIS_HOST),
+        "--http-host",
+        default=get_eval("HTTP_HOST", DEFAULT_HTTP_HOST),
         metavar="host",
-        help=f"Redis host address (default: '{DEFAULT_REDIS_HOST}')",
+        help=f"Host address (default: '{DEFAULT_HTTP_HOST}')",
     )
     parser.add_argument(
-        "--redis-port",
-        default=get_eval("REDIS_PORT", DEFAULT_REDIS_PORT),
+        "--http-port",
+        default=get_eval("HTTP_PORT", DEFAULT_HTTP_PORT),
         metavar="port",
         type=int,
-        help=f"Redis port number (default: {DEFAULT_REDIS_PORT})",
+        help=f"Port number (default: {DEFAULT_HTTP_PORT})",
     )
     parser.add_argument(
-        "--redis-database",
-        default=get_eval("REDIS_DATABASE", DEFAULT_REDIS_DATABASE),
-        metavar="index",
-        type=int,
-        help=f"Redis database index (default: {DEFAULT_REDIS_DATABASE})",
-    )
-    parser.add_argument(
-        "--redis-password",
-        default=get_eval("REDIS_PASSWORD"),
-        metavar="passwd",
-        help="Redis password",
+        "--http-timeout",
+        default=get_eval("HTTP_TIMEOUT", DEFAULT_HTTP_TIMEOUT),
+        metavar="sec",
+        type=float,
+        help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
 
+
+def add_redis_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "--redis-use-tls",
-        action="store_true",
-        default=get_eval("REDIS_USE_TLS", False),
-        help="Enable redis TLS mode",
-    )
-    parser.add_argument(
-        "--redis-ca-cert",
-        default=get_eval("REDIS_CA_CERT"),
-        help="CA Certificate file to verify with",
-    )
-    parser.add_argument(
-        "--redis-cert",
-        default=get_eval("REDIS_CERT"),
-        help="Client certificate to authenticate with",
-    )
-    parser.add_argument(
-        "--redis-key",
-        default=get_eval("REDIS_KEY"),
-        help="Private key file to authenticate with",
+        "--redis-url",
+        default=get_eval("REDIS_URL"),
+        metavar="url",
+        help="Redis URL",
     )
 
     redis_connection_timeout_help = (
@@ -178,17 +160,20 @@ def add_s3_arguments(parser: ArgumentParser) -> None:
 
 
 def add_supabase_arguments(parser: ArgumentParser) -> None:
+    supabase_url = get_eval("SUPABASE_URL", get_eval("NEXT_PUBLIC_SUPABASE_URL", ""))
+    supabase_key = get_eval("SUPABASE_KEY", get_eval("SUPABASE_SERVICE_ROLE_KEY", ""))
+
     parser.add_argument(
         "--supabase-url",
-        default=get_eval("SUPABASE_URL"),
+        default=supabase_url if supabase_url else None,
         metavar="url",
-        help="Supabase Project URL",
+        help="Supabase project URL",
     )
     parser.add_argument(
         "--supabase-key",
-        default=get_eval("SUPABASE_KEY"),
+        default=supabase_key if supabase_key else None,
         metavar="key",
-        help="Supabase Anon Key",
+        help="Supabase service_role Key",
     )
 
 
@@ -214,6 +199,21 @@ def add_cmd_bot_parser(subparsers) -> None:
     add_s3_arguments(parser)
     add_supabase_arguments(parser)
     add_telegram_arguments(parser)
+
+
+def add_cmd_master_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_MASTER,
+        help=CMD_MASTER_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_MASTER_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+    add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
+    add_http_arguments(parser)
 
 
 def add_cmd_worker_parser(subparsers) -> None:
@@ -308,6 +308,7 @@ def default_argument_parser() -> ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="cmd")
     add_cmd_bot_parser(subparsers)
+    add_cmd_master_parser(subparsers)
     add_cmd_worker_parser(subparsers)
     return parser
 

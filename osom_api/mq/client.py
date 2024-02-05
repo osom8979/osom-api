@@ -14,9 +14,6 @@ from osom_api.aio.shield_any import shield_any
 from osom_api.arguments import (
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_CONNECTION_TIMEOUT,
-    DEFAULT_REDIS_DATABASE,
-    DEFAULT_REDIS_HOST,
-    DEFAULT_REDIS_PORT,
     DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
 )
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
@@ -24,7 +21,6 @@ from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.logging.logging import logger
 from osom_api.mq.message import Message
 from osom_api.mq.path import get_global_broadcast_bytes_path
-from osom_api.mq.utils import redis_address
 
 
 def validation_redis_file(name: str, file: Optional[str] = None) -> None:
@@ -57,14 +53,7 @@ class MqClient:
 
     def __init__(
         self,
-        host=DEFAULT_REDIS_HOST,
-        port=DEFAULT_REDIS_PORT,
-        database=DEFAULT_REDIS_DATABASE,
-        password: Optional[str] = None,
-        use_tls=False,
-        ca_cert_path: Optional[str] = None,
-        cert_path: Optional[str] = None,
-        key_path: Optional[str] = None,
+        url: Optional[str] = None,
         connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
         subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
         close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
@@ -74,31 +63,8 @@ class MqClient:
         debug=False,
         verbose=0,
     ):
-        address = redis_address(host, port, database, use_tls)
-        logger.info(f"Redis connection address: {address}")
-
-        if debug and verbose >= VL2:
-            logger.debug(f"Redis Password: {password}")
-            logger.debug(f"Redis TLS: {use_tls}")
-            logger.debug(f"Redis TLS key file: {key_path}")
-            logger.debug(f"Redis TLS cert file: {cert_path}")
-            logger.debug(f"Redis TLS CA cert file: {ca_cert_path}")
-
-        redis_kwargs = dict()
-        redis_kwargs["socket_connect_timeout"] = connection_timeout
-
-        if password:
-            redis_kwargs["password"] = password
-
-        if use_tls:
-            validation_redis_file("Key", key_path)
-            validation_redis_file("Cert", cert_path)
-            validation_redis_file("CA/Cert", ca_cert_path)
-            redis_kwargs["ssl_keyfile"] = key_path
-            redis_kwargs["ssl_certfile"] = cert_path
-            redis_kwargs["ssl_ca_certs"] = ca_cert_path
-
-        self._redis = from_url(address, **redis_kwargs)
+        logger.info(f"Redis connection url: {url}")
+        self._redis = from_url(url, socket_connect_timeout=connection_timeout)
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
         self._callback = callback

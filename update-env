@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+
+{
+    echo "# Created at $(date)"
+
+    echo "# Common"
+    echo "TZ=Asia/Seoul"
+    echo "COLORED_LOGGING=True"
+    echo "DEFAULT_LOGGING=False"
+    echo "SIMPLE_LOGGING=False"
+    echo "USE_UVLOOP=True"
+    echo "SEVERITY=info"
+    echo "DEBUG=False"
+    echo "VERBOSE=0"
+
+    echo "# Redis common"
+    echo "REDIS_CONNECTION_TIMEOUT=8.0"
+    echo "REDIS_SUBSCRIBE_TIMEOUT=4.0"
+    echo "REDIS_CLOSE_TIMEOUT=12.0"
+
+    echo "# Vault api"
+    opm-vault request api
+
+    echo "# Vault web"
+    opm-vault request web
+
+    echo "# User"
+    echo "USER_UID=$(id -u)"
+    echo "USER_GID=$(id -g)"
+
+    echo "# Traefik"
+    echo "FRONTEND_HOST=<your.domain.com>"
+    echo "ACME_EMAIL=<your@email.com>"
+} >> "$ROOT_DIR/.env"

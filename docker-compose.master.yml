@@ -1,0 +1,76 @@
+version: "3.3"
+
+services:
+  master:
+    image: "ghcr.io/osom8979/osom-api:latest"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    command: master
+    environment:
+      - "TZ=${TZ:?err}"
+      - "COLORED_LOGGING=${COLORED_LOGGING:?err}"
+      - "DEFAULT_LOGGING=${DEFAULT_LOGGING:?err}"
+      - "SIMPLE_LOGGING=${SIMPLE_LOGGING:?err}"
+      - "USE_UVLOOP=${USE_UVLOOP:?err}"
+      - "SEVERITY=${SEVERITY:?err}"
+      - "DEBUG=${DEBUG:?err}"
+      - "VERBOSE=${VERBOSE:?err}"
+      - "SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}"
+      - "SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?err}"
+      - "REDIS_URL=${REDIS_URL:?err}"
+      - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
+      - "S3_ACCESS=${S3_ACCESS:?err}"
+      - "S3_SECRET=${S3_SECRET:?err}"
+      - "S3_REGION=${S3_REGION:?err}"
+      - "S3_BUCKET=${S3_BUCKET:?err}"
+    deploy:
+      mode: replicated
+      replicas: 2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=osom-net"
+      - "traefik.http.routers.osom_master.rule=Host(`${FRONTEND_HOST:?err}`)"
+      - "traefik.http.routers.osom_master.entrypoints=websecure"
+      - "traefik.http.routers.osom_master.tls.certresolver=osom_resolver"
+      - "traefik.http.services.osom_master.loadbalancer.server.port=10503"
+    depends_on:
+      - traefik
+
+  traefik:
+    image: "traefik:v2.10"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+    command:
+      - "--ping=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      #- "--entrypoints.web.address=:80"
+      #- "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      #- "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      #- "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.osom_resolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.osom_resolver.acme.email=${ACME_EMAIL:?err}"
+      - "--certificatesresolvers.osom_resolver.acme.storage=/letsencrypt/acme.json"
+      #- "--log.level=DEBUG"

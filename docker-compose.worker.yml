@@ -18,15 +18,16 @@ services:
       - "SIMPLE_LOGGING=${SIMPLE_LOGGING:?err}"
       - "USE_UVLOOP=${USE_UVLOOP:?err}"
       - "SEVERITY=${SEVERITY:?err}"
-      - "REDIS_HOST=${REDIS_HOST:?err}"
-      - "REDIS_PORT=${REDIS_PORT:?err}"
-      - "REDIS_DATABASE=${REDIS_DATABASE:?err}"
-      - "REDIS_PASSWORD=${REDIS_PASSWORD:?err}"
-      - "REDIS_USE_TLS=${REDIS_USE_TLS:?err}"
+      - "DEBUG=${DEBUG:?err}"
+      - "VERBOSE=${VERBOSE:?err}"
+      - "SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}"
+      - "SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?err}"
+      - "REDIS_URL=${REDIS_URL:?err}"
       - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
       - "S3_ACCESS=${S3_ACCESS:?err}"
       - "S3_SECRET=${S3_SECRET:?err}"
       - "S3_REGION=${S3_REGION:?err}"
       - "S3_BUCKET=${S3_BUCKET:?err}"
-      - "SUPABASE_URL=${SUPABASE_URL:?err}"
-      - "SUPABASE_KEY=${SUPABASE_KEY:?err}"
+    deploy:
+      mode: replicated
+      replicas: 2

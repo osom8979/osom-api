@@ -23,14 +23,7 @@ class CommonContext(MqClientCallback):
         self._s3 = None
 
         self._mq = MqClient(
-            host=config.redis_host,
-            port=config.redis_port,
-            database=config.redis_database,
-            password=config.redis_password,
-            use_tls=config.redis_use_tls,
-            ca_cert_path=config.redis_ca_cert,
-            cert_path=config.redis_cert,
-            key_path=config.redis_key,
+            url=config.redis_url,
             connection_timeout=config.redis_connection_timeout,
             subscribe_timeout=config.redis_subscribe_timeout,
             close_timeout=config.redis_close_timeout,
