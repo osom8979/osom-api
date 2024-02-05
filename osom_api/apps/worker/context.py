@@ -3,19 +3,24 @@
 from argparse import Namespace
 
 from overrides import override
-from orjson import loads
+from type_serialize.json import dumps, loads
 
 from osom_api.aio.run import aio_run
+from osom_api.apps.worker.commands.progress.create import ProgressCreate
 from osom_api.common.config import CommonConfig
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
-from osom_api.mq.path import RESPONSE_PATH, QUEUE_PATH
+from osom_api.mq.path import QUEUE_PATH, RESPONSE_PATH
+from osom_api.mq.protocol.worker import WorkerRequest
 
 
 class WorkerContext(CommonContext):
     def __init__(self, args: Namespace):
         self._config = CommonConfig.from_namespace(args)
         super().__init__(self._config)
+
+        commands = {ProgressCreate}
+        self._commands = {c.__api__: c() for c in commands}
 
     @override
     async def on_mq_connect(self) -> None:
@@ -36,12 +41,21 @@ class WorkerContext(CommonContext):
             if packet is None:
                 continue
 
-            o = loads(packet[1])
-            message_api = o["api"]
-            message_id = o["id"]
-            if message_api == "/progress/new":
-                res = b"{\"id\": \"UUID-XXX-YYY\"}"
-                await self.mq.lpush_bytes(f"{RESPONSE_PATH}/{message_id}", res)
+            request = loads(packet[1], WorkerRequest)
+            assert isinstance(request, WorkerRequest)
+            message_api = request.api
+            message_id = request.id
+            message_data = request.data
+
+            command = self._commands.get(message_api)
+            if command is None:
+                continue
+
+            result = await command.run(message_data, self)
+            if message_id:
+                response_path = f"{RESPONSE_PATH}/{message_id}"
+                response_data = dumps(result)
+                await self.mq.lpush_bytes(response_path, response_data)
 
     async def main(self) -> None:
         await self.common_open()
