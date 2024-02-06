@@ -9,6 +9,9 @@ from osom_api.arguments import (
     DEFAULT_REDIS_BLOCKING_TIMEOUT,
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_CONNECTION_TIMEOUT,
+    DEFAULT_REDIS_EXPIRE_LONG,
+    DEFAULT_REDIS_EXPIRE_MEDIUM,
+    DEFAULT_REDIS_EXPIRE_SHORT,
     DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     DEFAULT_SEVERITY,
     DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
@@ -25,6 +28,9 @@ class CommonConfig:
         redis_subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
         redis_blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
         redis_close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
+        redis_expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
+        redis_expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
+        redis_expire_long=DEFAULT_REDIS_EXPIRE_LONG,
         s3_endpoint: Optional[str] = None,
         s3_access: Optional[str] = None,
         s3_secret: Optional[str] = None,
@@ -46,6 +52,9 @@ class CommonConfig:
         self.redis_subscribe_timeout = redis_subscribe_timeout
         self.redis_blocking_timeout = redis_blocking_timeout
         self.redis_close_timeout = redis_close_timeout
+        self.redis_expire_short = redis_expire_short
+        self.redis_expire_medium = redis_expire_medium
+        self.redis_expire_long = redis_expire_long
         self.s3_endpoint = s3_endpoint
         self.s3_access = s3_access
         self.s3_secret = s3_secret
@@ -74,6 +83,9 @@ class CommonConfig:
         assert isinstance(args.redis_subscribe_timeout, float)
         assert isinstance(args.redis_blocking_timeout, float)
         assert isinstance(args.redis_close_timeout, float)
+        assert isinstance(args.redis_expire_short, float)
+        assert isinstance(args.redis_expire_medium, float)
+        assert isinstance(args.redis_expire_long, float)
 
         assert isinstance(args.s3_endpoint, (type(None), str))
         assert isinstance(args.s3_access, (type(None), str))

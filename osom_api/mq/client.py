@@ -188,7 +188,7 @@ class MqClient:
         if expire is not None:
             logger.info(f"Left PUSH '{key}' -> {value!r} (expire: {expire}s)")
             async with self._redis.pipeline(transaction=True) as pipeline:
-                await (pipeline.lpush(key, value).expire(expire).execute())
+                await pipeline.lpush(key, value).expire(key, expire).execute()
         else:
             logger.info(f"Left PUSH '{key}' -> {value!r}")
             await self._redis.lpush(key, value)

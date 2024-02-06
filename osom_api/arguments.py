@@ -33,7 +33,7 @@ CMD_WORKER_EPILOG: Final[str] = ""
 
 CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
 
-DEFAULT_DOTENV_FILENAME: Final[str] = ".env"
+DEFAULT_DOTENV_FILENAME: Final[str] = ".env.local"
 
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503  # ap1.0503.run
@@ -43,9 +43,10 @@ DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 8.0
 DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_BLOCKING_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 12.0
+DEFAULT_REDIS_EXPIRE_SHORT: Final[float] = 4.0
+DEFAULT_REDIS_EXPIRE_MEDIUM: Final[float] = 8.0
+DEFAULT_REDIS_EXPIRE_LONG: Final[float] = 12.0
 
-DEFAULT_SUPABASE_AUTO_REFRESH_TOKEN: Final[bool] = True
-DEFAULT_SUPABASE_PERSIST_SESSION: Final[bool] = True
 DEFAULT_SUPABASE_POSTGREST_TIMEOUT: Final[float] = 8.0
 DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
@@ -107,6 +108,9 @@ def add_redis_arguments(
     connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
     subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
+    expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
+    expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
+    expire_long=DEFAULT_REDIS_EXPIRE_LONG,
     close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
 ) -> None:
     parser.add_argument(
@@ -115,6 +119,7 @@ def add_redis_arguments(
         metavar="url",
         help="Redis URL",
     )
+
     parser.add_argument(
         "--redis-connection-timeout",
         default=get_eval("REDIS_CONNECTION_TIMEOUT", connection_timeout),
@@ -142,6 +147,28 @@ def add_redis_arguments(
         metavar="sec",
         type=float,
         help=f"Redis close timeout in seconds (default: {close_timeout:.2f})",
+    )
+
+    parser.add_argument(
+        "--redis-expire-short",
+        default=get_eval("REDIS_EXPIRE_SHORT", expire_short),
+        metavar="sec",
+        type=float,
+        help=f"Redis short expire seconds (default: {expire_short:.2f})",
+    )
+    parser.add_argument(
+        "--redis-expire-medium",
+        default=get_eval("REDIS_EXPIRE_MEDIUM", expire_medium),
+        metavar="sec",
+        type=float,
+        help=f"Redis medium expire seconds (default: {expire_medium:.2f})",
+    )
+    parser.add_argument(
+        "--redis-expire-long",
+        default=get_eval("REDIS_EXPIRE_LONG", expire_long),
+        metavar="sec",
+        type=float,
+        help=f"Redis long expire seconds (default: {expire_long:.2f})",
     )
 
 
