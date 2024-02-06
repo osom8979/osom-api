@@ -182,9 +182,16 @@ class MqClient:
     async def set_str(self, key: str, value: str) -> None:
         await self.set_bytes(key, value.encode("utf8"))
 
-    async def lpush_bytes(self, key: str, value: bytes) -> None:
-        logger.info(f"Left PUSH '{key}' -> {value!r}")
-        await self._redis.lpush(key, value)
+    async def lpush_bytes(
+        self, key: str, value: bytes, expire: Optional[int] = None
+    ) -> None:
+        if expire is not None:
+            logger.info(f"Left PUSH '{key}' -> {value!r} (expire: {expire}s)")
+            async with self._redis.pipeline(transaction=True) as pipeline:
+                await (pipeline.lpush(key, value).expire(expire).execute())
+        else:
+            logger.info(f"Left PUSH '{key}' -> {value!r}")
+            await self._redis.lpush(key, value)
 
     async def brpop_bytes(
         self,
