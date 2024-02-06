@@ -1,36 +1,46 @@
 #!/usr/bin/env bash
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+ENV_LOCAL="$ROOT_DIR/.env.local"
 
-{
-    echo "# Created at $(date)"
+if ! command -v timedatectl &> /dev/null; then
+    echo "Not found timedatectl command" 1>&2
+    exit 1
+fi
 
-    echo "# Common"
-    echo "TZ=Asia/Seoul"
-    echo "COLORED_LOGGING=True"
-    echo "DEFAULT_LOGGING=False"
-    echo "SIMPLE_LOGGING=False"
-    echo "USE_UVLOOP=True"
-    echo "SEVERITY=info"
-    echo "DEBUG=False"
-    echo "VERBOSE=0"
+if ! CURRENT_TIMEZONE=$(timedatectl -p Timezone --value show); then
+    echo "The 'timedatectl' command occurred error code $?" 1>&2
+    exit 1
+fi
 
-    echo "# Redis common"
-    echo "REDIS_CONNECTION_TIMEOUT=8.0"
-    echo "REDIS_SUBSCRIBE_TIMEOUT=4.0"
-    echo "REDIS_CLOSE_TIMEOUT=12.0"
+if ! command -v opm-vault &> /dev/null; then
+    echo "Not found opm-vault command" 1>&2
+    exit 1
+fi
 
-    echo "# Vault api"
-    opm-vault request api
+if ! opm-vault has api; then
+    echo "Key 'api' does not exist in opm-vault" 1>&2
+    exit 1
+fi
 
-    echo "# Vault web"
-    opm-vault request web
+if ! opm-vault has web; then
+    echo "Key 'web' does not exist in opm-vault" 1>&2
+    exit 1
+fi
 
-    echo "# User"
-    echo "USER_UID=$(id -u)"
-    echo "USER_GID=$(id -g)"
+ENV_CONTENT="
+# ================================================
+# Created at $(date)
+TZ=${CURRENT_TIMEZONE}
+USER_UID=$(id -u)
+USER_GID=$(id -g)
 
-    echo "# Traefik"
-    echo "FRONTEND_HOST=<your.domain.com>"
-    echo "ACME_EMAIL=<your@email.com>"
-} >> "$ROOT_DIR/.env"
+# vault api
+$(opm-vault request api)
+
+# vault web
+$(opm-vault request web)
+# ================================================
+"
+
+echo "$ENV_CONTENT" >> "$ENV_LOCAL"

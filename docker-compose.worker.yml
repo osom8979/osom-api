@@ -11,23 +11,8 @@ services:
         max-file: "10"
     user: ${USER_UID:?err}:${USER_GID:?err}
     command: worker
-    environment:
-      - "TZ=${TZ:?err}"
-      - "COLORED_LOGGING=${COLORED_LOGGING:?err}"
-      - "DEFAULT_LOGGING=${DEFAULT_LOGGING:?err}"
-      - "SIMPLE_LOGGING=${SIMPLE_LOGGING:?err}"
-      - "USE_UVLOOP=${USE_UVLOOP:?err}"
-      - "SEVERITY=${SEVERITY:?err}"
-      - "DEBUG=${DEBUG:?err}"
-      - "VERBOSE=${VERBOSE:?err}"
-      - "SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}"
-      - "SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?err}"
-      - "REDIS_URL=${REDIS_URL:?err}"
-      - "S3_ENDPOINT=${S3_ENDPOINT:?err}"
-      - "S3_ACCESS=${S3_ACCESS:?err}"
-      - "S3_SECRET=${S3_SECRET:?err}"
-      - "S3_REGION=${S3_REGION:?err}"
-      - "S3_BUCKET=${S3_BUCKET:?err}"
+    env_file:
+      - .env.local
     deploy:
       mode: replicated
       replicas: 2

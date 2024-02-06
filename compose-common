@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
+ENV_LOCAL="$ROOT_DIR/.env.local"
+
+TZ=$(test -f "$ENV_LOCAL" && source "$ENV_LOCAL" && echo "$TZ")
+USER_UID=$(test -f "$ENV_LOCAL" && source "$ENV_LOCAL" && echo "$USER_UID")
+USER_GID=$(test -f "$ENV_LOCAL" && source "$ENV_LOCAL" && echo "$USER_GID")
+
+TZ=${TZ:-$(timedatectl -p Timezone --value show)}
+USER_UID=${USER_UID:-$(id -u)}
+USER_GID=${USER_GID:-$(id -g)}
+
+export TZ
+export USER_UID
+export USER_GID
