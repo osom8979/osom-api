@@ -7,6 +7,10 @@ from overrides import override
 
 from osom_api.apps.worker.commands.interface import WorkerCommand
 from osom_api.common.context import CommonContext
+from osom_api.db.progress import (
+    insert_anonymous_progress,
+    latest_anonymous_progress_datetime,
+)
 from osom_api.logging.logging import logger
 
 
@@ -15,23 +19,11 @@ class ProgressCreate(WorkerCommand):
 
     @override
     async def run(self, data: Any, context: CommonContext) -> Any:
-        response = (
-            context.supabase.table("progress")
-            .select("created_at")
-            .is_("owner", "null")
-            .order("created_at", desc=True)
-            .limit(1)
-            .execute()
-        )
+        created = latest_anonymous_progress_datetime(context.supabase)
+        if created is not None:
+            duration = (datetime.now().astimezone() - created).total_seconds()
+            logger.debug(f"Created duration: {duration:.2f}s")
 
-        if len(response.data) >= 1:
-            created_at = datetime.fromisoformat(response.data[0]["created_at"])
-            created_duration = (
-                datetime.now().astimezone() - created_at
-            ).total_seconds()
-            logger.debug(f"Created duration: {created_duration:.2f}s")
-
-        response = context.supabase.table("progress").insert({"value": 0}).execute()
-        progress_id = response.data[0]["id"]
+        progress_id = insert_anonymous_progress(context.supabase)
         logger.info(f"Insert progress ID: {progress_id}")
         return {"id": progress_id}
