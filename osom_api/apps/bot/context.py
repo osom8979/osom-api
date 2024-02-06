@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# fmt: off
+# isort: off
+from osom_api.packages.helper.aiogramlib import Bot, Router, Dispatcher
+# isort: on
+# fmt: on
+
 from argparse import Namespace
 
-from aiogram import Bot, Dispatcher, Router
 from aiogram.enums import ParseMode
 from aiogram.types import Message
 from aiogram.utils.markdown import hbold

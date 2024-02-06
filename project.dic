@@ -2,6 +2,7 @@
 # https://plugins.jetbrains.com/plugin/12089-dictionary
 
 asctime
+asyncio's
 brpop
 certfile
 certificatesresolvers
@@ -32,6 +33,7 @@ requirepass
 tlschallenge
 traefik
 tznow
+uvloop's
 websecure
 weur
 wnam
