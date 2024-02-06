@@ -12,11 +12,5 @@ class WorkerRequest:
 
 
 @dataclass
-class CreateProgressData:
-    uuid: str
-
-
-@dataclass
-class CreateProgressResponse:
-    error: Optional[str] = None
-    data: Optional[CreateProgressData] = None
+class InsertProgressResponse:
+    id: str

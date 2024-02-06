@@ -31,3 +31,7 @@ class NoMessageIdError(WorkerError):
 
 class PacketDumpError(WorkerError):
     pass
+
+
+class InsertError(WorkerError):
+    pass
