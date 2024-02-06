@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 
 @dataclass
 class WorkerRequest:
-    api: str
-    id: str
-    data: Any
+    api: Optional[str] = None
+    id: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -18,5 +18,5 @@ class CreateProgressData:
 
 @dataclass
 class CreateProgressResponse:
-    error: Optional[str]
-    data: Optional[CreateProgressData]
+    error: Optional[str] = None
+    data: Optional[CreateProgressData] = None

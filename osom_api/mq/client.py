@@ -63,7 +63,6 @@ class MqClient:
         debug=False,
         verbose=0,
     ):
-        logger.info(f"Redis connection url: {url}")
         self._redis = from_url(url, socket_connect_timeout=connection_timeout)
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout

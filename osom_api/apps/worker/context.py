@@ -3,12 +3,13 @@
 from argparse import Namespace
 from asyncio.exceptions import CancelledError
 from math import floor
-from typing import Optional
+from typing import Dict, Optional
 
 from overrides import override
 from type_serialize.json import dumps, loads
 
 from osom_api.aio.run import aio_run
+from osom_api.apps.worker.commands.interface import WorkerCommand
 from osom_api.apps.worker.commands.progress.create import ProgressCreate
 from osom_api.apps.worker.exceptions import (
     CommandRuntimeError,
@@ -28,11 +29,14 @@ from osom_api.mq.protocol.worker import WorkerRequest
 
 
 class WorkerContext(CommonContext):
-    def __init__(self, args: Namespace):
+    _commands: Dict[str, WorkerCommand]
+
+    def __init__(self, args: Namespace, task_name: Optional[str] = None):
         self._config = CommonConfig.from_namespace(args)
+        self._task_name = task_name if task_name else self.__class__.__name__
         super().__init__(self._config)
 
-        commands = {ProgressCreate}
+        commands = (ProgressCreate,)
         self._commands = {c.__api__: c() for c in commands}
 
     @override
@@ -52,13 +56,15 @@ class WorkerContext(CommonContext):
         if packet is None:
             raise PollingTimeoutError()
 
+        logger.info(packet)
+
         try:
             request = loads(packet[1], WorkerRequest)
             assert isinstance(request, WorkerRequest)
         except BaseException as e:
             raise PacketLoadError() from e
 
-        if request.api:
+        if not request.api:
             raise EmptyApiError()
 
         command = self._commands.get(request.api)
@@ -68,6 +74,7 @@ class WorkerContext(CommonContext):
         try:
             result = await command.run(request.data, self)
         except BaseException as e:
+            logger.error(e)
             raise CommandRuntimeError() from e
 
         if not request.id:
@@ -87,7 +94,8 @@ class WorkerContext(CommonContext):
             try:
                 timeout_seconds = floor(self._config.redis_blocking_timeout)
                 await self.polling_iter(timeout_seconds)
-            except WorkerError:
+            except WorkerError as e:
+                logger.warning(type(e).__name__)
                 continue
             except CancelledError:
                 logger.warning("A Cancel signal was detected.")
