@@ -28,12 +28,18 @@ if ! opm-vault has web; then
     exit 1
 fi
 
+if ! command -v openssl &> /dev/null; then
+    opm-println-error "Not found openssl command"
+    exit 1
+fi
+
 ENV_CONTENT="
 # ================================================
-# Created at $(date)
+# created at $(date)
 TZ=${CURRENT_TIMEZONE}
 USER_UID=$(id -u)
 USER_GID=$(id -g)
+API_TOKEN=$(openssl rand -hex 32)
 
 # vault api
 $(opm-vault request api)
@@ -44,3 +50,4 @@ $(opm-vault request web)
 "
 
 echo "$ENV_CONTENT" >> "$ENV_LOCAL"
+echo "Please check local env file: '$ENV_LOCAL'"

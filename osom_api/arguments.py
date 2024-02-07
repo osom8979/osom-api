@@ -104,6 +104,13 @@ def add_http_arguments(parser: ArgumentParser) -> None:
         help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
 
+    parser.add_argument(
+        "--api-token",
+        default=get_eval("API_TOKEN"),
+        metavar="token",
+        help="API authentication token. if not specified, a random value is assigned.",
+    )
+
 
 def add_redis_arguments(
     parser: ArgumentParser,
