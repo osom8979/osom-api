@@ -34,9 +34,9 @@ from osom_api.mq.protocol.worker import (
 
 class WorkerContext(CommonContext):
     def __init__(self, args: Namespace):
-        self._commands = create_command_map()
         self._config = CommonConfig.from_namespace(args)
         super().__init__(self._config)
+        self._commands = create_command_map(self)
 
     @override
     async def on_mq_connect(self) -> None:
@@ -78,7 +78,8 @@ class WorkerContext(CommonContext):
             request_msg = request.get(WORKER_REQUEST_MSG_KEY)
             request_data = request.get(WORKER_REQUEST_DATA_KEY)
         except BaseException as e:
-            raise PacketLoadError("Packet decoding fail") from e
+            logger.exception(e)
+            raise PacketLoadError("Packet decoding fail")
 
         if not request_api:
             raise EmptyApiError("Request worker API is empty")
@@ -88,9 +89,10 @@ class WorkerContext(CommonContext):
             raise NotFoundCommandKeyError("Worker command not found")
 
         try:
-            result = await command.run(request_data, self)
+            result = await command.run(request_data)
         except BaseException as e:
-            raise CommandRuntimeError("A command runtime error was detected") from e
+            logger.exception(e)
+            raise CommandRuntimeError("A command runtime error was detected")
 
         if not request_msg:
             raise NoMessageIdError("Message ID does not exist")
@@ -102,7 +104,8 @@ class WorkerContext(CommonContext):
             response_data = dumps(serialize(result))
             assert isinstance(response_data, bytes)
         except BaseException as e:
-            raise PacketDumpError("Packet encoding fail") from e
+            logger.exception(e)
+            raise PacketDumpError("Packet encoding fail")
 
         response_path = f"{RESPONSE_PATH}/{request_msg}"
         await self.mq.lpush_bytes(response_path, response_data, expire)
