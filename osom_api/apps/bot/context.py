@@ -60,11 +60,11 @@ class BotContext(CommonContext):
         await message.answer(hbold(self._osom_version))
 
     async def main(self) -> None:
-        await self.common_open()
+        await self.open_common_context()
         try:
             await self._dispatcher.start_polling(self._bot)
         finally:
-            await self.common_close()
+            await self.close_common_context()
 
     def run(self) -> None:
         aio_run(self.main(), self._config.use_uvloop)

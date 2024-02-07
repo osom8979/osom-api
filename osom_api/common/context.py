@@ -75,10 +75,10 @@ class CommonContext(MqClientCallback):
         assert self._s3 is not None
         return self._s3
 
-    async def common_open(self) -> None:
+    async def open_common_context(self) -> None:
         await self._mq.open()
 
-    async def common_close(self) -> None:
+    async def close_common_context(self) -> None:
         await self._mq.close()
 
     @staticmethod

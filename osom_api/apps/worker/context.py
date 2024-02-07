@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from asyncio.exceptions import CancelledError
 from math import floor
 from typing import Dict, Optional
 
@@ -107,28 +106,20 @@ class WorkerContext(CommonContext):
                 expire_seconds = floor(self._config.redis_expire_medium)
                 await self.polling_iter(timeout_seconds, expire_seconds)
             except NoMessageIdError:
-                continue
+                pass
             except CommandRuntimeError as e:
                 logger.error(e)
-                continue
             except WorkerError as e:
                 logger.debug(e)
-                continue
-            except CancelledError:
-                logger.warning("A Cancel signal was detected.")
-                break
-            except BaseException as e:
-                logger.exception(e)
-                break
 
     async def main(self) -> None:
-        await self.common_open()
+        await self.open_common_context()
         try:
             logger.info("Start polling ...")
             await self.start_polling()
         finally:
             logger.info("Polling is done...")
-            await self.common_close()
+            await self.close_common_context()
 
     def run(self) -> None:
         aio_run(self.main(), self._config.use_uvloop)

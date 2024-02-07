@@ -28,9 +28,9 @@ class MasterContext(CommonContext):
     @asynccontextmanager
     async def _lifespan(self, app):
         assert self._app == app
-        await self.common_open()
+        await self.open_common_context()
         yield
-        await self.common_close()
+        await self.close_common_context()
 
     async def health(self):
         assert self

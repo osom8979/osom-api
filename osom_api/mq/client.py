@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from asyncio import Event, Task, create_task, get_running_loop, run_coroutine_threadsafe
 from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
+from datetime import datetime
 from os import R_OK, access, path
 from typing import Optional, Sequence
 
@@ -50,6 +51,7 @@ class MqClientCallback(metaclass=ABCMeta):
 
 class MqClient:
     _task: Optional[Task[None]]
+    _subscribe_begin: Optional[datetime]
 
     def __init__(
         self,
@@ -70,6 +72,7 @@ class MqClient:
         self._done = done if done is not None else Event()
         self._task_name = task_name if task_name else self.__class__.__name__
         self._task = None
+        self._subscribe_begin = None
         self._debug = debug
         self._verbose = verbose
 
@@ -82,6 +85,23 @@ class MqClient:
     async def close(self) -> None:
         assert self._task is not None
         self._done.set()
+
+        if not self._task.cancelled() and self._subscribe_begin is not None:
+            # If the waiting time is longer than the close timeout,
+            # Forcefully cancels the task.
+            # This will prevent the shutdown wait time from becoming too long.
+            duration = (datetime.now() - self._subscribe_begin).total_seconds()
+            expected_waiting_time = self._subscribe_timeout - duration
+            if self._close_timeout < expected_waiting_time:
+                if self._debug:
+                    logger.warning("Forces cancellation of a task during Redis close")
+                    if self._verbose >= VL1:
+                        logger.warning(
+                            f"Close timeout ({self._close_timeout:.1f}s) vs "
+                            f"Expected waiting time ({expected_waiting_time:.1f}s)"
+                        )
+                self._task.cancel()
+
         try:
             async with async_timeout(self._close_timeout):
                 await self._task
@@ -137,18 +157,24 @@ class MqClient:
 
         while not self._done.is_set():
             if self._debug and self._verbose >= VL2:
-                logger.debug("Get subscription message ...")
+                logger.debug(f"Subscription message ... {self._subscribe_timeout:.1f}s")
 
-            msg = await pubsub.get_message(
-                ignore_subscribe_messages=True,
-                timeout=self._subscribe_timeout,
-            )
+            try:
+                self._subscribe_begin = datetime.now()
+                msg = await pubsub.get_message(
+                    ignore_subscribe_messages=True,
+                    timeout=self._subscribe_timeout,
+                )
+            finally:
+                self._subscribe_begin = None
+
+            if msg is None:
+                if self._debug and self._verbose >= VL2:
+                    logger.debug("Subscription message not received")
+                continue
 
             if self._debug and self._verbose >= VL1:
                 logger.debug(f"Recv subscription message: {msg}")
-
-            if msg is None:
-                continue
 
             msg = Message.from_message(msg)
             if not msg.is_message:
