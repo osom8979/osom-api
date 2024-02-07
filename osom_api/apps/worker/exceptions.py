@@ -29,6 +29,10 @@ class NoMessageIdError(WorkerError):
     pass
 
 
+class NoMessageDataError(WorkerError):
+    pass
+
+
 class PacketDumpError(WorkerError):
     pass
 

@@ -2,17 +2,18 @@
 
 from argparse import Namespace
 from math import floor
-from typing import Dict, Optional
+from typing import Optional
 
+from orjson import dumps, loads
 from overrides import override
-from type_serialize.json import dumps, loads
+from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
-from osom_api.apps.worker.commands.interface import WorkerCommand
-from osom_api.apps.worker.commands.progress.create import ProgressCreate
+from osom_api.apps.worker.commands import create_command_map
 from osom_api.apps.worker.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
+    NoMessageDataError,
     NoMessageIdError,
     NotFoundCommandKeyError,
     PacketDumpError,
@@ -24,19 +25,18 @@ from osom_api.common.config import CommonConfig
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 from osom_api.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH, encode_path
-from osom_api.mq.protocol.worker import WorkerRequest
+from osom_api.mq.protocol.worker import (
+    WORKER_REQUEST_API_KEY,
+    WORKER_REQUEST_DATA_KEY,
+    WORKER_REQUEST_MSG_KEY,
+)
 
 
 class WorkerContext(CommonContext):
-    _commands: Dict[str, WorkerCommand]
-
-    def __init__(self, args: Namespace, task_name: Optional[str] = None):
+    def __init__(self, args: Namespace):
+        self._commands = create_command_map()
         self._config = CommonConfig.from_namespace(args)
-        self._task_name = task_name if task_name else self.__class__.__name__
         super().__init__(self._config)
-
-        commands = (ProgressCreate,)
-        self._commands = {c.__api__: c() for c in commands}
 
     @override
     async def on_mq_connect(self) -> None:
@@ -70,33 +70,41 @@ class WorkerContext(CommonContext):
         assert recv_key == encode_path(QUEUE_COMMON_PATH)
 
         try:
-            request = loads(recv_data, WorkerRequest)
-            assert isinstance(request, WorkerRequest)
+            request = loads(recv_data)
+            if not isinstance(request, dict):
+                raise TypeError(f"Unsupported request type: {type(request).__name__}")
+
+            request_api = request.get(WORKER_REQUEST_API_KEY)
+            request_msg = request.get(WORKER_REQUEST_MSG_KEY)
+            request_data = request.get(WORKER_REQUEST_DATA_KEY)
         except BaseException as e:
             raise PacketLoadError("Packet decoding fail") from e
 
-        if not request.api:
+        if not request_api:
             raise EmptyApiError("Request worker API is empty")
 
-        command = self._commands.get(request.api)
+        command = self._commands.get(request_api)
         if command is None:
             raise NotFoundCommandKeyError("Worker command not found")
 
         try:
-            result = await command.run(request.data, self)
+            result = await command.run(request_data, self)
         except BaseException as e:
             raise CommandRuntimeError("A command runtime error was detected") from e
 
-        if not request.id:
+        if not request_msg:
             raise NoMessageIdError("Message ID does not exist")
 
+        if not result:
+            raise NoMessageDataError("Message Data does not exist")
+
         try:
-            response_data = dumps(result)
+            response_data = dumps(serialize(result))
             assert isinstance(response_data, bytes)
         except BaseException as e:
             raise PacketDumpError("Packet encoding fail") from e
 
-        response_path = f"{RESPONSE_PATH}/{request.id}"
+        response_path = f"{RESPONSE_PATH}/{request_msg}"
         await self.mq.lpush_bytes(response_path, response_data, expire)
 
     async def start_polling(self) -> None:

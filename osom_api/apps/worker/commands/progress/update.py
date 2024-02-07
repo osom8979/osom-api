@@ -16,7 +16,7 @@ from osom_api.logging.logging import logger
 from osom_api.mq.protocol.worker import CreateProgressResponse
 
 
-class ProgressCreate(WorkerCommand):
+class ProgressUpdate(WorkerCommand):
     @override
     async def run(self, data: Any, context: CommonContext) -> Any:
         created = latest_anonymous_progress_datetime(context.supabase)

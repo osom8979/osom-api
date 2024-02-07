@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Final, Optional
+
+WORKER_REQUEST_API_KEY: Final[str] = "api"
+WORKER_REQUEST_MSG_KEY: Final[str] = "msg"
+WORKER_REQUEST_DATA_KEY: Final[str] = "data"
 
 
 @dataclass
-class WorkerRequest:
-    api: Optional[str] = None
-    id: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class InsertProgressResponse:
+class CreateProgressResponse:
     id: str
+    """UUID of generated Progress."""
+
+
+@dataclass
+class UpdateProgressRequest:
+    id: str
+    """UUID of progress."""
+
+    value: Optional[str] = None
+    """The value of the progress."""
