@@ -21,7 +21,7 @@ class ProgressRouter(APIRouter):
         self.context = context
         super().__init__(prefix="/progress")
         self.add_api_route("/create", self.create, methods=["POST"])
-        self.add_api_route("/increase", self.increase, methods=["GET"])
+        self.add_api_route("/increase", self.increase, methods=["POST"])
 
     @property
     def mq(self):
