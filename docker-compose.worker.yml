@@ -2,7 +2,7 @@ version: "3.3"
 
 services:
   worker:
-    # image: "ghcr.io/osom8979/osom-api:latest"
+    image: "ghcr.io/osom8979/osom-api:latest"
     build: .
     restart: always
     logging:
