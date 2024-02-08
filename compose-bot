@@ -8,4 +8,8 @@ export TZ
 export USER_UID
 export USER_GID
 
-docker compose -p ddrm-bot -f "$ROOT_DIR/docker-compose.bot.yml" "$@"
+docker compose \
+    --project-name ddrm-bot \
+    --env-file "$ROOT_DIR/.env.local" \
+    --file "$ROOT_DIR/docker-compose.bot.yml" \
+    "$@"

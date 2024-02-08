@@ -8,4 +8,8 @@ export TZ
 export USER_UID
 export USER_GID
 
-docker compose -p ddrm-master -f "$ROOT_DIR/docker-compose.master.yml" "$@"
+docker compose \
+    --project-name ddrm-master \
+    --env-file "$ROOT_DIR/.env.local" \
+    --file "$ROOT_DIR/docker-compose.master.yml" \
+    "$@"
