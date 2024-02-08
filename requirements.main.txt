@@ -9,5 +9,6 @@ plugpack>=0.0.2
 type-serialize>=1.2.1
 orjson
 python-dotenv
-uvloop
+starlette
 uvicorn
+uvloop

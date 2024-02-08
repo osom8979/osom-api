@@ -7,6 +7,7 @@ from fastapi import APIRouter, FastAPI, WebSocket
 from overrides import override
 
 from osom_api.apps.master.config import MasterConfig
+from osom_api.apps.master.middlewares.authorization import AuthorizationMiddleware
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 
@@ -22,7 +23,9 @@ class MasterContext(CommonContext):
         self._router.add_api_route("/health", self.health, methods=["GET"])
         self._router.add_api_websocket_route("/ws", self.ws)
 
-        self._app = FastAPI(lifespan=self._lifespan)
+        self._app = FastAPI(lifespan=self._lifespan, openapi_url=None)
+        # noinspection PyTypeChecker
+        self._app.add_middleware(AuthorizationMiddleware, token=self._config.api_token)
         self._app.include_router(self._router)
 
     @asynccontextmanager
