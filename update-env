@@ -3,35 +3,68 @@
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" || exit; pwd)
 ENV_LOCAL="$ROOT_DIR/.env.local"
 
+AUTO_YES=0
+USAGE="
+Usage: ${BASH_SOURCE[0]} [options]
+
+Available options are:
+  -h, --help        Print this message.
+  -y, --yes         Automatic yes to prompts.
+  --                Stop handling options.
+"
+
+function print_error
+{
+    # shellcheck disable=SC2145
+    echo -e "\033[31m$@\033[0m" 1>&2
+}
+
+function print_message
+{
+    # shellcheck disable=SC2145
+    echo -e "\033[32m$@\033[0m"
+}
+
+function print_usage
+{
+    echo "$USAGE"
+}
+
+trap 'cancel_black' INT
+
+function cancel_black
+{
+    print_error "An interrupt signal was detected."
+    exit 1
+}
+
 if ! command -v timedatectl &> /dev/null; then
-    echo "Not found timedatectl command" 1>&2
+    print_error "Not found timedatectl command"
     exit 1
 fi
 
 if ! CURRENT_TIMEZONE=$(timedatectl -p Timezone --value show); then
-    echo "The 'timedatectl' command occurred error code $?" 1>&2
+    print_error "The 'timedatectl' command occurred error code $?"
     exit 1
 fi
 
 if ! command -v opm-vault &> /dev/null; then
-    echo "Not found opm-vault command" 1>&2
+    print_error "Not found opm-vault command"
     exit 1
 fi
 
 if ! opm-vault has api; then
-    echo "Key 'api' does not exist in opm-vault" 1>&2
+    print_error "Key 'api' does not exist in opm-vault"
     exit 1
 fi
 
 if ! opm-vault has web; then
-    echo "Key 'web' does not exist in opm-vault" 1>&2
+    print_error "Key 'web' does not exist in opm-vault"
     exit 1
 fi
 
-if ! command -v openssl &> /dev/null; then
-    opm-println-error "Not found openssl command"
-    exit 1
-fi
+read -r -p "Frontend hostname? " FRONTEND_HOST
+read -r -p "ACME email? " ACME_EMAIL
 
 ENV_CONTENT="
 # ================================================
@@ -39,15 +72,49 @@ ENV_CONTENT="
 TZ=${CURRENT_TIMEZONE}
 USER_UID=$(id -u)
 USER_GID=$(id -g)
-API_TOKEN=$(openssl rand -hex 32)
 
 # vault api
 $(opm-vault request api)
 
 # vault web
 $(opm-vault request web)
+
+# traefik
+FRONTEND_HOST=${FRONTEND_HOST}
+ACME_EMAIL=${ACME_EMAIL}
 # ================================================
 "
 
+while [[ -n $1 ]]; do
+    case $1 in
+    -h|--help)
+        print_usage
+        exit 0
+        ;;
+    -y|--yes)
+        AUTO_YES=1
+        shift
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        print_error -s "Invalid command: $1"
+        exit 1
+        ;;
+    esac
+done
+
+if [[ $AUTO_YES -ne 0 ]]; then
+    echo "$ENV_CONTENT"
+    read -r -p "Are you sure you want to continue with the installation? (y/n) " YN
+
+    if [[ "${YN,,}" != 'y' ]]; then
+        print_error "The job has been canceled"
+        exit 1
+    fi
+fi
+
 echo "$ENV_CONTENT" >> "$ENV_LOCAL"
-echo "Please check local env file: '$ENV_LOCAL'"
+print_message "Please check local env file: '$ENV_LOCAL'"

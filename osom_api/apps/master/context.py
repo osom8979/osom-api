@@ -8,6 +8,7 @@ from overrides import override
 
 from osom_api.apps.master.config import MasterConfig
 from osom_api.apps.master.middlewares.authorization import AuthorizationMiddleware
+from osom_api.apps.master.routers.progress import ProgressRouter
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 
@@ -25,8 +26,9 @@ class MasterContext(CommonContext):
 
         self._app = FastAPI(lifespan=self._lifespan, openapi_url=None)
         # noinspection PyTypeChecker
-        self._app.add_middleware(AuthorizationMiddleware, token=self._config.api_token)
+        self._app.add_middleware(AuthorizationMiddleware, token=self._config.opt_token)
         self._app.include_router(self._router)
+        self._app.include_router(ProgressRouter(self))
 
     @asynccontextmanager
     async def _lifespan(self, app):
@@ -36,8 +38,7 @@ class MasterContext(CommonContext):
         await self.close_common_context()
 
     async def health(self):
-        assert self
-        return {}
+        return {"mq": await self.mq.ping(1.0)}
 
     async def ws(self, websocket: WebSocket) -> None:
         assert self

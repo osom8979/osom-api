@@ -187,6 +187,15 @@ class MqClient:
             if self._callback is not None:
                 await shield_any(self._callback.on_mq_subscribe(channel, data), logger)
 
+    async def ping(self, timeout: Optional[float] = None) -> bool:
+        try:
+            async with async_timeout(timeout):
+                await self._redis.ping()
+        except:  # noqa
+            return False
+        else:
+            return True
+
     async def exists(self, key: str) -> bool:
         exists = 1 == await self._redis.exists(key)
         logger.info(f"Exists '{key}' -> {exists}")

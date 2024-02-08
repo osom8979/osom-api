@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional, Union
 
 from supabase import Client as SupabaseClient
 
@@ -49,3 +49,20 @@ def insert_anonymous_progress(supabase: SupabaseClient) -> Optional[str]:
 
     assert len(response.data) == 1
     return response.data[0][id_]
+
+
+def increase_progress_value(
+    supabase: SupabaseClient,
+    progress_id: str,
+    increase_value: Optional[int] = None,
+) -> Optional[int]:
+    params: Dict[str, Union[str, int]] = {"progress_id": progress_id}
+    if increase_value:
+        params["increase_value"] = increase_value
+    response = supabase.rpc("increase_progress_value", params).execute()
+
+    if len(response.data) == 0:
+        return None
+
+    assert len(response.data) == 1
+    return response.data[0][value]

@@ -8,6 +8,7 @@ overrides>=7.7.0
 plugpack>=0.0.2
 type-serialize>=1.2.1
 orjson
+postgrest
 python-dotenv
 starlette
 uvicorn

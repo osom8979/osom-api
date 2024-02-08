@@ -104,11 +104,20 @@ def add_http_arguments(parser: ArgumentParser) -> None:
         help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
 
+
+def add_api_arguments(parser: ArgumentParser) -> None:
+    api_token = get_eval("API_TOKEN", get_eval("OSOM_API_KEY", ""))
     parser.add_argument(
         "--api-token",
-        default=get_eval("API_TOKEN"),
+        default=api_token,
         metavar="token",
         help="API authentication token. if not specified, a random value is assigned.",
+    )
+    parser.add_argument(
+        "--api-disable-auth",
+        action="store_true",
+        default=get_eval("API_DISABLE_AUTH", False),
+        help="Disable authentication",
     )
 
 
@@ -288,6 +297,7 @@ def add_cmd_master_parser(subparsers) -> None:
     add_s3_arguments(parser)
     add_supabase_arguments(parser)
     add_http_arguments(parser)
+    add_api_arguments(parser)
 
 
 def add_cmd_worker_parser(subparsers) -> None:
