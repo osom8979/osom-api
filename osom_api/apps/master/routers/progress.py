@@ -4,7 +4,11 @@ from typing import Optional
 
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
+
+# noinspection PyPackageRequirements
 from postgrest.exceptions import APIError
+
+# noinspection PyPackageRequirements
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from osom_api.common.context import CommonContext

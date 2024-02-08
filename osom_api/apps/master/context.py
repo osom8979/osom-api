@@ -60,6 +60,7 @@ class MasterContext(CommonContext):
         logger.warning("Redis task is done")
 
     def run(self) -> None:
+        # noinspection PyPackageRequirements
         from uvicorn import run as uvicorn_run
 
         uvicorn_run(
