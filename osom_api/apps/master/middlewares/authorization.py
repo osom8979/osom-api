@@ -2,10 +2,9 @@
 
 from typing import Optional
 
-from starlette.datastructures import Headers
-from starlette.responses import Response
-from starlette.status import HTTP_401_UNAUTHORIZED
-from starlette.types import ASGIApp, Receive, Scope, Send
+from fastapi import Response, status
+from fastapi.applications import ASGIApp, Receive, Scope, Send
+from fastapi.datastructures import Headers
 
 
 def get_authorization_param(headers: Headers) -> Optional[str]:
@@ -30,7 +29,7 @@ class AuthorizationMiddleware:
             param = get_authorization_param(Headers(scope=scope))
             if not param or param != self.token:
                 response = Response(
-                    status_code=HTTP_401_UNAUTHORIZED,
+                    status_code=status.HTTP_401_UNAUTHORIZED,
                     headers={"WWW-Authenticate": "Bearer"},
                 )
                 await response(scope, receive, send)

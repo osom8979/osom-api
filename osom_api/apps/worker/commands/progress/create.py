@@ -6,7 +6,6 @@ from typing import Any
 from overrides import override
 
 from osom_api.apps.worker.commands.interface import WorkerCommand
-from osom_api.apps.worker.exceptions import InsertError
 from osom_api.db.progress import (
     insert_anonymous_progress,
     latest_anonymous_progress_datetime,
@@ -23,9 +22,6 @@ class ProgressCreate(WorkerCommand):
             duration = (datetime.now().astimezone() - created).total_seconds()
             logger.debug(f"Created duration: {duration:.2f}s")
 
-        progress_id = insert_anonymous_progress(self.supabase)
-        if progress_id is None:
-            raise InsertError("Anonymous progress insertion error")
-
-        logger.info(f"Insert progress ID: {progress_id}")
-        return CreateProgressResponse(id=progress_id)
+        body = insert_anonymous_progress(self.supabase)
+        logger.info(f"Insert progress ID: {body.id}")
+        return CreateProgressResponse(id=body.id)
