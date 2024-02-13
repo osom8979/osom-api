@@ -28,23 +28,23 @@ increase_value = "increase_value"
 null = "null"
 
 
-class InsertProgress(BaseModel):
+class InsertProgressResponse(BaseModel):
     id: str
 
 
-class SelectProgress(BaseModel):
+class SelectProgressResponse(BaseModel):
     value: float
     expired_at: str
     created_at: str
     updated_at: Optional[str] = None
 
 
-class UpdateProgress(BaseModel):
+class UpdateProgressRequest(BaseModel):
     value: float
 
 
-class IncreaseProgress(BaseModel):
-    value: float
+class IncreaseProgressRequest(BaseModel):
+    value: Optional[float] = None
 
 
 def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
@@ -72,7 +72,7 @@ def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
     return datetime.fromisoformat(row[created_at])
 
 
-def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgress:
+def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgressResponse:
     response = supabase.table(progress).insert({}).execute()
 
     if len(response.data) == 0:
@@ -83,13 +83,13 @@ def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgress:
 
     assert len(response.data) == 1
     row = response.data[0]
-    return InsertProgress(id=row[id_])
+    return InsertProgressResponse(id=row[id_])
 
 
 def select_anonymous_progress(
     supabase: SupabaseClient,
     code: str,
-) -> SelectProgress:
+) -> SelectProgressResponse:
     response = (
         supabase.table(progress)
         .select(value, created_at, expired_at, updated_at)
@@ -114,7 +114,7 @@ def select_anonymous_progress(
             detail="Expired progress",
         )
 
-    return SelectProgress(
+    return SelectProgressResponse(
         value=row[value],
         expired_at=row[expired_at],
         created_at=row[created_at],
@@ -125,8 +125,8 @@ def select_anonymous_progress(
 def update_anonymous_progress_value(
     supabase: SupabaseClient,
     code: str,
-    body: UpdateProgress,
-) -> SelectProgress:
+    body: UpdateProgressRequest,
+) -> SelectProgressResponse:
     response = (
         supabase.table(progress)
         .update({value: floor(body.value)})
@@ -143,7 +143,7 @@ def update_anonymous_progress_value(
 
     assert len(response.data) == 1
     row = response.data[0]
-    return SelectProgress(
+    return SelectProgressResponse(
         value=row[value],
         expired_at=row[expired_at],
         created_at=row[created_at],
@@ -154,10 +154,10 @@ def update_anonymous_progress_value(
 def increase_progress_value(
     supabase: SupabaseClient,
     code: str,
-    body: Optional[IncreaseProgress] = None,
-) -> SelectProgress:
+    body: Optional[IncreaseProgressRequest] = None,
+) -> SelectProgressResponse:
     params: Dict[str, Union[str, int]] = {progress_id: code}
-    if body is not None:
+    if body is not None and body.value is not None:
         params[increase_value] = floor(body.value)
     response = supabase.rpc(increase_anonymous_progress_value, params).execute()
 
@@ -169,7 +169,7 @@ def increase_progress_value(
 
     assert len(response.data) == 1
     row = response.data[0]
-    return SelectProgress(
+    return SelectProgressResponse(
         value=row[value],
         expired_at=row[expired_at],
         created_at=row[created_at],

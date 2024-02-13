@@ -6,8 +6,8 @@ from fastapi import APIRouter, Response, status
 
 from osom_api.common.context import CommonContext
 from osom_api.db.progress import (
-    IncreaseProgress,
-    UpdateProgress,
+    IncreaseProgressRequest,
+    UpdateProgressRequest,
     delete_anonymous_progress,
     increase_progress_value,
     insert_anonymous_progress,
@@ -71,7 +71,7 @@ class AnonymousProgressRouter(APIRouter):
         logger.info(f"Select progress ({code}) OK. {result}")
         return result
 
-    async def update_progress(self, code: str, body: UpdateProgress):
+    async def update_progress(self, code: str, body: UpdateProgressRequest):
         result = update_anonymous_progress_value(self.supabase, code, body)
         logger.info(f"Update progress ({code}) OK. {result}")
         return result
@@ -79,7 +79,7 @@ class AnonymousProgressRouter(APIRouter):
     async def increase_progress(
         self,
         code: str,
-        body: Optional[IncreaseProgress] = None,
+        body: Optional[IncreaseProgressRequest] = None,
     ):
         result = increase_progress_value(self.supabase, code, body)
         logger.info(f"Increase progress ({code}) OK. {result}")
