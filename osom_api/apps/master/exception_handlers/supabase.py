@@ -1,33 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from fastapi import FastAPI, Request, Response, status
-from fastapi.datastructures import Headers
 from fastapi.responses import ORJSONResponse
 
 # noinspection PyPackageRequirements
 from postgrest.exceptions import APIError
 
 
-def compatible_application_json(headers: Headers) -> bool:
-    accept = headers.get("Accept")
-    if not accept:
-        # 'None' is considered acceptable.
-        return True
-
-    tokens = accept.replace(" ", "").lower().split(",")
-    for token in tokens:
-        mime = token.split(";")[0]
-        if mime in ("application/json", "application/*", "*/*"):
-            return True
-
-    return False
-
-
 async def supabase_exception_handler(request: Request, exc: Exception) -> Response:
+    assert isinstance(request, Request)
     assert isinstance(exc, APIError)
-    if not compatible_application_json(request.headers):
-        return Response(status_code=status.HTTP_406_NOT_ACCEPTABLE)
-
     return ORJSONResponse(
         content=dict(
             error=dict(

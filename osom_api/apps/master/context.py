@@ -10,6 +10,7 @@ from osom_api.apps.master.config import MasterConfig
 from osom_api.apps.master.exception_handlers.supabase import (
     add_supabase_exception_handler,
 )
+from osom_api.apps.master.middlewares.accept_json import add_accept_json_middleware
 from osom_api.apps.master.middlewares.authorization import add_authorization_middleware
 from osom_api.apps.master.routers.anonymous.progress import AnonymousProgressRouter
 from osom_api.common.context import CommonContext
@@ -31,6 +32,7 @@ class MasterContext(CommonContext):
         self._app.include_router(self._router)
         self._app.include_router(AnonymousProgressRouter(self))
 
+        add_accept_json_middleware(self._app)
         add_authorization_middleware(self._app)
         add_supabase_exception_handler(self._app)
 
