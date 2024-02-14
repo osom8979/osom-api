@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Body, Path, Response, status
 
 from osom_api.common.context import CommonContext
 from osom_api.db.progress import (
@@ -66,20 +66,24 @@ class AnonymousProgressRouter(APIRouter):
         logger.info(f"Insert progress OK. {result}")
         return result
 
-    async def read_progress(self, code: str):
+    async def read_progress(self, code: Annotated[str, Path()]):
         result = select_anonymous_progress(self.supabase, code)
         logger.info(f"Select progress ({code}) OK. {result}")
         return result
 
-    async def update_progress(self, code: str, body: UpdateProgressRequest):
+    async def update_progress(
+        self,
+        code: Annotated[str, Path()],
+        body: Annotated[UpdateProgressRequest, Body()],
+    ):
         result = update_anonymous_progress_value(self.supabase, code, body)
         logger.info(f"Update progress ({code}) OK. {result}")
         return result
 
     async def increase_progress(
         self,
-        code: str,
-        body: Optional[IncreaseProgressRequest] = None,
+        code: Annotated[str, Path()],
+        body: Annotated[Optional[IncreaseProgressRequest], Body()] = None,
     ):
         result = increase_progress_value(self.supabase, code, body)
         logger.info(f"Increase progress ({code}) OK. {result}")

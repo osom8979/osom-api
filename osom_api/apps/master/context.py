@@ -28,7 +28,7 @@ class MasterContext(CommonContext):
         self._router.add_api_route("/health", self.health, methods=["GET"])
         self._router.add_api_websocket_route("/ws", self.ws)
 
-        self._app = FastAPI(lifespan=self._lifespan, openapi_url=None)
+        self._app = FastAPI(lifespan=self._lifespan)
         self._app.include_router(self._router)
         self._app.include_router(AnonymousProgressRouter(self))
 
