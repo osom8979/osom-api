@@ -10,19 +10,19 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands import create_command_map
-from osom_api.apps.worker.exceptions import (
+from osom_api.common.config import CommonConfig
+from osom_api.common.context import CommonContext
+from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
     NoMessageDataError,
     NoMessageIdError,
     NotFoundCommandKeyError,
+    OsomApiError,
     PacketDumpError,
     PacketLoadError,
     PollingTimeoutError,
-    WorkerError,
 )
-from osom_api.common.config import CommonConfig
-from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 from osom_api.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH, encode_path
 from osom_api.mq.protocol.worker import (
@@ -120,7 +120,7 @@ class WorkerContext(CommonContext):
                 pass
             except CommandRuntimeError as e:
                 logger.error(e)
-            except WorkerError as e:
+            except OsomApiError as e:
                 logger.debug(e)
 
     async def main(self) -> None:

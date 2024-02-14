@@ -7,8 +7,10 @@ from fastapi import APIRouter, FastAPI, WebSocket
 from overrides import override
 
 from osom_api.apps.master.config import MasterConfig
-from osom_api.apps.master.middlewares.authorization import AuthorizationMiddleware
-from osom_api.apps.master.middlewares.common_errors import CommonErrorsMiddleware
+from osom_api.apps.master.exception_handlers.supabase import (
+    add_supabase_exception_handler,
+)
+from osom_api.apps.master.middlewares.authorization import add_authorization_middleware
 from osom_api.apps.master.routers.anonymous.progress import AnonymousProgressRouter
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
@@ -26,14 +28,11 @@ class MasterContext(CommonContext):
         self._router.add_api_websocket_route("/ws", self.ws)
 
         self._app = FastAPI(lifespan=self._lifespan, openapi_url=None)
-
-        # noinspection PyTypeChecker
-        self._app.add_middleware(AuthorizationMiddleware, token=self._config.opt_token)
-        # noinspection PyTypeChecker
-        self._app.add_middleware(CommonErrorsMiddleware)
-
         self._app.include_router(self._router)
         self._app.include_router(AnonymousProgressRouter(self))
+
+        add_authorization_middleware(self._app)
+        add_supabase_exception_handler(self._app)
 
     @asynccontextmanager
     async def _lifespan(self, app):

@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import Response, status
+from fastapi import FastAPI, Response, status
 from fastapi.applications import ASGIApp, Receive, Scope, Send
 from fastapi.datastructures import Headers
 
@@ -36,3 +36,12 @@ class AuthorizationMiddleware:
                 return
 
         await self.app(scope, receive, send)
+
+    @classmethod
+    def inject(cls, api: FastAPI, token: Optional[str] = None) -> None:
+        # noinspection PyTypeChecker
+        api.add_middleware(cls, token=token)
+
+
+def add_authorization_middleware(api: FastAPI, token: Optional[str] = None) -> None:
+    AuthorizationMiddleware.inject(api, token)
