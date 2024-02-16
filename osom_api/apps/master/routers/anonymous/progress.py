@@ -22,7 +22,7 @@ class AnonymousProgressRouter(APIRouter):
         self.context = context
         super().__init__(prefix="/anonymous/progress", tags=["anonymous", "progress"])
         self.add_api_route(
-            path="/",
+            path="",
             endpoint=self.create_progress,
             methods=["PUT"],
             status_code=status.HTTP_201_CREATED,
