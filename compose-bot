@@ -9,7 +9,7 @@ export USER_UID
 export USER_GID
 
 docker compose \
-    --project-name ddrm-bot \
+    --project-name osom-bot \
     --env-file "$ROOT_DIR/.env.local" \
     --file "$ROOT_DIR/docker-compose.bot.yml" \
     "$@"

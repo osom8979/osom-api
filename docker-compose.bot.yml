@@ -10,7 +10,7 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
-    user: ${USER_UID:?err}:${USER_GID:?err}
-    command: bot
     env_file:
       - .env.local
+    user: ${USER_UID:?err}:${USER_GID:?err}
+    command: bot
