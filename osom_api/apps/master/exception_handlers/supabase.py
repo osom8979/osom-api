@@ -6,19 +6,22 @@ from fastapi.responses import ORJSONResponse
 # noinspection PyPackageRequirements
 from postgrest.exceptions import APIError
 
+from osom_api.apps.master.exception_handlers.error_object import create_error_object
+
 
 async def supabase_exception_handler(request: Request, exc: Exception) -> Response:
     assert isinstance(request, Request)
     assert isinstance(exc, APIError)
+
+    error_object = create_error_object(
+        exc.code,
+        exc.details,
+        exc.hint,
+        exc.message,
+    )
+
     return ORJSONResponse(
-        content=dict(
-            error=dict(
-                code=exc.code,
-                details=exc.details,
-                hint=exc.hint,
-                message=exc.message,
-            )
-        ),
+        content=dict(error=error_object),
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
