@@ -39,6 +39,8 @@ DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
+DEFAULT_API_OPENAPI_URL: Final[str] = "/spec/openapi.json"
+
 _SECONDS_PER_HOUR: Final[int] = 60 * 60
 
 DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 16.0
@@ -118,6 +120,18 @@ def add_api_arguments(parser: ArgumentParser) -> None:
         action="store_true",
         default=get_eval("API_DISABLE_AUTH", False),
         help="Disable authentication",
+    )
+    parser.add_argument(
+        "--api-disable-docs",
+        action="store_true",
+        default=get_eval("API_DISABLE_DOCS", False),
+        help="Disable documentation",
+    )
+    parser.add_argument(
+        "--api-openapi-url",
+        default=get_eval("API_OPENAPI_URL", DEFAULT_API_OPENAPI_URL),
+        metavar="url",
+        help=f"OpenAPI spec path (default: '{DEFAULT_API_OPENAPI_URL}')",
     )
 
 

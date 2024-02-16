@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI, WebSocket
 from overrides import override
 
+from osom_api.arguments import version
 from osom_api.apps.master.config import MasterConfig
 from osom_api.apps.master.exception_handlers.supabase import (
     add_supabase_exception_handler,
@@ -28,12 +29,19 @@ class MasterContext(CommonContext):
         self._router.add_api_route("/health", self.health, methods=["GET"])
         self._router.add_api_websocket_route("/ws", self.ws)
 
-        self._app = FastAPI(lifespan=self._lifespan)
+        self._app = FastAPI(
+            debug=self._config.debug,
+            title="osom-api",
+            version=version(),
+            openapi_url=self._config.options.openapi_url,
+            lifespan=self._lifespan,
+        )
         self._app.include_router(self._router)
         self._app.include_router(AnonymousProgressRouter(self))
 
         add_accept_json_middleware(self._app)
-        add_authorization_middleware(self._app)
+        add_authorization_middleware(self._app, self._config.opt_api_token)
+
         add_supabase_exception_handler(self._app)
 
     @asynccontextmanager
