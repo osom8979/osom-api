@@ -3,17 +3,17 @@
 from argparse import Namespace
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, WebSocket
+from fastapi import APIRouter, Depends, FastAPI, WebSocket
 from overrides import override
 
-from osom_api.arguments import version
 from osom_api.apps.master.config import MasterConfig
+from osom_api.apps.master.dependencies.accept import compatible_application_json
 from osom_api.apps.master.exception_handlers.supabase import (
     add_supabase_exception_handler,
 )
-from osom_api.apps.master.middlewares.accept_json import add_accept_json_middleware
 from osom_api.apps.master.middlewares.authorization import add_authorization_middleware
 from osom_api.apps.master.routers.anonymous.progress import AnonymousProgressRouter
+from osom_api.arguments import version
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 
@@ -33,13 +33,13 @@ class MasterContext(CommonContext):
             debug=self._config.debug,
             title="osom-api",
             version=version(),
-            openapi_url=self._config.options.openapi_url,
+            openapi_url=self._config.opt_api_openapi_url,
+            dependencies=[Depends(compatible_application_json)],
             lifespan=self._lifespan,
         )
         self._app.include_router(self._router)
         self._app.include_router(AnonymousProgressRouter(self))
 
-        add_accept_json_middleware(self._app)
         add_authorization_middleware(self._app, self._config.opt_api_token)
 
         add_supabase_exception_handler(self._app)
@@ -84,7 +84,7 @@ class MasterContext(CommonContext):
             loop=self._config.loop_setup_type,
             lifespan="on",
             log_config=None,
-            log_level=None,
+            log_level=self._config.severity,
             access_log=True,
             proxy_headers=False,
             server_header=False,
