@@ -5,7 +5,7 @@ from argparse import Namespace
 from osom_api.common.config import CommonConfig
 
 
-class BotConfig(CommonConfig):
+class TelegramConfig(CommonConfig):
     def __init__(
         self,
         telegram_token: str,

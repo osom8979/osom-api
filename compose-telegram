@@ -9,7 +9,7 @@ export USER_UID
 export USER_GID
 
 docker compose \
-    --project-name osom-bot \
+    --project-name osom-telegram \
     --env-file "$ROOT_DIR/.env.local" \
-    --file "$ROOT_DIR/docker-compose.bot.yml" \
+    --file "$ROOT_DIR/docker-compose.telegram.yml" \
     "$@"

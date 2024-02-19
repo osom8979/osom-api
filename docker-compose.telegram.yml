@@ -13,4 +13,4 @@ services:
     env_file:
       - .env.local
     user: ${USER_UID:?err}:${USER_GID:?err}
-    command: bot
+    command: telegram

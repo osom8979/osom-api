@@ -19,8 +19,8 @@ EPILOG: Final[str] = ""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
-CMD_BOT: Final[str] = "bot"
-CMD_BOT_HELP: Final[str] = "Bot"
+CMD_TELEGRAM: Final[str] = "telegram"
+CMD_BOT_HELP: Final[str] = "Telegram bot"
 CMD_BOT_EPILOG: Final[str] = ""
 
 CMD_MASTER: Final[str] = "master"
@@ -31,7 +31,7 @@ CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
-CMDS = (CMD_BOT, CMD_MASTER, CMD_WORKER)
+CMDS = (CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_DOTENV_FILENAME: Final[str] = ".env.local"
 
@@ -286,7 +286,7 @@ def add_telegram_arguments(parser: ArgumentParser) -> None:
 def add_cmd_bot_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
-        name=CMD_BOT,
+        name=CMD_TELEGRAM,
         help=CMD_BOT_HELP,
         formatter_class=RawDescriptionHelpFormatter,
         epilog=CMD_BOT_EPILOG,

@@ -14,17 +14,17 @@ from aiogram.utils.markdown import hbold
 from overrides import override
 
 from osom_api.aio.run import aio_run
-from osom_api.apps.bot.commands.help import CommandHelp
-from osom_api.apps.bot.commands.version import CommandVersion
-from osom_api.apps.bot.config import BotConfig
+from osom_api.apps.telegram.commands.help import CommandHelp
+from osom_api.apps.telegram.commands.version import CommandVersion
+from osom_api.apps.telegram.config import TelegramConfig
 from osom_api.arguments import version as osom_version
 from osom_api.common.context import CommonContext
 from osom_api.logging.logging import logger
 
 
-class BotContext(CommonContext):
+class TelegramContext(CommonContext):
     def __init__(self, args: Namespace):
-        self._config = BotConfig.from_namespace(args)
+        self._config = TelegramConfig.from_namespace(args)
         super().__init__(self._config)
 
         self._bot = Bot(
