@@ -2,7 +2,7 @@
 
 from argparse import Namespace
 
-from aiogram import Bot, Dispatcher, Router
+from aiogram import Bot, Dispatcher, F, Router
 from aiogram.enums import ParseMode
 from aiogram.types import Message
 from aiogram.utils.markdown import hbold
@@ -36,6 +36,7 @@ class TelegramContext(CommonContext):
         )
         self._router.message.register(self.on_help, CommandHelp())
         self._router.message.register(self.on_version, CommandVersion())
+        self._router.message.register(self.on_openai_chat, F.text.startswith("?"))
         self._router.message.register(self.on_fallback)
 
         self._dispatcher = Dispatcher()
@@ -61,29 +62,41 @@ class TelegramContext(CommonContext):
     async def on_version(self, message: Message) -> None:
         await message.answer(hbold(self._osom_version))
 
-    async def on_fallback(self, message: Message) -> None:
-        assert self
+    async def on_openai_chat(self, message: Message) -> None:
+        assert message.text
+        assert message.text.startswith("?")
+
+        message_text = message.text[1:].strip()
+        if not message_text:
+            return
+
         try:
-            if message.text:
-                chat_completion = await self.openai.chat.completions.create(
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": message.text,
-                        }
-                    ],
-                    model="gpt-3.5-turbo",
-                )
-                content = chat_completion.choices[0].message.content
-                print(chat_completion.model_dump_json())
-                # chat_completion_json = chat_completion.model_dump_json()
-                await message.reply(content if content else "")
-            else:
-                await message.send_copy(chat_id=message.chat.id)
+            chat_completion = await self.openai.chat.completions.create(
+                messages=[{"role": "user", "content": message_text}],
+                model="gpt-4",
+            )
+            content = chat_completion.choices[0].message.content
+            print(chat_completion.model_dump_json())
+            # chat_completion_json = chat_completion.model_dump_json()
+            await message.reply(content if content else "")
         except BaseException as e:
             message_id = message.message_id
             logger.error(f"Unexpected error occurred in message ({message_id}): {e}")
             await message.reply("Unexpected error occurred")
+
+    async def on_fallback(self, message: Message) -> None:
+        assert self
+        o = dict(
+            event="fallback",
+            content_type=message.content_type,
+            message_id=message.message_id,
+            chat=message.chat.id,
+            username=message.chat.username,
+            full_name=message.chat.full_name,
+            type=message.chat.type,
+            text=message.text,
+        )
+        logger.debug(repr(o))
 
     async def main(self) -> None:
         await self.open_common_context()
