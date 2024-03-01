@@ -25,10 +25,7 @@ class TelegramContext(CommonContext):
         self._config = TelegramConfig.from_namespace(args)
         super().__init__(self._config)
 
-        self._bot = Bot(
-            token=self._config.telegram_token,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
+        self._bot = Bot(token=self._config.telegram_token)
 
         self._router = Router()
         self._router.message.outer_middleware.register(
