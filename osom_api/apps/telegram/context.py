@@ -64,7 +64,22 @@ class TelegramContext(CommonContext):
     async def on_fallback(self, message: Message) -> None:
         assert self
         try:
-            await message.send_copy(chat_id=message.chat.id)
+            if message.text:
+                chat_completion = await self.openai.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": message.text,
+                        }
+                    ],
+                    model="gpt-3.5-turbo",
+                )
+                content = chat_completion.choices[0].message.content
+                print(chat_completion.model_dump_json())
+                # chat_completion_json = chat_completion.model_dump_json()
+                await message.reply(content if content else "")
+            else:
+                await message.send_copy(chat_id=message.chat.id)
         except BaseException as e:
             message_id = message.message_id
             logger.error(f"Unexpected error occurred in message ({message_id}): {e}")

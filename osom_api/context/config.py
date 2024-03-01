@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from type_serialize.inspect.member import get_public_instance_attributes
 
 from osom_api.arguments import (
+    DEFAULT_OPENAI_TIMEOUT,
     DEFAULT_REDIS_BLOCKING_TIMEOUT,
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_CONNECTION_TIMEOUT,
@@ -40,6 +41,8 @@ class CommonConfig:
         supabase_key: Optional[str] = None,
         supabase_postgrest_timeout=DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
         supabase_storage_timeout=DEFAULT_SUPABASE_STORAGE_TIMEOUT,
+        openai_api_key: Optional[str] = None,
+        openai_timeout=DEFAULT_OPENAI_TIMEOUT,
         severity=DEFAULT_SEVERITY,
         use_uvloop=False,
         debug=False,
@@ -64,6 +67,8 @@ class CommonConfig:
         self.supabase_key = supabase_key
         self.supabase_postgrest_timeout = supabase_postgrest_timeout
         self.supabase_storage_timeout = supabase_storage_timeout
+        self.openai_api_key = openai_api_key
+        self.openai_timeout = openai_timeout
         self.severity = severity
         self.use_uvloop = use_uvloop
         self.debug = debug
@@ -97,6 +102,9 @@ class CommonConfig:
         assert isinstance(args.supabase_key, (type(None), str))
         assert isinstance(args.supabase_postgrest_timeout, float)
         assert isinstance(args.supabase_storage_timeout, float)
+
+        assert isinstance(args.openai_api_key, (type(None), str))
+        assert isinstance(args.openai_timeout, float)
 
         assert isinstance(args.severity, str)
         assert isinstance(args.use_uvloop, bool)

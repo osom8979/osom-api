@@ -4,6 +4,7 @@ from signal import SIGINT, raise_signal
 from typing import Any, Optional
 
 from boto3 import resource as boto3_resource
+from openai import AsyncOpenAI
 from overrides import override
 from supabase import Client as SupabaseClient
 from supabase import create_client
@@ -61,6 +62,13 @@ class CommonContext(MqClientCallback):
                 region_name=config.s3_region,
             )
 
+        if config.openai_api_key:
+            assert isinstance(config.openai_api_key, str)
+            self._openai = AsyncOpenAI(
+                api_key=config.openai_api_key,
+                timeout=config.openai_timeout,
+            )
+
     @property
     def mq(self) -> MqClient:
         return self._mq
@@ -74,6 +82,11 @@ class CommonContext(MqClientCallback):
     def s3(self) -> Any:
         assert self._s3 is not None
         return self._s3
+
+    @property
+    def openai(self) -> AsyncOpenAI:
+        assert self._openai is not None
+        return self._openai
 
     async def open_common_context(self) -> None:
         await self._mq.open()

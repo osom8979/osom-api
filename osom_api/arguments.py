@@ -54,6 +54,8 @@ DEFAULT_REDIS_EXPIRE_LONG: Final[float] = 12.0
 DEFAULT_SUPABASE_POSTGREST_TIMEOUT: Final[float] = 8.0
 DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
+DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
+
 PRINTER_ATTR_KEY: Final[str] = "_printer"
 
 VERBOSE_LEVEL_0: Final[int] = 0
@@ -274,6 +276,25 @@ def add_supabase_arguments(
     )
 
 
+def add_openai_arguments(
+    parser: ArgumentParser,
+    openai_timeout=DEFAULT_OPENAI_TIMEOUT,
+) -> None:
+    parser.add_argument(
+        "--openai-api-key",
+        default=get_eval("OPENAI_API_KEY"),
+        metavar="key",
+        help="OpenAI API Key",
+    )
+    parser.add_argument(
+        "--openai-timeout",
+        default=get_eval("OPENAI_TIMEOUT", openai_timeout),
+        metavar="sec",
+        type=float,
+        help=f"OpenAI timeout. (default: {openai_timeout:.2f})",
+    )
+
+
 def add_telegram_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--telegram-token",
@@ -281,6 +302,22 @@ def add_telegram_arguments(parser: ArgumentParser) -> None:
         metavar="token",
         help="Telegram API Token",
     )
+
+
+def add_discord_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--discord-token",
+        default=get_eval("DISCORD_TOKEN"),
+        metavar="token",
+        help="Discord API Token",
+    )
+
+
+def _add_context_arguments(parser: ArgumentParser) -> None:
+    add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
+    add_openai_arguments(parser)
 
 
 def add_cmd_bot_parser(subparsers) -> None:
@@ -292,9 +329,7 @@ def add_cmd_bot_parser(subparsers) -> None:
         epilog=CMD_BOT_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
+    _add_context_arguments(parser)
     add_telegram_arguments(parser)
 
 
@@ -307,9 +342,7 @@ def add_cmd_master_parser(subparsers) -> None:
         epilog=CMD_MASTER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
+    _add_context_arguments(parser)
     add_http_arguments(parser)
     add_api_arguments(parser)
 
@@ -323,9 +356,7 @@ def add_cmd_worker_parser(subparsers) -> None:
         epilog=CMD_WORKER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
+    _add_context_arguments(parser)
 
 
 def default_argument_parser() -> ArgumentParser:
