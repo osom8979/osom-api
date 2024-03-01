@@ -6,7 +6,7 @@ from weakref import ref
 
 from overrides import override
 
-from osom_api.common.context import CommonContext
+from osom_api.context.context import CommonContext
 
 
 class WorkerCommandInterface(metaclass=ABCMeta):

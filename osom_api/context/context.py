@@ -9,7 +9,7 @@ from supabase import Client as SupabaseClient
 from supabase import create_client
 from supabase.client import ClientOptions as SupabaseClientOptions
 
-from osom_api.common.config import CommonConfig
+from osom_api.context.config import CommonConfig
 from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
 

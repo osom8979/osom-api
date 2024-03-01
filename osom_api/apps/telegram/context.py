@@ -16,7 +16,7 @@ from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
 )
 from osom_api.arguments import version as osom_version
-from osom_api.common.context import CommonContext
+from osom_api.context.context import CommonContext
 from osom_api.logging.logging import logger
 
 

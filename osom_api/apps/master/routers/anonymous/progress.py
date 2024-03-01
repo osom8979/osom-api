@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Body, Path, Response, status
 
-from osom_api.common.context import CommonContext
+from osom_api.context.context import CommonContext
 from osom_api.db.progress import (
     IncreaseProgressRequest,
     UpdateProgressRequest,

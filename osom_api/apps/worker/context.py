@@ -10,8 +10,8 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands import create_command_map
-from osom_api.common.config import CommonConfig
-from osom_api.common.context import CommonContext
+from osom_api.context.config import CommonConfig
+from osom_api.context.context import CommonContext
 from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,

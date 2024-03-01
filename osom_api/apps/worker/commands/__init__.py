@@ -5,7 +5,7 @@ from typing import Dict
 
 from osom_api.apps.worker.commands.interface import WorkerCommand
 from osom_api.apps.worker.commands.progress.create import ProgressCreate
-from osom_api.common.context import CommonContext
+from osom_api.context.context import CommonContext
 
 COMMAND_API_REGEX = re_compile(r"([A-Z][0-9a-z]+)")
 
