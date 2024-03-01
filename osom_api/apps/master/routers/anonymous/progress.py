@@ -62,12 +62,12 @@ class AnonymousProgressRouter(APIRouter):
 
     async def create_progress(self):
         logger.info("create_progress....")
-        result = insert_anonymous_progress(self.supabase)
+        result = await insert_anonymous_progress(self.supabase)
         logger.info(f"Insert progress OK. {result}")
         return result
 
     async def read_progress(self, code: Annotated[str, Path()]):
-        result = select_anonymous_progress(self.supabase, code)
+        result = await select_anonymous_progress(self.supabase, code)
         logger.info(f"Select progress ({code}) OK. {result}")
         return result
 
@@ -76,7 +76,7 @@ class AnonymousProgressRouter(APIRouter):
         code: Annotated[str, Path()],
         body: Annotated[UpdateProgressRequest, Body()],
     ):
-        result = update_anonymous_progress_value(self.supabase, code, body)
+        result = await update_anonymous_progress_value(self.supabase, code, body)
         logger.info(f"Update progress ({code}) OK. {result}")
         return result
 
@@ -85,11 +85,11 @@ class AnonymousProgressRouter(APIRouter):
         code: Annotated[str, Path()],
         body: Annotated[Optional[IncreaseProgressRequest], Body()] = None,
     ):
-        result = increase_progress_value(self.supabase, code, body)
+        result = await increase_progress_value(self.supabase, code, body)
         logger.info(f"Increase progress ({code}) OK. {result}")
         return result
 
     async def delete_progress(self, code: str):
-        delete_anonymous_progress(self.supabase, code)
+        await delete_anonymous_progress(self.supabase, code)
         logger.info(f"Delete progress ({code}) OK.")
         return Response()

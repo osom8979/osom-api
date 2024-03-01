@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from asyncio import to_thread
 from datetime import datetime
 from math import floor
 from typing import Dict, Optional, Union
@@ -47,12 +48,8 @@ class IncreaseProgressRequest(BaseModel):
     value: Optional[float] = None
 
 
-def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
-    """
-    Latest datetime of the progress for anonymous user.
-    """
-
-    response = (
+def _latest_anonymous_progress_datetime(supabase: SupabaseClient):
+    return (
         supabase.table(progress)
         .select(created_at)
         .is_(owner, null)
@@ -60,6 +57,13 @@ def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
         .limit(1)
         .execute()
     )
+
+
+async def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
+    """
+    Latest datetime of the progress for anonymous user.
+    """
+    response = await to_thread(_latest_anonymous_progress_datetime, supabase)
 
     if len(response.data) == 0:
         raise HTTPException(
@@ -72,8 +76,12 @@ def latest_anonymous_progress_datetime(supabase: SupabaseClient) -> datetime:
     return datetime.fromisoformat(row[created_at])
 
 
-def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgressResponse:
-    response = supabase.table(progress).insert({}).execute()
+def _insert_anonymous_progress(supabase: SupabaseClient):
+    return supabase.table(progress).insert({}).execute()
+
+
+async def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgressResponse:
+    response = await to_thread(_insert_anonymous_progress, supabase)
 
     if len(response.data) == 0:
         raise HTTPException(
@@ -86,11 +94,11 @@ def insert_anonymous_progress(supabase: SupabaseClient) -> InsertProgressRespons
     return InsertProgressResponse(id=row[id_])
 
 
-def select_anonymous_progress(
+def _select_anonymous_progress(
     supabase: SupabaseClient,
     code: str,
-) -> SelectProgressResponse:
-    response = (
+):
+    return (
         supabase.table(progress)
         .select(value, created_at, expired_at, updated_at)
         .eq(id_, code)
@@ -98,6 +106,13 @@ def select_anonymous_progress(
         .limit(1)
         .execute()
     )
+
+
+async def select_anonymous_progress(
+    supabase: SupabaseClient,
+    code: str,
+) -> SelectProgressResponse:
+    response = await to_thread(_select_anonymous_progress, supabase, code)
 
     if len(response.data) == 0:
         raise HTTPException(
@@ -122,18 +137,26 @@ def select_anonymous_progress(
     )
 
 
-def update_anonymous_progress_value(
+def _update_anonymous_progress_value(
     supabase: SupabaseClient,
     code: str,
     body: UpdateProgressRequest,
-) -> SelectProgressResponse:
-    response = (
+):
+    return (
         supabase.table(progress)
         .update({value: floor(body.value)})
         .eq(id_, code)
         .is_(owner, null)
         .execute()
     )
+
+
+async def update_anonymous_progress_value(
+    supabase: SupabaseClient,
+    code: str,
+    body: UpdateProgressRequest,
+) -> SelectProgressResponse:
+    response = await to_thread(_update_anonymous_progress_value, supabase, code, body)
 
     if len(response.data) == 0:
         raise HTTPException(
@@ -151,15 +174,23 @@ def update_anonymous_progress_value(
     )
 
 
-def increase_progress_value(
+def _increase_progress_value(
+    supabase: SupabaseClient,
+    code: str,
+    body: Optional[IncreaseProgressRequest] = None,
+):
+    params: Dict[str, Union[str, int]] = {progress_id: code}
+    if body is not None and body.value is not None:
+        params[increase_value] = floor(body.value)
+    return supabase.rpc(increase_anonymous_progress_value, params).execute()
+
+
+async def increase_progress_value(
     supabase: SupabaseClient,
     code: str,
     body: Optional[IncreaseProgressRequest] = None,
 ) -> SelectProgressResponse:
-    params: Dict[str, Union[str, int]] = {progress_id: code}
-    if body is not None and body.value is not None:
-        params[increase_value] = floor(body.value)
-    response = supabase.rpc(increase_anonymous_progress_value, params).execute()
+    response = await to_thread(_increase_progress_value, supabase, code, body)
 
     if len(response.data) == 0:
         raise HTTPException(
@@ -177,5 +208,9 @@ def increase_progress_value(
     )
 
 
-def delete_anonymous_progress(supabase: SupabaseClient, code: str) -> None:
-    supabase.table(progress).delete().eq(id_, code).is_(owner, null).execute()
+def _delete_anonymous_progress(supabase: SupabaseClient, code: str):
+    return supabase.table(progress).delete().eq(id_, code).is_(owner, null).execute()
+
+
+async def delete_anonymous_progress(supabase: SupabaseClient, code: str):
+    return await to_thread(_delete_anonymous_progress, supabase, code)

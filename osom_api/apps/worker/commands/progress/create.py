@@ -17,11 +17,11 @@ from osom_api.mq.protocol.worker import CreateProgressResponse
 class ProgressCreate(WorkerCommand):
     @override
     async def run(self, data: Any) -> CreateProgressResponse:
-        created = latest_anonymous_progress_datetime(self.supabase)
+        created = await latest_anonymous_progress_datetime(self.supabase)
         if created is not None:
             duration = (datetime.now().astimezone() - created).total_seconds()
             logger.debug(f"Created duration: {duration:.2f}s")
 
-        body = insert_anonymous_progress(self.supabase)
+        body = await insert_anonymous_progress(self.supabase)
         logger.info(f"Insert progress ID: {body.id}")
         return CreateProgressResponse(id=body.id)
