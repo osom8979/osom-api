@@ -1,4 +1,4 @@
--- drop type public.role_type;
+drop type public.role_type;
 
 create type public.role_type as enum (
     'manager',
