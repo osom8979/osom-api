@@ -5,16 +5,18 @@ from asyncio.exceptions import CancelledError
 from functools import lru_cache
 from typing import Callable, Dict
 
+from osom_api.apps.discord.main import discord_main
 from osom_api.apps.master.main import master_main
 from osom_api.apps.telegram.main import telegram_main
 from osom_api.apps.worker.main import worker_main
-from osom_api.arguments import CMD_MASTER, CMD_TELEGRAM, CMD_WORKER
+from osom_api.arguments import CMD_DISCORD, CMD_MASTER, CMD_TELEGRAM, CMD_WORKER
 from osom_api.logging.logging import logger
 
 
 @lru_cache
 def cmd_apps() -> Dict[str, Callable[[Namespace], None]]:
     return {
+        CMD_DISCORD: discord_main,
         CMD_TELEGRAM: telegram_main,
         CMD_MASTER: master_main,
         CMD_WORKER: worker_main,

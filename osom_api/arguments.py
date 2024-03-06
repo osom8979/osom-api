@@ -19,9 +19,13 @@ EPILOG: Final[str] = ""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
+CMD_DISCORD: Final[str] = "discord"
+CMD_DISCORD_HELP: Final[str] = "Discord bot"
+CMD_DISCORD_EPILOG: Final[str] = ""
+
 CMD_TELEGRAM: Final[str] = "telegram"
-CMD_BOT_HELP: Final[str] = "Telegram bot"
-CMD_BOT_EPILOG: Final[str] = ""
+CMD_TELEGRAM_HELP: Final[str] = "Telegram bot"
+CMD_TELEGRAM_EPILOG: Final[str] = ""
 
 CMD_MASTER: Final[str] = "master"
 CMD_MASTER_HELP: Final[str] = "Master node"
@@ -31,7 +35,7 @@ CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker node"
 CMD_WORKER_EPILOG: Final[str] = ""
 
-CMDS = (CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
+CMDS = (CMD_DISCORD, CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_DOTENV_FILENAME: Final[str] = ".env.local"
 
@@ -306,6 +310,12 @@ def add_telegram_arguments(parser: ArgumentParser) -> None:
 
 def add_discord_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
+        "--discord-application-id",
+        default=get_eval("DISCORD_APPLICATION_ID"),
+        metavar="id",
+        help="Discord Application ID",
+    )
+    parser.add_argument(
         "--discord-token",
         default=get_eval("DISCORD_TOKEN"),
         metavar="token",
@@ -320,13 +330,26 @@ def _add_context_arguments(parser: ArgumentParser) -> None:
     add_openai_arguments(parser)
 
 
-def add_cmd_bot_parser(subparsers) -> None:
+def add_cmd_discord_parser(subparsers) -> None:
+    # noinspection SpellCheckingInspection
+    parser = subparsers.add_parser(
+        name=CMD_DISCORD,
+        help=CMD_DISCORD_HELP,
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog=CMD_DISCORD_EPILOG,
+    )
+    assert isinstance(parser, ArgumentParser)
+    _add_context_arguments(parser)
+    add_discord_arguments(parser)
+
+
+def add_cmd_telegram_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_TELEGRAM,
-        help=CMD_BOT_HELP,
+        help=CMD_TELEGRAM_HELP,
         formatter_class=RawDescriptionHelpFormatter,
-        epilog=CMD_BOT_EPILOG,
+        epilog=CMD_TELEGRAM_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
     _add_context_arguments(parser)
@@ -439,7 +462,8 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="cmd")
-    add_cmd_bot_parser(subparsers)
+    add_cmd_discord_parser(subparsers)
+    add_cmd_telegram_parser(subparsers)
     add_cmd_master_parser(subparsers)
     add_cmd_worker_parser(subparsers)
     return parser

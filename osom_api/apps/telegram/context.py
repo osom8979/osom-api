@@ -3,9 +3,7 @@
 from argparse import Namespace
 
 from aiogram import Bot, Dispatcher, F, Router
-from aiogram.enums import ParseMode
 from aiogram.types import Message
-from aiogram.utils.markdown import bold
 from overrides import override
 
 from osom_api.aio.run import aio_run
@@ -57,7 +55,7 @@ class TelegramContext(CommonContext):
         await message.answer(self._osom_version)
 
     async def on_version(self, message: Message) -> None:
-        await message.answer(bold(self._osom_version))
+        await message.answer(self._osom_version)
 
     async def on_openai_chat(self, message: Message) -> None:
         assert message.text
