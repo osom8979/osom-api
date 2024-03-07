@@ -25,7 +25,7 @@ class RegistrationVerifierMiddleware(BaseMiddleware):
     ) -> Any:
         if isinstance(event, Message):
             if not await registered_telegram_chat_id(self.supabase, event.chat.id):
-                logger.error(f"Not registered chat {event.chat.id}")
+                logger.error(f"Unregistered chat {event.chat.id}")
                 link = hlink("osom.run", "https://www.osom.run/")
                 return await event.reply(f"Not registered. Go to {link} and sign up!")
 

@@ -39,3 +39,7 @@ class PacketDumpError(OsomApiError):
 
 class InsertError(OsomApiError):
     pass
+
+
+class UnregisteredError(OsomApiError):
+    pass
