@@ -14,11 +14,11 @@ from osom_api.apps.master.exception_handlers.supabase import (
 from osom_api.apps.master.middlewares.authorization import add_authorization_middleware
 from osom_api.apps.master.routers.anonymous.progress import AnonymousProgressRouter
 from osom_api.arguments import version
-from osom_api.context.context import CommonContext
+from osom_api.context import Context
 from osom_api.logging.logging import logger
 
 
-class MasterContext(CommonContext):
+class MasterContext(Context):
     def __init__(self, args: Namespace):
         self._config = MasterConfig.from_namespace(args)
         self._config.logging_params()

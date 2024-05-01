@@ -5,10 +5,10 @@ from asyncio.exceptions import CancelledError
 from functools import lru_cache
 from typing import Callable, Dict
 
-from osom_api.apps.discord.main import discord_main
-from osom_api.apps.master.main import master_main
-from osom_api.apps.telegram.main import telegram_main
-from osom_api.apps.worker.main import worker_main
+from osom_api.apps.discord import discord_main
+from osom_api.apps.master import master_main
+from osom_api.apps.telegram import telegram_main
+from osom_api.apps.worker import worker_main
 from osom_api.arguments import CMD_DISCORD, CMD_MASTER, CMD_TELEGRAM, CMD_WORKER
 from osom_api.logging.logging import logger
 

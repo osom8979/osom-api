@@ -21,7 +21,7 @@ from osom_api.arguments import (
 from osom_api.logging.logging import DEBUG, convert_level_number, logger
 
 
-class CommonConfig:
+class Config:
     def __init__(
         self,
         redis_url: Optional[str] = None,

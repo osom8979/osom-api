@@ -14,11 +14,11 @@ from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
 )
 from osom_api.arguments import version as osom_version
-from osom_api.context.context import CommonContext
+from osom_api.context import Context
 from osom_api.logging.logging import logger
 
 
-class TelegramContext(CommonContext):
+class TelegramContext(Context):
     def __init__(self, args: Namespace):
         self._config = TelegramConfig.from_namespace(args)
         super().__init__(self._config)

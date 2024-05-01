@@ -2,10 +2,10 @@
 
 from argparse import Namespace
 
-from osom_api.context.config import CommonConfig
+from osom_api.config import Config
 
 
-class TelegramConfig(CommonConfig):
+class TelegramConfig(Config):
     def __init__(
         self,
         telegram_token: str,

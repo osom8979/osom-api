@@ -6,7 +6,7 @@ from weakref import ref
 
 from overrides import override
 
-from osom_api.context.context import CommonContext
+from osom_api.context import Context
 
 
 class WorkerCommandInterface(metaclass=ABCMeta):
@@ -16,11 +16,11 @@ class WorkerCommandInterface(metaclass=ABCMeta):
 
 
 class WorkerCommand(WorkerCommandInterface):
-    def __init__(self, context: CommonContext):
+    def __init__(self, context: Context):
         self._context = ref(context)
 
     @property
-    def context(self) -> CommonContext:
+    def context(self) -> Context:
         context = self._context()
         if context is None:
             raise RuntimeError("The context reference is broken")

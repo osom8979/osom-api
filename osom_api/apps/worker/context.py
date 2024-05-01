@@ -10,8 +10,8 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands import create_command_map
-from osom_api.context.config import CommonConfig
-from osom_api.context.context import CommonContext
+from osom_api.config import Config
+from osom_api.context import Context
 from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
@@ -32,9 +32,9 @@ from osom_api.mq.protocol.worker import (
 )
 
 
-class WorkerContext(CommonContext):
+class WorkerContext(Context):
     def __init__(self, args: Namespace):
-        self._config = CommonConfig.from_namespace(args)
+        self._config = Config.from_namespace(args)
         super().__init__(self._config)
         self._commands = create_command_map(self)
 

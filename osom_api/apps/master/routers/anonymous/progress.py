@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Body, Path, Response, status
 
-from osom_api.context.context import CommonContext
+from osom_api.context import Context
 from osom_api.db.progress import (
     IncreaseProgressRequest,
     UpdateProgressRequest,
@@ -18,7 +18,7 @@ from osom_api.logging.logging import logger
 
 
 class AnonymousProgressRouter(APIRouter):
-    def __init__(self, context: CommonContext):
+    def __init__(self, context: Context):
         self.context = context
         super().__init__(prefix="/anonymous/progress", tags=["anonymous", "progress"])
         self.add_api_route(

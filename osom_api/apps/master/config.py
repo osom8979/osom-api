@@ -12,11 +12,11 @@ from osom_api.arguments import (
     DEFAULT_HTTP_PORT,
     DEFAULT_HTTP_TIMEOUT,
 )
-from osom_api.context.config import CommonConfig
+from osom_api.config import Config
 from osom_api.random.hex import generate_hexdigits
 
 
-class MasterConfig(CommonConfig):
+class MasterConfig(Config):
     def __init__(
         self,
         http_host=DEFAULT_HTTP_HOST,

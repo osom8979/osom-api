@@ -10,12 +10,12 @@ from overrides import override
 from osom_api.aio.run import aio_run
 from osom_api.apps.discord.config import DiscordConfig
 from osom_api.arguments import version as osom_version
-from osom_api.context.context import CommonContext
+from osom_api.context import Context
 from osom_api.db.discord_register import registered_discord_channel_id
 from osom_api.logging.logging import logger
 
 
-class DiscordContext(CommonContext):
+class DiscordContext(Context):
     def __init__(self, args: Namespace):
         self._config = DiscordConfig.from_namespace(args)
         super().__init__(self._config)

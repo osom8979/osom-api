@@ -2,10 +2,10 @@
 
 from argparse import Namespace
 
-from osom_api.context.config import CommonConfig
+from osom_api.config import Config
 
 
-class DiscordConfig(CommonConfig):
+class DiscordConfig(Config):
     def __init__(
         self,
         discord_application_id: str,
