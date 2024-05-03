@@ -6,11 +6,7 @@ from osom_api.config import Config
 
 
 class TelegramConfig(Config):
-    def __init__(
-        self,
-        telegram_token: str,
-        **kwargs,
-    ):
+    def __init__(self, telegram_token: str, **kwargs):
         self.telegram_token = telegram_token
         super().__init__(**kwargs)
 

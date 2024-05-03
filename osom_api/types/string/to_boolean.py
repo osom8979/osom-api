@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 
-TRUE_LOWERS = [
+from typing import Final, Sequence
+
+TRUE_LOWERS: Final[Sequence[str]] = (
     "y",
     "yes",
     "true",
     "on",
     "1",
-]
-FALSE_LOWERS = [
+)
+
+FALSE_LOWERS: Final[Sequence[str]] = (
     "n",
     "no",
     "false",
     "off",
     "0",
-]
+)
 
 
 def string_to_boolean(value: str) -> bool:

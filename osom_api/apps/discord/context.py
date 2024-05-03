@@ -26,7 +26,7 @@ class DiscordContext(Context):
         self._intents.presences = False
         self._intents.message_content = True
         self._bot = bot = Bot(
-            command_prefix="?",
+            command_prefix="/",
             intents=self._intents,
             sync_command=True,
             application_id=self._config.discord_application_id,
