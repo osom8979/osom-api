@@ -15,7 +15,7 @@ from osom_api.arguments import (
 from osom_api.db.mixins.discord_register import DiscordRegister
 from osom_api.db.mixins.progress import Progress
 from osom_api.db.mixins.telegram_register import TelegramRegister
-from osom_api.exceptions import InvalidArgumentError, NotInitializedError
+from osom_api.exceptions import NotInitializedError
 
 
 class DbClient(DiscordRegister, Progress, TelegramRegister):
@@ -41,16 +41,16 @@ class DbClient(DiscordRegister, Progress, TelegramRegister):
         )
 
     async def open(self) -> None:
-        if not self._supabase_url:
-            raise InvalidArgumentError("No supabase url provided")
-        if not self._supabase_key:
-            raise InvalidArgumentError("No supabase key provided")
-
-        self._supabase = await create_client(
-            self._supabase_url,
-            self._supabase_key,
-            self._options,
-        )
+        if all((self._supabase_url, self._supabase_key)):
+            assert isinstance(self._supabase_url, str)
+            assert isinstance(self._supabase_key, str)
+            self._supabase = await create_client(
+                self._supabase_url,
+                self._supabase_key,
+                self._options,
+            )
+        else:
+            self._supabase = None
 
     async def close(self) -> None:
         self._supabase = None

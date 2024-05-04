@@ -66,10 +66,7 @@ class TelegramContext(Context):
             return
 
         try:
-            chat_completion = await self.openai.chat.completions.create(
-                messages=[{"role": "user", "content": message_text}],
-                model="gpt-4",
-            )
+            chat_completion = await self.oai.create_chat_completion(message_text)
             content = chat_completion.choices[0].message.content
             print(chat_completion.model_dump_json())
             # chat_completion_json = chat_completion.model_dump_json()

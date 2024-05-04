@@ -2,13 +2,13 @@
 
 from signal import SIGINT, raise_signal
 
-from openai import AsyncOpenAI
 from overrides import override
 
 from osom_api.config import Config
 from osom_api.db.client import DbClient
 from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
+from osom_api.oai.client import OaiClient
 from osom_api.s3.client import S3Client
 
 
@@ -40,13 +40,10 @@ class Context(MqClientCallback):
             region=config.s3_region,
             bucket=config.s3_bucket,
         )
-
-        if config.openai_api_key:
-            assert isinstance(config.openai_api_key, str)
-            self._openai = AsyncOpenAI(
-                api_key=config.openai_api_key,
-                timeout=config.openai_timeout,
-            )
+        self._oai = OaiClient(
+            api_key=config.openai_api_key,
+            timeout=config.openai_timeout,
+        )
 
     @property
     def mq(self):
@@ -61,16 +58,17 @@ class Context(MqClientCallback):
         return self._s3
 
     @property
-    def openai(self) -> AsyncOpenAI:
-        assert self._openai is not None
-        return self._openai
+    def oai(self):
+        return self._oai
 
     async def open_common_context(self) -> None:
         await self._mq.open()
         await self._db.open()
         await self._s3.open()
+        await self._oai.open()
 
     async def close_common_context(self) -> None:
+        await self._oai.close()
         await self._s3.close()
         await self._db.close()
         await self._mq.close()
