@@ -27,7 +27,7 @@ class TelegramContext(Context):
 
         self._router = Router()
         self._router.message.outer_middleware.register(
-            RegistrationVerifierMiddleware(self.supabase)
+            RegistrationVerifierMiddleware(self.db)
         )
         self._router.message.register(self.on_help, CommandHelp())
         self._router.message.register(self.on_version, CommandVersion())

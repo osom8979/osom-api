@@ -5,15 +5,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Body, Path, Response, status
 
 from osom_api.context import Context
-from osom_api.db.progress import (
-    IncreaseProgressRequest,
-    UpdateProgressRequest,
-    delete_anonymous_progress,
-    increase_progress_value,
-    insert_anonymous_progress,
-    select_anonymous_progress,
-    update_anonymous_progress_value,
-)
+from osom_api.db.mixins.progress import IncreaseProgressRequest, UpdateProgressRequest
 from osom_api.logging.logging import logger
 
 
@@ -48,26 +40,14 @@ class AnonymousProgressRouter(APIRouter):
             methods=["DELETE"],
         )
 
-    @property
-    def mq(self):
-        return self.context.mq
-
-    @property
-    def supabase(self):
-        return self.context.supabase
-
-    @property
-    def s3(self):
-        return self.context.s3
-
     async def create_progress(self):
         logger.info("create_progress....")
-        result = await insert_anonymous_progress(self.supabase)
+        result = await self.context.db.insert_anonymous_progress()
         logger.info(f"Insert progress OK. {result}")
         return result
 
     async def read_progress(self, code: Annotated[str, Path()]):
-        result = await select_anonymous_progress(self.supabase, code)
+        result = await self.context.db.select_anonymous_progress(code)
         logger.info(f"Select progress ({code}) OK. {result}")
         return result
 
@@ -76,7 +56,7 @@ class AnonymousProgressRouter(APIRouter):
         code: Annotated[str, Path()],
         body: Annotated[UpdateProgressRequest, Body()],
     ):
-        result = await update_anonymous_progress_value(self.supabase, code, body)
+        result = await self.context.db.update_anonymous_progress_value(code, body)
         logger.info(f"Update progress ({code}) OK. {result}")
         return result
 
@@ -85,11 +65,11 @@ class AnonymousProgressRouter(APIRouter):
         code: Annotated[str, Path()],
         body: Annotated[Optional[IncreaseProgressRequest], Body()] = None,
     ):
-        result = await increase_progress_value(self.supabase, code, body)
+        result = await self.context.db.increase_progress_value(code, body)
         logger.info(f"Increase progress ({code}) OK. {result}")
         return result
 
     async def delete_progress(self, code: str):
-        await delete_anonymous_progress(self.supabase, code)
+        await self.context.db.delete_anonymous_progress(code)
         logger.info(f"Delete progress ({code}) OK.")
         return Response()

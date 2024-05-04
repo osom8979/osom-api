@@ -43,3 +43,15 @@ class InsertError(OsomApiError):
 
 class UnregisteredError(OsomApiError):
     pass
+
+
+class InvalidStateError(OsomApiError):
+    pass
+
+
+class NotInitializedError(InvalidStateError):
+    pass
+
+
+class InvalidArgumentError(OsomApiError):
+    pass

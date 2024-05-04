@@ -11,7 +11,6 @@ from osom_api.aio.run import aio_run
 from osom_api.apps.discord.config import DiscordConfig
 from osom_api.arguments import version as osom_version
 from osom_api.context import Context
-from osom_api.db.discord_register import registered_discord_channel_id
 from osom_api.logging.logging import logger
 
 
@@ -56,7 +55,7 @@ class DiscordContext(Context):
         logger.warning("Redis task is done")
 
     async def is_registration(self, ctx: CommandContext) -> bool:
-        if await registered_discord_channel_id(self.supabase, ctx.channel.id):
+        if await self.db.registered_discord_channel_id(ctx.channel.id):
             return True
 
         logger.error(f"Unregistered channel {ctx.channel.id}")

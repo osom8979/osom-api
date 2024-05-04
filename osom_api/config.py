@@ -116,10 +116,6 @@ class Config:
         return {k: v for k, v in get_public_instance_attributes(args)}
 
     @property
-    def valid_supabase_params(self) -> bool:
-        return all((self.supabase_url, self.supabase_key))
-
-    @property
     def valid_s3_params(self) -> bool:
         return all(
             (

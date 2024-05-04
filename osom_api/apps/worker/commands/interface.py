@@ -26,18 +26,6 @@ class WorkerCommand(WorkerCommandInterface):
             raise RuntimeError("The context reference is broken")
         return context
 
-    @property
-    def mq(self):
-        return self.context.mq
-
-    @property
-    def supabase(self):
-        return self.context.supabase
-
-    @property
-    def s3(self):
-        return self.context.s3
-
     @override
     async def run(self, data: Any) -> Any:
         raise NotImplementedError

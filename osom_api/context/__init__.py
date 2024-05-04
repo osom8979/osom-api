@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 
 from signal import SIGINT, raise_signal
-from typing import Any, Optional
+from typing import Any
 
 from boto3 import resource as boto3_resource
 from openai import AsyncOpenAI
 from overrides import override
-from supabase import create_client
-from supabase._sync.client import SyncClient as SupabaseClient
-from supabase.lib.client_options import ClientOptions as SupabaseClientOptions
 
 from osom_api.config import Config
+from osom_api.db.client import DbClient
 from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
 
 
 class Context(MqClientCallback):
-    _supabase: Optional[SupabaseClient]
     _s3: Any
 
     def __init__(self, config: Config):
-        self._supabase = None
         self._s3 = None
 
         self._mq = MqClient(
@@ -34,20 +30,14 @@ class Context(MqClientCallback):
             debug=config.debug,
             verbose=config.verbose,
         )
-
-        if config.valid_supabase_params:
-            assert isinstance(config.supabase_url, str)
-            assert isinstance(config.supabase_key, str)
-            self._supabase = create_client(
-                supabase_url=config.supabase_url,
-                supabase_key=config.supabase_key,
-                options=SupabaseClientOptions(
-                    auto_refresh_token=True,
-                    persist_session=True,
-                    postgrest_client_timeout=config.supabase_postgrest_timeout,
-                    storage_client_timeout=config.supabase_storage_timeout,
-                ),
-            )
+        self._db = DbClient(
+            supabase_url=config.supabase_url,
+            supabase_key=config.supabase_key,
+            auto_refresh_token=True,
+            persist_session=True,
+            postgrest_client_timeout=config.supabase_postgrest_timeout,
+            storage_client_timeout=config.supabase_storage_timeout,
+        )
 
         if config.valid_s3_params:
             assert isinstance(config.s3_endpoint, str)
@@ -74,9 +64,8 @@ class Context(MqClientCallback):
         return self._mq
 
     @property
-    def supabase(self) -> SupabaseClient:
-        assert self._supabase is not None
-        return self._supabase
+    def db(self) -> DbClient:
+        return self._db
 
     @property
     def s3(self) -> Any:
@@ -90,8 +79,10 @@ class Context(MqClientCallback):
 
     async def open_common_context(self) -> None:
         await self._mq.open()
+        await self._db.open()
 
     async def close_common_context(self) -> None:
+        await self._db.close()
         await self._mq.close()
 
     @staticmethod
