@@ -115,18 +115,6 @@ class Config:
     def namespace_to_dict(args: Namespace) -> Dict[str, Any]:
         return {k: v for k, v in get_public_instance_attributes(args)}
 
-    @property
-    def valid_s3_params(self) -> bool:
-        return all(
-            (
-                self.s3_endpoint,
-                self.s3_access,
-                self.s3_secret,
-                self.s3_region,
-                self.s3_bucket,
-            )
-        )
-
     def print(self, *args, **kwargs):
         return self.printer(*args, **kwargs)
 

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from signal import SIGINT, raise_signal
-from typing import Any
 
-from boto3 import resource as boto3_resource
 from openai import AsyncOpenAI
 from overrides import override
 
@@ -11,14 +9,11 @@ from osom_api.config import Config
 from osom_api.db.client import DbClient
 from osom_api.logging.logging import logger
 from osom_api.mq.client import MqClient, MqClientCallback
+from osom_api.s3.client import S3Client
 
 
 class Context(MqClientCallback):
-    _s3: Any
-
     def __init__(self, config: Config):
-        self._s3 = None
-
         self._mq = MqClient(
             url=config.redis_url,
             connection_timeout=config.redis_connection_timeout,
@@ -38,19 +33,13 @@ class Context(MqClientCallback):
             postgrest_client_timeout=config.supabase_postgrest_timeout,
             storage_client_timeout=config.supabase_storage_timeout,
         )
-
-        if config.valid_s3_params:
-            assert isinstance(config.s3_endpoint, str)
-            assert isinstance(config.s3_access, str)
-            assert isinstance(config.s3_secret, str)
-            assert isinstance(config.s3_region, str)
-            self._s3 = boto3_resource(
-                service_name="s3",
-                endpoint_url=config.s3_endpoint,
-                aws_access_key_id=config.s3_access,
-                aws_secret_access_key=config.s3_secret,
-                region_name=config.s3_region,
-            )
+        self._s3 = S3Client(
+            endpoint=config.s3_endpoint,
+            access=config.s3_access,
+            secret=config.s3_secret,
+            region=config.s3_region,
+            bucket=config.s3_bucket,
+        )
 
         if config.openai_api_key:
             assert isinstance(config.openai_api_key, str)
@@ -60,16 +49,15 @@ class Context(MqClientCallback):
             )
 
     @property
-    def mq(self) -> MqClient:
+    def mq(self):
         return self._mq
 
     @property
-    def db(self) -> DbClient:
+    def db(self):
         return self._db
 
     @property
-    def s3(self) -> Any:
-        assert self._s3 is not None
+    def s3(self):
         return self._s3
 
     @property
@@ -80,8 +68,10 @@ class Context(MqClientCallback):
     async def open_common_context(self) -> None:
         await self._mq.open()
         await self._db.open()
+        await self._s3.open()
 
     async def close_common_context(self) -> None:
+        await self._s3.close()
         await self._db.close()
         await self._mq.close()
 
