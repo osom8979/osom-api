@@ -5,11 +5,11 @@ from signal import SIGINT, raise_signal
 from overrides import override
 
 from osom_api.config import Config
-from osom_api.db.client import DbClient
+from osom_api.context.db import DbClient
+from osom_api.context.mq import MqClient, MqClientCallback
+from osom_api.context.oai import OaiClient
+from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
-from osom_api.mq.client import MqClient, MqClientCallback
-from osom_api.oai.client import OaiClient
-from osom_api.s3.client import S3Client
 
 
 class Context(MqClientCallback):

@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_api.mq.path import (
+from osom_api.context.mq.path import (
     BROADCAST_PATH,
     PATH_ROOT,
     PATH_SEPARATOR,

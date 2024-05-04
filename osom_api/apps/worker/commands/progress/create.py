@@ -6,8 +6,8 @@ from typing import Any
 from overrides import override
 
 from osom_api.apps.worker.commands.interface import WorkerCommand
+from osom_api.context.mq.protocol.worker import CreateProgressResponse
 from osom_api.logging.logging import logger
-from osom_api.mq.protocol.worker import CreateProgressResponse
 
 
 class ProgressCreate(WorkerCommand):

@@ -5,7 +5,10 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Body, Path, Response, status
 
 from osom_api.context import Context
-from osom_api.db.mixins.progress import IncreaseProgressRequest, UpdateProgressRequest
+from osom_api.context.db.mixins.progress import (
+    IncreaseProgressRequest,
+    UpdateProgressRequest,
+)
 from osom_api.logging.logging import logger
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osom_api.db.mixins._base import Columns, DbMixinBase, Tables
+from osom_api.context.db.mixins._base import Columns, DbMixinBase, Tables
 
 
 class T(Tables):

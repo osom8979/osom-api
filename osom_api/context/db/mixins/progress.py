@@ -7,7 +7,7 @@ from typing import Dict, Optional, Union
 from fastapi import HTTPException, status
 from fastapi.types import BaseModel
 
-from osom_api.db.mixins._base import Columns, DbMixinBase, Rpcs, Tables, Values
+from osom_api.context.db.mixins._base import Columns, DbMixinBase, Rpcs, Tables, Values
 
 
 class T(Tables):

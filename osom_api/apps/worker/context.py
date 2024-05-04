@@ -12,6 +12,12 @@ from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands import create_command_map
 from osom_api.config import Config
 from osom_api.context import Context
+from osom_api.context.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH, encode_path
+from osom_api.context.mq.protocol.worker import (
+    WORKER_REQUEST_API_KEY,
+    WORKER_REQUEST_DATA_KEY,
+    WORKER_REQUEST_MSG_KEY,
+)
 from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
@@ -24,12 +30,6 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
-from osom_api.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH, encode_path
-from osom_api.mq.protocol.worker import (
-    WORKER_REQUEST_API_KEY,
-    WORKER_REQUEST_DATA_KEY,
-    WORKER_REQUEST_MSG_KEY,
-)
 
 
 class WorkerContext(Context):

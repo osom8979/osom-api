@@ -7,7 +7,7 @@ from aiogram.types import Message, TelegramObject
 from aiogram.utils.markdown import hlink
 from overrides import override
 
-from osom_api.db.client import DbClient
+from osom_api.context.db import DbClient
 from osom_api.logging.logging import logger
 
 
