@@ -6,7 +6,7 @@ from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
 from datetime import datetime
 from os import R_OK, access, path
-from typing import Optional, Sequence
+from typing import Literal, Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub
@@ -22,6 +22,8 @@ from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
 from osom_api.context.mq.path import BROADCAST_PATH, encode_path
 from osom_api.logging.logging import logger
+
+SslCertReqs = Literal["none", "optional", "required"]
 
 
 def validation_redis_file(name: str, file: Optional[str] = None) -> None:
@@ -62,10 +64,15 @@ class MqClient:
         callback: Optional[MqClientCallback] = None,
         done: Optional[Event] = None,
         task_name: Optional[str] = None,
+        ssl_cert_reqs: Literal["none", "optional", "required"] = "none",
         debug=False,
         verbose=0,
     ):
-        self._redis = from_url(url, socket_connect_timeout=connection_timeout)
+        self._redis = from_url(
+            url,
+            socket_connect_timeout=connection_timeout,
+            ssl_cert_reqs=ssl_cert_reqs,
+        )
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
         self._callback = callback

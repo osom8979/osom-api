@@ -2,7 +2,8 @@
 
 from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
-from os import R_OK, access, getcwd, path
+from os import R_OK, access, getcwd
+from os.path import isfile, join
 from typing import Final, List, Optional
 
 from osom_api.logging.logging import (
@@ -84,7 +85,7 @@ def add_dotenv_arguments(parser: ArgumentParser) -> None:
     )
     parser.add_argument(
         "--dotenv-path",
-        default=get_eval("DOTENV_PATH", path.join(getcwd(), DEFAULT_DOTENV_FILENAME)),
+        default=get_eval("DOTENV_PATH", join(getcwd(), DEFAULT_DOTENV_FILENAME)),
         metavar="file",
         help=f"Specifies the dot-env file (default: '{DEFAULT_DOTENV_FILENAME}')",
     )
@@ -482,7 +483,7 @@ def _load_dotenv(
 
     if args.no_dotenv:
         return
-    if not path.isfile(args.dotenv_path):
+    if not isfile(args.dotenv_path):
         return
     if not access(args.dotenv_path, R_OK):
         return
