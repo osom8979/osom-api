@@ -4,7 +4,12 @@ from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
 from osom_api.apps import run_app
-from osom_api.arguments import CMDS, PRINTER_ATTR_KEY, get_default_arguments
+from osom_api.arguments import (
+    CMDS,
+    PRINTER_ATTR_KEY,
+    VERBOSE_LEVEL_2,
+    get_default_arguments,
+)
 from osom_api.logging.clear import clear_root_handlers_in_realtime_logging
 from osom_api.logging.logging import (
     SEVERITY_NAME_DEBUG,
@@ -67,7 +72,7 @@ def main(
     else:
         set_root_level(severity)
 
-    if verbose >= 1:
+    if verbose >= VERBOSE_LEVEL_2:
         logger.debug(f"Arguments: {args}")
 
     return run_app(cmd, args)

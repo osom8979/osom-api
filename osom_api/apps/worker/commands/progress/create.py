@@ -11,6 +11,11 @@ from osom_api.logging.logging import logger
 
 
 class ProgressCreate(WorkerCommand):
+    @property
+    @override
+    def command(self) -> str:
+        return "progress"
+
     @override
     async def run(self, data: Any) -> CreateProgressResponse:
         created = await self.context.db.latest_anonymous_progress_datetime()

@@ -10,6 +10,11 @@ from osom_api.context import Context
 
 
 class WorkerCommandInterface(metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def command(self) -> str:
+        raise NotImplementedError
+
     @abstractmethod
     async def run(self, data: Any) -> Any:
         raise NotImplementedError
@@ -25,6 +30,11 @@ class WorkerCommand(WorkerCommandInterface):
         if context is None:
             raise RuntimeError("The context reference is broken")
         return context
+
+    @property
+    @override
+    def command(self) -> str:
+        raise NotImplementedError
 
     @override
     async def run(self, data: Any) -> Any:

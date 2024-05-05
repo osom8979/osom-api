@@ -15,25 +15,28 @@ from osom_api.logging.logging import (
 from osom_api.system.environ import get_typed_environ_value as get_eval
 
 PROG: Final[str] = "osom-api"
-DESCRIPTION: Final[str] = "osom master and worker"
-EPILOG: Final[str] = ""
+DESCRIPTION: Final[str] = "API management toolkit for OSOM project"
+EPILOG = f"""
+Apply general debugging options:
+  {PROG} -vv -c -d ...
+"""
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
 CMD_DISCORD: Final[str] = "discord"
-CMD_DISCORD_HELP: Final[str] = "Discord bot"
+CMD_DISCORD_HELP: Final[str] = "Proxy server for Discord bots"
 CMD_DISCORD_EPILOG: Final[str] = ""
 
 CMD_TELEGRAM: Final[str] = "telegram"
-CMD_TELEGRAM_HELP: Final[str] = "Telegram bot"
+CMD_TELEGRAM_HELP: Final[str] = "Proxy server for Telegram bots"
 CMD_TELEGRAM_EPILOG: Final[str] = ""
 
 CMD_MASTER: Final[str] = "master"
-CMD_MASTER_HELP: Final[str] = "Master node"
+CMD_MASTER_HELP: Final[str] = "Endpoint server for HTTP API"
 CMD_MASTER_EPILOG: Final[str] = ""
 
 CMD_WORKER: Final[str] = "worker"
-CMD_WORKER_HELP: Final[str] = "Worker node"
+CMD_WORKER_HELP: Final[str] = "Worker nodes connected to message queue"
 CMD_WORKER_EPILOG: Final[str] = ""
 
 CMDS = (CMD_DISCORD, CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
@@ -372,6 +375,9 @@ def add_cmd_master_parser(subparsers) -> None:
 
 
 def add_cmd_worker_parser(subparsers) -> None:
+    # [IMPORTANT] Avoid 'circular import' issues
+    from osom_api.context.mq.path import QUEUE_COMMON_PATH
+
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_WORKER,
@@ -381,6 +387,12 @@ def add_cmd_worker_parser(subparsers) -> None:
     )
     assert isinstance(parser, ArgumentParser)
     _add_context_arguments(parser)
+    parser.add_argument(
+        "--request-key",
+        default=get_eval("REQUEST_KEY", QUEUE_COMMON_PATH),
+        metavar="key",
+        help=f"Request key path (default: '{QUEUE_COMMON_PATH}')",
+    )
 
 
 def default_argument_parser() -> ArgumentParser:

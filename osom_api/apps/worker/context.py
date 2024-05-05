@@ -10,14 +10,10 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.commands import create_command_map
-from osom_api.config import Config
+from osom_api.apps.worker.config import WorkerConfig
 from osom_api.context import Context
-from osom_api.context.mq.path import QUEUE_COMMON_PATH, RESPONSE_PATH, encode_path
-from osom_api.context.mq.protocol.worker import (
-    WORKER_REQUEST_API_KEY,
-    WORKER_REQUEST_DATA_KEY,
-    WORKER_REQUEST_MSG_KEY,
-)
+from osom_api.context.mq.path import QUEUE_COMMON_PATH, encode_path, make_response_path
+from osom_api.context.mq.protocol.worker import Keys
 from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
@@ -34,7 +30,7 @@ from osom_api.logging.logging import logger
 
 class WorkerContext(Context):
     def __init__(self, args: Namespace):
-        self._config = Config.from_namespace(args)
+        self._config = WorkerConfig.from_namespace(args)
         super().__init__(self._config)
         self._commands = create_command_map(self)
 
@@ -52,10 +48,11 @@ class WorkerContext(Context):
 
     async def polling_iter(
         self,
+        request_key=QUEUE_COMMON_PATH,
         timeout: Optional[int] = None,
         expire: Optional[int] = None,
     ) -> None:
-        packet = await self.mq.brpop_bytes(QUEUE_COMMON_PATH, timeout)
+        packet = await self.mq.brpop_bytes(request_key, timeout)
         if packet is None:
             raise PollingTimeoutError("Blocking Right POP operation timeout")
 
@@ -67,16 +64,16 @@ class WorkerContext(Context):
 
         recv_key = packet[0]
         recv_data = packet[1]
-        assert recv_key == encode_path(QUEUE_COMMON_PATH)
+        assert recv_key == encode_path(request_key)
 
         try:
             request = loads(recv_data)
             if not isinstance(request, dict):
                 raise TypeError(f"Unsupported request type: {type(request).__name__}")
 
-            request_api = request.get(WORKER_REQUEST_API_KEY)
-            request_msg = request.get(WORKER_REQUEST_MSG_KEY)
-            request_data = request.get(WORKER_REQUEST_DATA_KEY)
+            request_api = request.get(Keys.api)
+            request_msg = request.get(Keys.msg)
+            request_data = request.get(Keys.data)
         except BaseException as e:
             logger.exception(e)
             raise PacketLoadError("Packet decoding fail")
@@ -107,15 +104,17 @@ class WorkerContext(Context):
             logger.exception(e)
             raise PacketDumpError("Packet encoding fail")
 
-        response_path = f"{RESPONSE_PATH}/{request_msg}"
+        response_path = make_response_path(request_msg)
         await self.mq.lpush_bytes(response_path, response_data, expire)
 
     async def start_polling(self) -> None:
         while True:
             try:
-                timeout_seconds = floor(self._config.redis_blocking_timeout)
-                expire_seconds = floor(self._config.redis_expire_medium)
-                await self.polling_iter(timeout_seconds, expire_seconds)
+                await self.polling_iter(
+                    request_key=self._config.request_key,
+                    timeout=floor(self._config.redis_blocking_timeout),
+                    expire=floor(self._config.redis_expire_medium),
+                )
             except NoMessageIdError:
                 pass
             except CommandRuntimeError as e:
