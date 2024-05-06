@@ -9,6 +9,7 @@ from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
+from osom_api.context.msg import Msg
 from osom_api.logging.logging import logger
 
 
@@ -88,3 +89,6 @@ class Context(MqClientCallback):
     @override
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
+
+    async def do_message(self, message: Msg):
+        pass
