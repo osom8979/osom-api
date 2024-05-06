@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from unittest import IsolatedAsyncioTestCase, main, skipIf
 from typing import Optional, Tuple
+from unittest import IsolatedAsyncioTestCase, main, skipIf
 
 from dotenv import dotenv_values
 

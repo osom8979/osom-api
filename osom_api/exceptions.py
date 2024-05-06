@@ -49,7 +49,11 @@ class InvalidStateError(OsomApiError):
     pass
 
 
-class NotInitializedError(InvalidStateError):
+class NotInitializedError(OsomApiError):
+    pass
+
+
+class AlreadyInitializedError(OsomApiError):
     pass
 
 

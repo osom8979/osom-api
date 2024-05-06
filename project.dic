@@ -15,6 +15,7 @@ eeur
 enam
 encipherment
 exposedbydefault
+fileobj
 ghcr
 keysize
 levelname
@@ -25,6 +26,7 @@ meipass
 nocov
 osom
 pmessage
+presigned
 psubscribe
 punsubscribe
 pythonpath
@@ -32,7 +34,10 @@ rediscli
 rediss
 requirepass
 rpcs
+strftime
+subresources
 tableflip
+tiering
 timedatectl
 tlschallenge
 traefik

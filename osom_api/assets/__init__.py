@@ -3,6 +3,7 @@
 import os
 import sys
 from functools import lru_cache
+from pathlib import Path
 
 
 @lru_cache
@@ -12,3 +13,13 @@ def get_assets_dir() -> str:
         return os.path.join(getattr(sys, "_MEIPASS"), "assets")
     else:
         return os.path.abspath(os.path.dirname(__file__))
+
+
+@lru_cache
+def get_assets_path() -> Path:
+    return Path(get_assets_dir())
+
+
+@lru_cache
+def get_osom_logo_svg_path() -> Path:
+    return get_assets_path() / "osom.logo.svg"

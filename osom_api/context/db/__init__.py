@@ -13,10 +13,11 @@ from osom_api.arguments import (
     DEFAULT_SUPABASE_STORAGE_TIMEOUT,
 )
 from osom_api.context.db.mixins.discord_register import DiscordRegister
+from osom_api.context.db.mixins.members import Members
 from osom_api.context.db.mixins.progress import Progress
 from osom_api.context.db.mixins.telegram_register import TelegramRegister
-from osom_api.context.db.mixins.members import Members
-from osom_api.exceptions import NotInitializedError
+from osom_api.exceptions import AlreadyInitializedError, NotInitializedError
+from osom_api.logging.logging import logger
 
 
 class DbClient(DiscordRegister, Progress, TelegramRegister, Members):
@@ -43,19 +44,24 @@ class DbClient(DiscordRegister, Progress, TelegramRegister, Members):
         )
 
     async def open(self) -> None:
-        if all((self._supabase_url, self._supabase_key)):
-            assert isinstance(self._supabase_url, str)
-            assert isinstance(self._supabase_key, str)
-            self._supabase = await create_client(
-                self._supabase_url,
-                self._supabase_key,
-                self._options,
-            )
-        else:
-            self._supabase = None
+        if self._supabase is not None:
+            raise AlreadyInitializedError("Supabase client already initialized")
+
+        if not all((self._supabase_url, self._supabase_key)):
+            logger.warning("Supabase client is not initialized")
+            return
+
+        assert isinstance(self._supabase_url, str)
+        assert isinstance(self._supabase_key, str)
+        self._supabase = await create_client(
+            self._supabase_url,
+            self._supabase_key,
+            self._options,
+        )
 
     async def close(self) -> None:
         self._supabase = None
+        logger.debug("Supabase client closed")
 
     @property
     @override
