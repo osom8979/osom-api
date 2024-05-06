@@ -3,12 +3,11 @@
 from argparse import Namespace
 
 from aiogram import Bot, Dispatcher, F, Router
+from aiogram.enums.content_type import ContentType
 from aiogram.types import Message
 from overrides import override
 
 from osom_api.aio.run import aio_run
-from osom_api.apps.telegram.commands.help import CommandHelp
-from osom_api.apps.telegram.commands.version import CommandVersion
 from osom_api.apps.telegram.config import TelegramConfig
 from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
@@ -29,9 +28,8 @@ class TelegramContext(Context):
         self._router.message.outer_middleware.register(
             RegistrationVerifierMiddleware(self.db)
         )
-        self._router.message.register(self.on_help, CommandHelp())
-        self._router.message.register(self.on_version, CommandVersion())
-        self._router.message.register(self.on_openai_chat, F.text.startswith("?"))
+        self._router.message.register(self.on_help, F.text == "help")
+        self._router.message.register(self.on_version, F.text == "version")
         self._router.message.register(self.on_fallback)
 
         self._dispatcher = Dispatcher()
@@ -78,16 +76,25 @@ class TelegramContext(Context):
 
     async def on_fallback(self, message: Message) -> None:
         assert self
+        # ContentType.TEXT
+        # ContentType.PHOTO
         o = dict(
-            event="fallback",
             content_type=message.content_type,
             message_id=message.message_id,
             chat=message.chat.id,
             username=message.chat.username,
-            full_name=message.chat.full_name,
-            type=message.chat.type,
-            text=message.text,
+            nickname=message.chat.full_name,
+            content=message.text,
+            created_at=message.date,
         )
+        for photo in message.photo:
+            po = dict(
+                file_id=photo.file_id,
+                # file_unique_id=photo.file_unique_id,
+                width=photo.width,
+                height=photo.height,
+                file_size=photo.file_size,
+            )
         logger.debug(repr(o))
 
     async def main(self) -> None:

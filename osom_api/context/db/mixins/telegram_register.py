@@ -14,7 +14,7 @@ class C(Columns):
 
 
 class TelegramRegister(DbMixinBase):
-    async def select_discord_channel_id(self, message_chat_id: int):
+    async def select_telegram_chat_id(self, message_chat_id: int):
         return (
             await self.supabase.table(T.telegram_register)
             .select(C.chat_id)
@@ -23,6 +23,6 @@ class TelegramRegister(DbMixinBase):
         )
 
     async def registered_telegram_chat_id(self, message_chat_id: int):
-        response = await self.select_discord_channel_id(message_chat_id)
+        response = await self.select_telegram_chat_id(message_chat_id)
         assert len(response.data) in (0, 1)
         return len(response.data) == 1

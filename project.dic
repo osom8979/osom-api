@@ -32,10 +32,12 @@ rediscli
 rediss
 requirepass
 rpcs
+tableflip
 timedatectl
 tlschallenge
 traefik
 tznow
+unflip
 uvloop's
 websecure
 weur

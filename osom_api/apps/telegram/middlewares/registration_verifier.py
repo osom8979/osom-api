@@ -4,9 +4,9 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
-from aiogram.utils.markdown import hlink
 from overrides import override
 
+from osom_api.arguments import NOT_REGISTERED_MSG
 from osom_api.context.db import DbClient
 from osom_api.logging.logging import logger
 
@@ -25,7 +25,6 @@ class RegistrationVerifierMiddleware(BaseMiddleware):
         if isinstance(event, Message):
             if not await self.db.registered_telegram_chat_id(event.chat.id):
                 logger.error(f"Unregistered chat {event.chat.id}")
-                link = hlink("osom.run", "https://www.osom.run/")
-                return await event.reply(f"Not registered. Go to {link} and sign up!")
+                return await event.reply(NOT_REGISTERED_MSG)
 
         return await handler(event, data)

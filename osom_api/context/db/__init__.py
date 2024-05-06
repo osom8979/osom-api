@@ -5,7 +5,7 @@ from typing import Optional
 from overrides import override
 
 # noinspection PyProtectedMember
-from supabase._async.client import AsyncClient, create_client
+from supabase._async.client import AsyncClient, AsyncMemoryStorage, create_client
 from supabase.lib.client_options import ClientOptions
 
 from osom_api.arguments import (
@@ -15,10 +15,11 @@ from osom_api.arguments import (
 from osom_api.context.db.mixins.discord_register import DiscordRegister
 from osom_api.context.db.mixins.progress import Progress
 from osom_api.context.db.mixins.telegram_register import TelegramRegister
+from osom_api.context.db.mixins.members import Members
 from osom_api.exceptions import NotInitializedError
 
 
-class DbClient(DiscordRegister, Progress, TelegramRegister):
+class DbClient(DiscordRegister, Progress, TelegramRegister, Members):
     _supabase: Optional[AsyncClient]
 
     def __init__(
@@ -38,6 +39,7 @@ class DbClient(DiscordRegister, Progress, TelegramRegister):
             persist_session=persist_session,
             postgrest_client_timeout=postgrest_client_timeout,
             storage_client_timeout=storage_client_timeout,
+            storage=AsyncMemoryStorage(),  # noqa
         )
 
     async def open(self) -> None:

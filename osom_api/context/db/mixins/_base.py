@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 
-from abc import ABC
+from enum import StrEnum
 
 # noinspection PyProtectedMember
 from supabase._async.client import AsyncClient
 
 
-class Tables(ABC):
+class Tables(StrEnum):
     pass
 
 
-class Columns(ABC):
+class Columns(StrEnum):
     pass
 
 
-class Rpcs(ABC):
+class Rpcs(StrEnum):
     pass
 
 
-class Values(ABC):
+class Values(StrEnum):
     pass
 
 
