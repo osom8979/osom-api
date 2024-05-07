@@ -3,8 +3,8 @@
 from asyncio import to_thread
 from typing import Any, BinaryIO, Dict, Optional
 
-from botocore.exceptions import ClientError
 from boto3 import client as boto3_client
+from botocore.exceptions import ClientError
 
 from osom_api.context.s3.protocol.client import Client
 from osom_api.exceptions import AlreadyInitializedError, NotInitializedError
@@ -26,14 +26,16 @@ class S3Client:
         self._access = access
         self._secret = secret
         self._region = region
-        self._bucket = bucket
+        self._bucket = bucket if bucket else str()
         self._client = None
 
     async def open(self) -> None:
         if self._client is not None:
             raise AlreadyInitializedError("S3 client already initialized")
 
-        if not all((self._endpoint, self._access, self._secret, self._region)):
+        # [IMPORTANT] bucket name is also required.
+        values = self._endpoint, self._access, self._secret, self._region, self._bucket
+        if not all(values):
             logger.warning("S3 client is not initialized")
             return
 

@@ -1,32 +1,34 @@
 # -*- coding: utf-8 -*-
 
-from enum import IntEnum, auto, unique
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import IntEnum, unique
 from typing import List
+from uuid import uuid4
 
 
 @unique
 class MsgProvider(IntEnum):
-    Master = auto()
-    Worker = auto()
-    Discord = auto()
-    Telegram = auto()
+    Master = 0
+    Worker = 1
+    Discord = 2
+    Telegram = 3
 
 
 @dataclass
-class File:
+class MsgFile:
     content_type: str
     file_id: str
     file_name: str
     file_size: int
     image_width: int
     image_height: int
-    presigned_url: str
+    content: bytes
+    file_uuid: str = field(default_factory=lambda: uuid4().hex)
 
 
 @dataclass
-class Msg:
+class MsgRequest:
     provider: MsgProvider
     message_id: int
     channel_id: int
@@ -34,4 +36,12 @@ class Msg:
     nickname: str
     text: str
     created_at: datetime
-    files: List[File] = field(default_factory=list)
+    files: List[MsgFile] = field(default_factory=list)
+    msg_uuid: str = field(default_factory=lambda: uuid4().hex)
+
+
+@dataclass
+class MsgResponse:
+    msg_uuid: str
+    text: str
+    files: List[MsgFile] = field(default_factory=list)

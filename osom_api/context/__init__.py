@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from signal import SIGINT, raise_signal
+from typing import Optional
 
 from overrides import override
 
+from osom_api.arguments import version as osom_version
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
+from osom_api.context.msg import MsgRequest, MsgResponse
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
-from osom_api.context.msg import Msg
 from osom_api.logging.logging import logger
 
 
@@ -74,6 +76,14 @@ class Context(MqClientCallback):
         await self._db.close()
         await self._mq.close()
 
+    @property
+    def version(self):
+        return osom_version()
+
+    @property
+    def help(self):
+        return ""
+
     @staticmethod
     def raise_interrupt_signal() -> None:
         raise_signal(SIGINT)
@@ -90,5 +100,5 @@ class Context(MqClientCallback):
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
 
-    async def do_message(self, message: Msg):
-        pass
+    async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
+        return None

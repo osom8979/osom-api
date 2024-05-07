@@ -3,7 +3,6 @@
 from argparse import Namespace
 
 from aiogram import Bot, Dispatcher, F, Router
-from aiogram.enums.content_type import ContentType
 from aiogram.types import Message
 from overrides import override
 
@@ -12,8 +11,8 @@ from osom_api.apps.telegram.config import TelegramConfig
 from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
 )
-from osom_api.arguments import version as osom_version
 from osom_api.context import Context
+from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
 
 
@@ -30,12 +29,10 @@ class TelegramContext(Context):
         )
         self._router.message.register(self.on_help, F.text == "help")
         self._router.message.register(self.on_version, F.text == "version")
-        self._router.message.register(self.on_fallback)
+        self._router.message.register(self.on_message)
 
         self._dispatcher = Dispatcher()
         self._dispatcher.include_routers(self._router)
-
-        self._osom_version = osom_version()
 
     @override
     async def on_mq_connect(self) -> None:
@@ -50,10 +47,10 @@ class TelegramContext(Context):
         logger.warning("Redis task is done")
 
     async def on_help(self, message: Message) -> None:
-        await message.answer(self._osom_version)
+        await message.answer(self.help)
 
     async def on_version(self, message: Message) -> None:
-        await message.answer(self._osom_version)
+        await message.answer(self.version)
 
     async def on_openai_chat(self, message: Message) -> None:
         assert message.text
@@ -74,28 +71,50 @@ class TelegramContext(Context):
             logger.error(f"Unexpected error occurred in message ({message_id}): {e}")
             await message.reply("Unexpected error occurred")
 
-    async def on_fallback(self, message: Message) -> None:
-        assert self
-        # ContentType.TEXT
-        # ContentType.PHOTO
-        o = dict(
-            content_type=message.content_type,
-            message_id=message.message_id,
-            chat=message.chat.id,
-            username=message.chat.username,
-            nickname=message.chat.full_name,
-            content=message.text,
-            created_at=message.date,
-        )
-        for photo in message.photo:
-            po = dict(
+    async def on_message(self, message: Message) -> None:
+        files = list()
+        if message.photo is not None:
+            file_sizes = [p.file_size if p.file_size else 0 for p in message.photo]
+            largest_file_index = file_sizes.index(max(file_sizes))
+            photo = message.photo[largest_file_index]
+            file_info = await self._bot.get_file(photo.file_id)
+            assert file_info.file_path
+            file_buffer = await self._bot.download_file(file_info.file_path)
+            assert file_buffer is not None
+            content = file_buffer.read()
+            msg_file = MsgFile(
+                content_type="image/jpeg",
                 file_id=photo.file_id,
-                # file_unique_id=photo.file_unique_id,
-                width=photo.width,
-                height=photo.height,
-                file_size=photo.file_size,
+                file_name=file_info.file_path,
+                file_size=photo.file_size if photo.file_size else 0,
+                image_width=photo.width,
+                image_height=photo.height,
+                content=content,
             )
-        logger.debug(repr(o))
+            files.append(msg_file)
+
+        chat = message.chat
+        username = chat.username if chat.username else str()
+        text = message.text if message.text else str()
+        msg = MsgRequest(
+            provider=MsgProvider.Telegram,
+            message_id=message.message_id,
+            channel_id=chat.id,
+            username=username,
+            nickname=chat.full_name,
+            text=text,
+            created_at=message.date,
+            files=files,
+        )
+
+        response = await self.do_message(msg)
+        if response is not None:
+            if response.text:
+                await message.reply(response.text)
+            else:
+                await message.reply("Empty response text")
+        else:
+            await message.reply("No response")
 
     async def main(self) -> None:
         await self.open_common_context()

@@ -20,6 +20,11 @@ def get_dotenv_s3_values() -> Optional[Tuple[str, str, str, str, str]]:
     region = values.get("S3_REGION")
     bucket = values.get("S3_BUCKET")
     if all((endpoint, access, secret, region, bucket)):
+        assert isinstance(endpoint, str)
+        assert isinstance(access, str)
+        assert isinstance(secret, str)
+        assert isinstance(region, str)
+        assert isinstance(bucket, str)
         return endpoint, access, secret, region, bucket
     else:
         return None

@@ -11,8 +11,8 @@ from overrides import override
 from osom_api.aio.run import aio_run
 from osom_api.apps.discord.config import DiscordConfig
 from osom_api.arguments import NOT_REGISTERED_MSG
-from osom_api.arguments import version as osom_version
 from osom_api.context import Context
+from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
 
 
@@ -21,7 +21,6 @@ class DiscordContext(Context):
         self._config = DiscordConfig.from_namespace(args)
         super().__init__(self._config)
 
-        self._osom_version = osom_version()
         self._intents = Intents.default()
         self._intents.typing = False
         self._intents.presences = False
@@ -40,9 +39,14 @@ class DiscordContext(Context):
 
             return check(predicate)
 
-        @bot.command(help="Shows osom-api version number")
+        @bot.command(name="help")
         @is_registration()
-        async def version(ctx) -> None:
+        async def _help(ctx) -> None:
+            await self.on_help(ctx)
+
+        @bot.command(name="version")
+        @is_registration()
+        async def _version(ctx) -> None:
             await self.on_version(ctx)
 
         @bot.event
@@ -70,33 +74,51 @@ class DiscordContext(Context):
         await ctx.send(NOT_REGISTERED_MSG)
         return False
 
+    async def on_help(self, ctx: CommandContext) -> None:
+        await ctx.send(self.help)
+
     async def on_version(self, ctx: CommandContext) -> None:
-        await ctx.send(self._osom_version)
+        await ctx.send(self.version)
 
     async def on_message(self, message: Message) -> None:
-        if message.content.startswith("$hello"):
-            await message.channel.send("Hello!")
-        o = dict(
-            content_type=message.type,
-            message_id=message.id,
-            chat=message.channel.id,
-            username=message.author.name,
-            nickname=message.author.global_name,
-            content=message.content,
-            created_at=message.created_at,
-        )
+        files = list()
         for attach in message.attachments:
-            if attach.content_type == "image/png":
-                po = dict(
-                    file_id=attach.id,
-                    width=attach.width,
-                    height=attach.height,
-                    file_size=attach.size,
-                    filename=attach.filename,
-                    # proxy_url=attach.proxy_url,
-                    url=attach.url,
-                    temporary=attach.ephemeral,
-                )
+            content = await attach.read()
+            content_type = attach.content_type if attach.content_type else ""
+            image_width = attach.width if attach.width else 0
+            image_height = attach.height if attach.height else 0
+            msg_file = MsgFile(
+                content_type=content_type,
+                file_id=str(attach.id),
+                file_name=attach.filename,
+                file_size=attach.size,
+                image_width=image_width,
+                image_height=image_height,
+                content=content,
+            )
+            files.append(msg_file)
+
+        author = message.author
+        global_name = author.global_name if author.global_name else author.name
+        msg = MsgRequest(
+            provider=MsgProvider.Discord,
+            message_id=message.id,
+            channel_id=message.channel.id,
+            username=author.name,
+            nickname=global_name,
+            text=message.content,
+            created_at=message.created_at,
+            files=files,
+        )
+
+        response = await self.do_message(msg)
+        if response is not None:
+            if response.text:
+                await message.channel.send(response.text)
+            else:
+                await message.reply("Empty response text")
+        else:
+            await message.channel.send("No response")
 
     async def main(self) -> None:
         await self.open_common_context()
