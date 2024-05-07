@@ -146,7 +146,7 @@ class MqClient:
             finally:
                 await pubsub.close()
         except CancelledError:
-            raise
+            logger.warning("A cancellation signal was detected in a Redis Task")
         except BaseException as e:
             logger.error(e)
         finally:
