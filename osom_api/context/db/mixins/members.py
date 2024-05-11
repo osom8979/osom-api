@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from osom_api.context.db.mixins._base import Columns, DbMixinBase, Tables
+from osom_api.context.db.mixins._base import AutoName, Columns, DbMixinBase, Tables
 
 
 class T(Tables):
-    members = "members"
+    members = AutoName()
 
 
 class C(Columns):
-    team = "team"
-    member = "member"
-    role = "role"
+    team = AutoName()
+    member = AutoName()
+    role = AutoName()
 
 
 class Members(DbMixinBase):

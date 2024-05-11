@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from enum import StrEnum
+from enum import StrEnum, auto
 
 # noinspection PyProtectedMember
 from supabase._async.client import AsyncClient
+
+AutoName = auto
 
 
 class Tables(StrEnum):

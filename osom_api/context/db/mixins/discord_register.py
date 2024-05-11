@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from osom_api.context.db.mixins._base import Columns, DbMixinBase, Tables
+from osom_api.context.db.mixins._base import AutoName, Columns, DbMixinBase, Tables
 
 
 class T(Tables):
-    discord_register = "discord_register"
+    discord_register = AutoName()
 
 
 class C(Columns):
-    channel_id = "channel_id"
-    created_at = "created_at"
-    updated_at = "updated_at"
+    channel_id = AutoName()
+    created_at = AutoName()
+    updated_at = AutoName()
 
 
 class DiscordRegister(DbMixinBase):

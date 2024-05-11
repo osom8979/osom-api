@@ -7,30 +7,37 @@ from typing import Dict, Optional, Union
 from fastapi import HTTPException, status
 from fastapi.types import BaseModel
 
-from osom_api.context.db.mixins._base import Columns, DbMixinBase, Rpcs, Tables, Values
+from osom_api.context.db.mixins._base import (
+    AutoName,
+    Columns,
+    DbMixinBase,
+    Rpcs,
+    Tables,
+    Values,
+)
 
 
 class T(Tables):
-    progress = "progress"
+    progress = AutoName()
 
 
 class C(Columns):
-    id = "id"
-    owner = "owner"
-    value = "value"
-    expired_at = "expired_at"
-    created_at = "created_at"
-    updated_at = "updated_at"
+    id = AutoName()
+    owner = AutoName()
+    value = AutoName()  # type: ignore[assignment]
+    expired_at = AutoName()
+    created_at = AutoName()
+    updated_at = AutoName()
 
 
 class R(Rpcs):
-    increase_anonymous_progress_value = "increase_anonymous_progress_value"
-    progress_id = "progress_id"
-    increase_value = "increase_value"
+    increase_anonymous_progress_value = AutoName()
+    progress_id = AutoName()
+    increase_value = AutoName()
 
 
 class V(Values):
-    null = "null"
+    null = AutoName()
 
 
 class InsertProgressResponse(BaseModel):
