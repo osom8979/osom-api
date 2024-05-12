@@ -14,6 +14,12 @@ from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
 
+HELP_MESSAGE = f"""OSOM API version: {osom_version()}
+Available commands:
+  /help        Show help message
+  /version     Show version number
+"""
+
 
 class Context(MqClientCallback):
     def __init__(self, config: Config):
@@ -47,6 +53,10 @@ class Context(MqClientCallback):
             api_key=config.openai_api_key,
             timeout=config.openai_timeout,
         )
+        self._commands = {
+            "help": lambda: self.help,
+            "version": lambda: self.version,
+        }
 
     @property
     def mq(self):
@@ -82,7 +92,7 @@ class Context(MqClientCallback):
 
     @property
     def help(self):
-        return ""
+        return HELP_MESSAGE
 
     @staticmethod
     def raise_interrupt_signal() -> None:
@@ -101,4 +111,15 @@ class Context(MqClientCallback):
         logger.warning("The Redis subscription task is completed")
 
     async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
-        return None
+        if message.text[0] == "/":
+            tokens = message.text.split(" ", 1)
+            tokens_size = len(tokens)
+            assert tokens_size in (1, 2)
+            command = tokens[0]
+            args = tokens[1].strip() if tokens_size == 2 else str()
+            if command in self._commands:
+                return self._commands[command](args)
+            else:
+                raise InvalidCommandException(f"Unknown command: {command!r}")
+        else:
+            return None
