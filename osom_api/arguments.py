@@ -64,6 +64,9 @@ DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
 DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
 
+DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/common"
+DEFAULT_MODULE_PATH: Final[str] = "osom_api.apps.worker.modules.common"
+
 OSOM_WEB_LINK: Final[str] = "https://www.osom.run/"
 NOT_REGISTERED_MSG: Final[str] = f"Not registered. Go to {OSOM_WEB_LINK} and sign up!"
 
@@ -389,15 +392,21 @@ def add_cmd_worker_parser(subparsers) -> None:
     _add_context_arguments(parser)
     parser.add_argument(
         "--request-path",
-        default=get_eval("REQUEST_PATH"),
+        default=get_eval("REQUEST_PATH", DEFAULT_REQUEST_PATH),
         metavar="path",
-        help="Request path in message queue",
+        help=f"Request path in message queue. (default: '{DEFAULT_REQUEST_PATH}')",
     )
     parser.add_argument(
         "--module-path",
-        default=get_eval("MODULE_PATH", ""),
+        default=get_eval("MODULE_PATH", DEFAULT_MODULE_PATH),
         metavar="path",
-        help="Import path of the module to use",
+        help=f"Import path of the module to use (default: '{DEFAULT_MODULE_PATH}')",
+    )
+    parser.add_argument(
+        "--isolate-module",
+        action="store_true",
+        default=get_eval("ISOLATE_MODULE", False),
+        help="Enable isolated module",
     )
 
 

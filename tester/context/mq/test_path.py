@@ -2,6 +2,7 @@
 
 from unittest import TestCase, main
 
+from osom_api.arguments import DEFAULT_REQUEST_PATH
 from osom_api.context.mq.path import (
     BROADCAST_PATH,
     PATH_ROOT,
@@ -27,6 +28,9 @@ class PathTestCase(TestCase):
         self.assertEqual(QUEUE_COMMON_PATH, join_path(QUEUE_PATH, "common"))
         self.assertEqual(RESPONSE_PATH, join_path(PATH_ROOT, "response"))
         self.assertEqual(BROADCAST_PATH, join_path(PATH_ROOT, "broadcast"))
+
+    def test_default_variables(self):
+        self.assertEqual(DEFAULT_REQUEST_PATH, QUEUE_COMMON_PATH)
 
 
 if __name__ == "__main__":

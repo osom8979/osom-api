@@ -9,13 +9,13 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
+from osom_api.apps.worker.module import Module
+from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
-from osom_api.context.mq.path import QUEUE_COMMON_PATH, encode_path, make_response_path
+from osom_api.context.mq.path import encode_path, make_response_path
 from osom_api.context.mq.protocol.worker import Keys
 from osom_api.exceptions import (
     CommandRuntimeError,
-    EmptyApiError,
-    InvalidCommandError,
     NoMessageDataError,
     NoMessageIdError,
     OsomApiError,
@@ -30,20 +30,11 @@ class WorkerContext(Context):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig.from_namespace(args)
         super().__init__(self._config)
+        self._module = Module(self._config.module_path, self._config.isolate_module)
 
     @property
     def request_path(self):
-        if self._config.request_path:
-            return self._config.request_path
-        else:
-            return QUEUE_COMMON_PATH
-
-    @property
-    def module_path(self):
-        if self._config.module_path:
-            return self._config.module_path
-        else:
-            return QUEUE_COMMON_PATH
+        return floor(self._config.request_path)
 
     @property
     def timeout(self):
@@ -65,12 +56,14 @@ class WorkerContext(Context):
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
 
-    async def open_modules(self) -> None:
+    async def open_module(self) -> None:
         logger.debug("Open modules ...")
+        await self._module.async_open()
         logger.info("Opened modules")
 
-    async def close_modules(self) -> None:
+    async def close_module(self) -> None:
         logger.debug("Close modules ...")
+        await self._module.async_close()
         logger.info("Closed modules")
 
     async def polling_iter(self) -> None:
@@ -102,9 +95,15 @@ class WorkerContext(Context):
         if not request_id:
             raise NoMessageIdError("Message ID does not exist")
 
+        assert isinstance(request_id, str)
+
+        if self._config.verbose >= VERBOSE_LEVEL_1:
+            logger.info(f"Request[{request_id}] {request_data}")
+        else:
+            logger.info(f"Request[{request_id}]")
+
         try:
-            # result = await worker_command.run(request_data)
-            result = None
+            result = await self._module.run(request_data)
         except BaseException as e:
             logger.exception(e)
             raise CommandRuntimeError("A command runtime error was detected")
@@ -135,13 +134,13 @@ class WorkerContext(Context):
 
     async def main(self) -> None:
         await self.open_common_context()
-        await self.open_modules()
+        await self.open_module()
         try:
             logger.info("Start polling ...")
             await self.start_polling()
         finally:
             logger.info("Polling is done...")
-            await self.close_modules()
+            await self.close_module()
             await self.close_common_context()
 
     def run(self) -> None:
