@@ -41,16 +41,6 @@ class DiscordContext(Context):
 
             return check(predicate)
 
-        @bot.command(name="help")
-        @is_registration()
-        async def cmd_help(ctx) -> None:
-            await self.on_help(ctx)
-
-        @bot.command(name="version")
-        @is_registration()
-        async def cmd_version(ctx) -> None:
-            await self.on_version(ctx)
-
         @bot.event
         @is_registration()
         async def on_message(message) -> None:
@@ -76,13 +66,10 @@ class DiscordContext(Context):
         await ctx.send(NOT_REGISTERED_MSG)
         return False
 
-    async def on_help(self, ctx: CommandContext) -> None:
-        await ctx.send(self.help)
-
-    async def on_version(self, ctx: CommandContext) -> None:
-        await ctx.send(self.version)
-
     async def on_message(self, message: Message) -> None:
+        if message.author.bot:
+            return
+
         files = list()
         for attach in message.attachments:
             content = await attach.read()
@@ -114,13 +101,13 @@ class DiscordContext(Context):
         )
 
         response = await self.do_message(msg)
-        if response is not None:
-            if response.text:
-                await message.channel.send(response.text)
-            else:
-                await message.reply("Empty response text")
-        else:
-            await message.channel.send("No response")
+        if response is None:
+            return
+
+        if not response.text:
+            return
+
+        await message.channel.send(response.text)
 
     async def main(self) -> None:
         await self.open_common_context()

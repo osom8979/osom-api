@@ -2,7 +2,8 @@
 
 from argparse import Namespace
 
-from aiogram import Bot, Dispatcher, F, Router
+from aiogram import Bot, Dispatcher, Router
+from aiogram.filters import Command
 from aiogram.types import Message
 from overrides import override
 
@@ -16,6 +17,16 @@ from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
 
 
+class HelpCommand(Command):
+    def __init__(self):
+        super().__init__("help")
+
+
+class VersionCommand(Command):
+    def __init__(self):
+        super().__init__("version")
+
+
 class TelegramContext(Context):
     def __init__(self, args: Namespace):
         self._config = TelegramConfig.from_namespace(args)
@@ -27,8 +38,8 @@ class TelegramContext(Context):
         self._router.message.outer_middleware.register(
             RegistrationVerifierMiddleware(self.db)
         )
-        self._router.message.register(self.on_help, F.text == "help")
-        self._router.message.register(self.on_version, F.text == "version")
+        self._router.message.register(self.on_help, HelpCommand())
+        self._router.message.register(self.on_version, VersionCommand())
         self._router.message.register(self.on_message)
 
         self._dispatcher = Dispatcher()
@@ -51,25 +62,6 @@ class TelegramContext(Context):
 
     async def on_version(self, message: Message) -> None:
         await message.answer(self.version)
-
-    async def on_openai_chat(self, message: Message) -> None:
-        assert message.text
-        assert message.text.startswith("?")
-
-        message_text = message.text[1:].strip()
-        if not message_text:
-            return
-
-        try:
-            chat_completion = await self.oai.create_chat_completion(message_text)
-            content = chat_completion.choices[0].message.content
-            print(chat_completion.model_dump_json())
-            # chat_completion_json = chat_completion.model_dump_json()
-            await message.reply(content if content else "")
-        except BaseException as e:
-            message_id = message.message_id
-            logger.error(f"Unexpected error occurred in message ({message_id}): {e}")
-            await message.reply("Unexpected error occurred")
 
     async def on_message(self, message: Message) -> None:
         files = list()
@@ -108,13 +100,13 @@ class TelegramContext(Context):
         )
 
         response = await self.do_message(msg)
-        if response is not None:
-            if response.text:
-                await message.reply(response.text)
-            else:
-                await message.reply("Empty response text")
-        else:
-            await message.reply("No response")
+        if response is None:
+            return
+
+        if not response.text:
+            return
+
+        await message.reply(response.text)
 
     async def main(self) -> None:
         await self.open_common_context()

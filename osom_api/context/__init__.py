@@ -16,8 +16,7 @@ from osom_api.context.s3 import S3Client
 from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 
-HELP_MESSAGE = f"""OSOM API version: {osom_version()}
-Available commands:
+HELP_MESSAGE = f"""Available commands:
   {COMMAND_PREFIX}help        Show help message
   {COMMAND_PREFIX}version     Show version number
 """
@@ -58,8 +57,8 @@ class Context(MqClientCallback):
             timeout=config.openai_timeout,
         )
         self._commands = {
-            "version": self.on_req_version,
-            "help": self.on_req_help,
+            "version": self.on_version,
+            "help": self.on_help,
         }
 
     @property
@@ -114,15 +113,31 @@ class Context(MqClientCallback):
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
 
-    async def on_req_version(self, message: MsgRequest) -> MsgResponse:
+    async def on_version(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.version)
 
-    async def on_req_help(self, message: MsgRequest) -> MsgResponse:
+    async def on_help(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.help)
 
+    async def on_openai_chat(self, message: MsgRequest) -> None:
+        try:
+            chat_completion = await self.oai.create_chat_completion(message.text)
+            content = chat_completion.choices[0].message.content
+            print(chat_completion.model_dump_json())
+            # chat_completion_json = chat_completion.model_dump_json()
+            # await message.reply(content if content else "")
+        except BaseException as e:
+            message_id = message.message_id
+            logger.error(f"Unexpected error occurred in message ({message_id}): {e}")
+            # await message.reply("Unexpected error occurred")
+
     async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
+        logger.info(f"Message({message})")
+
         if message.text.startswith(COMMAND_PREFIX):
             command, argument = message.split_command_argument()
+            command_begin = len(COMMAND_PREFIX)
+            command = command[command_begin:]
             coro = self._commands.get(command)
             if coro is None:
                 raise InvalidCommandError(f"Unregistered command: {command!r}")

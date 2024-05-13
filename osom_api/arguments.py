@@ -25,19 +25,31 @@ DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
 CMD_DISCORD: Final[str] = "discord"
 CMD_DISCORD_HELP: Final[str] = "Proxy server for Discord bots"
-CMD_DISCORD_EPILOG: Final[str] = ""
+CMD_DISCORD_EPILOG = f"""
+Simply usage:
+  {PROG} {CMD_DISCORD}
+"""
 
 CMD_TELEGRAM: Final[str] = "telegram"
 CMD_TELEGRAM_HELP: Final[str] = "Proxy server for Telegram bots"
-CMD_TELEGRAM_EPILOG: Final[str] = ""
+CMD_TELEGRAM_EPILOG = f"""
+Simply usage:
+  {PROG} {CMD_TELEGRAM}
+"""
 
 CMD_MASTER: Final[str] = "master"
 CMD_MASTER_HELP: Final[str] = "Endpoint server for HTTP API"
-CMD_MASTER_EPILOG: Final[str] = ""
+CMD_MASTER_EPILOG = f"""
+Simply usage:
+  {PROG} {CMD_MASTER}
+"""
 
 CMD_WORKER: Final[str] = "worker"
 CMD_WORKER_HELP: Final[str] = "Worker nodes connected to message queue"
-CMD_WORKER_EPILOG: Final[str] = ""
+CMD_WORKER_EPILOG = f"""
+Simply usage:
+  {PROG} {CMD_WORKER}
+"""
 
 CMDS = (CMD_DISCORD, CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
 
