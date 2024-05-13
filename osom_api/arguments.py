@@ -378,9 +378,6 @@ def add_cmd_master_parser(subparsers) -> None:
 
 
 def add_cmd_worker_parser(subparsers) -> None:
-    # [IMPORTANT] Avoid 'circular import' issues
-    from osom_api.context.mq.path import QUEUE_COMMON_PATH
-
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_WORKER,
@@ -391,10 +388,16 @@ def add_cmd_worker_parser(subparsers) -> None:
     assert isinstance(parser, ArgumentParser)
     _add_context_arguments(parser)
     parser.add_argument(
-        "--request-key",
-        default=get_eval("REQUEST_KEY", QUEUE_COMMON_PATH),
-        metavar="key",
-        help=f"Request key path (default: '{QUEUE_COMMON_PATH}')",
+        "--request-path",
+        default=get_eval("REQUEST_PATH"),
+        metavar="path",
+        help="Request path in message queue",
+    )
+    parser.add_argument(
+        "--module-path",
+        default=get_eval("MODULE_PATH", ""),
+        metavar="path",
+        help="Import path of the module to use",
     )
 
 

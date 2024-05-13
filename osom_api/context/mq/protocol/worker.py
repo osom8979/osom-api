@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from enum import StrEnum, unique
+from enum import StrEnum, auto, unique
 from typing import Final, Optional
-
-WORKER_REQUEST_API_KEY: Final[str] = "api"
-WORKER_REQUEST_MSG_KEY: Final[str] = "msg"
-WORKER_REQUEST_DATA_KEY: Final[str] = "data"
 
 
 @unique
 class Keys(StrEnum):
-    api = WORKER_REQUEST_API_KEY
-    msg = WORKER_REQUEST_MSG_KEY
-    data = WORKER_REQUEST_DATA_KEY
+    id = auto()
+    cmd = auto()
+    data = auto()
 
 
-assert Keys.api == WORKER_REQUEST_API_KEY
-assert Keys.msg == WORKER_REQUEST_MSG_KEY
-assert Keys.data == WORKER_REQUEST_DATA_KEY
+WORKER_REQUEST_ID_KEY: Final[str] = Keys.id
+WORKER_REQUEST_CMD_KEY: Final[str] = Keys.cmd
+WORKER_REQUEST_DATA_KEY: Final[str] = Keys.data
 
 
 @dataclass

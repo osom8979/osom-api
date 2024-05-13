@@ -17,7 +17,7 @@ class EmptyApiError(OsomApiError):
     pass
 
 
-class NotFoundCommandKeyError(OsomApiError):
+class InvalidCommandError(OsomApiError):
     pass
 
 

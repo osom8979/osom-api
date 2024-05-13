@@ -1,27 +1,31 @@
 # -*- coding: utf-8 -*-
 
 from signal import SIGINT, raise_signal
-from typing import Optional
+from typing import Awaitable, Callable, Dict, Optional
 
 from overrides import override
 
 from osom_api.arguments import version as osom_version
+from osom_api.commands import COMMAND_PREFIX
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
 from osom_api.context.msg import MsgRequest, MsgResponse
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
+from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 
 HELP_MESSAGE = f"""OSOM API version: {osom_version()}
 Available commands:
-  /help        Show help message
-  /version     Show version number
+  {COMMAND_PREFIX}help        Show help message
+  {COMMAND_PREFIX}version     Show version number
 """
 
 
 class Context(MqClientCallback):
+    _commands: Dict[str, Callable[[MsgRequest], Awaitable[MsgResponse]]]
+
     def __init__(self, config: Config):
         self._mq = MqClient(
             url=config.redis_url,
@@ -54,8 +58,8 @@ class Context(MqClientCallback):
             timeout=config.openai_timeout,
         )
         self._commands = {
-            "help": lambda: self.help,
-            "version": lambda: self.version,
+            "version": self.on_req_version,
+            "help": self.on_req_help,
         }
 
     @property
@@ -110,16 +114,19 @@ class Context(MqClientCallback):
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
 
+    async def on_req_version(self, message: MsgRequest) -> MsgResponse:
+        return MsgResponse(message.msg_uuid, self.version)
+
+    async def on_req_help(self, message: MsgRequest) -> MsgResponse:
+        return MsgResponse(message.msg_uuid, self.help)
+
     async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
-        if message.text[0] == "/":
-            tokens = message.text.split(" ", 1)
-            tokens_size = len(tokens)
-            assert tokens_size in (1, 2)
-            command = tokens[0]
-            args = tokens[1].strip() if tokens_size == 2 else str()
-            if command in self._commands:
-                return self._commands[command](args)
-            else:
-                raise InvalidCommandException(f"Unknown command: {command!r}")
+        if message.text.startswith(COMMAND_PREFIX):
+            command, argument = message.split_command_argument()
+            coro = self._commands.get(command)
+            if coro is None:
+                raise InvalidCommandError(f"Unregistered command: {command!r}")
+
+            return await coro(message)
         else:
             return None

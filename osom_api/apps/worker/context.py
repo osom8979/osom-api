@@ -2,14 +2,12 @@
 
 from argparse import Namespace
 from math import floor
-from typing import Optional
 
 from orjson import dumps, loads
 from overrides import override
 from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
-from osom_api.apps.worker.commands import create_command_map
 from osom_api.apps.worker.config import WorkerConfig
 from osom_api.context import Context
 from osom_api.context.mq.path import QUEUE_COMMON_PATH, encode_path, make_response_path
@@ -17,9 +15,9 @@ from osom_api.context.mq.protocol.worker import Keys
 from osom_api.exceptions import (
     CommandRuntimeError,
     EmptyApiError,
+    InvalidCommandError,
     NoMessageDataError,
     NoMessageIdError,
-    NotFoundCommandKeyError,
     OsomApiError,
     PacketDumpError,
     PacketLoadError,
@@ -32,7 +30,28 @@ class WorkerContext(Context):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig.from_namespace(args)
         super().__init__(self._config)
-        self._commands = create_command_map(self)
+
+    @property
+    def request_path(self):
+        if self._config.request_path:
+            return self._config.request_path
+        else:
+            return QUEUE_COMMON_PATH
+
+    @property
+    def module_path(self):
+        if self._config.module_path:
+            return self._config.module_path
+        else:
+            return QUEUE_COMMON_PATH
+
+    @property
+    def timeout(self):
+        return floor(self._config.redis_blocking_timeout)
+
+    @property
+    def expire(self):
+        return floor(self._config.redis_expire_medium)
 
     @override
     async def on_mq_connect(self) -> None:
@@ -46,13 +65,16 @@ class WorkerContext(Context):
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
 
-    async def polling_iter(
-        self,
-        request_key=QUEUE_COMMON_PATH,
-        timeout: Optional[int] = None,
-        expire: Optional[int] = None,
-    ) -> None:
-        packet = await self.mq.brpop_bytes(request_key, timeout)
+    async def open_modules(self) -> None:
+        logger.debug("Open modules ...")
+        logger.info("Opened modules")
+
+    async def close_modules(self) -> None:
+        logger.debug("Close modules ...")
+        logger.info("Closed modules")
+
+    async def polling_iter(self) -> None:
+        packet = await self.mq.brpop_bytes(self.request_path, self.timeout)
         if packet is None:
             raise PollingTimeoutError("Blocking Right POP operation timeout")
 
@@ -64,35 +86,28 @@ class WorkerContext(Context):
 
         recv_key = packet[0]
         recv_data = packet[1]
-        assert recv_key == encode_path(request_key)
+        assert recv_key == encode_path(self.request_path)
 
         try:
             request = loads(recv_data)
             if not isinstance(request, dict):
                 raise TypeError(f"Unsupported request type: {type(request).__name__}")
 
-            request_api = request.get(Keys.api)
-            request_msg = request.get(Keys.msg)
+            request_id = request.get(Keys.id)
             request_data = request.get(Keys.data)
         except BaseException as e:
             logger.exception(e)
             raise PacketLoadError("Packet decoding fail")
 
-        if not request_api:
-            raise EmptyApiError("Request worker API is empty")
-
-        command = self._commands.get(request_api)
-        if command is None:
-            raise NotFoundCommandKeyError("Worker command not found")
+        if not request_id:
+            raise NoMessageIdError("Message ID does not exist")
 
         try:
-            result = await command.run(request_data)
+            # result = await worker_command.run(request_data)
+            result = None
         except BaseException as e:
             logger.exception(e)
             raise CommandRuntimeError("A command runtime error was detected")
-
-        if not request_msg:
-            raise NoMessageIdError("Message ID does not exist")
 
         if not result:
             raise NoMessageDataError("Message Data does not exist")
@@ -102,19 +117,15 @@ class WorkerContext(Context):
             assert isinstance(response_data, bytes)
         except BaseException as e:
             logger.exception(e)
-            raise PacketDumpError("Packet encoding fail")
+            raise PacketDumpError("Response packet encoding fail")
 
-        response_path = make_response_path(request_msg)
-        await self.mq.lpush_bytes(response_path, response_data, expire)
+        response_path = make_response_path(request_id)
+        await self.mq.lpush_bytes(response_path, response_data, self.expire)
 
     async def start_polling(self) -> None:
         while True:
             try:
-                await self.polling_iter(
-                    request_key=self._config.request_key,
-                    timeout=floor(self._config.redis_blocking_timeout),
-                    expire=floor(self._config.redis_expire_medium),
-                )
+                await self.polling_iter()
             except NoMessageIdError:
                 pass
             except CommandRuntimeError as e:
@@ -124,11 +135,13 @@ class WorkerContext(Context):
 
     async def main(self) -> None:
         await self.open_common_context()
+        await self.open_modules()
         try:
             logger.info("Start polling ...")
             await self.start_polling()
         finally:
             logger.info("Polling is done...")
+            await self.close_modules()
             await self.close_common_context()
 
     def run(self) -> None:

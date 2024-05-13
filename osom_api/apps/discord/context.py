@@ -11,6 +11,7 @@ from overrides import override
 from osom_api.aio.run import aio_run
 from osom_api.apps.discord.config import DiscordConfig
 from osom_api.arguments import NOT_REGISTERED_MSG
+from osom_api.commands import COMMAND_PREFIX
 from osom_api.context import Context
 from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
@@ -21,12 +22,13 @@ class DiscordContext(Context):
         self._config = DiscordConfig.from_namespace(args)
         super().__init__(self._config)
 
-        self._intents = Intents.default()
-        self._intents.typing = False
-        self._intents.presences = False
+        self._intents = Intents.all()
+        self._intents.members = False
         self._intents.message_content = True
+        self._intents.presences = False
+        self._intents.typing = False
         self._bot = bot = Bot(
-            command_prefix="/",
+            command_prefix=COMMAND_PREFIX,
             help_command=None,
             intents=self._intents,
             application_id=self._config.discord_application_id,
@@ -41,12 +43,12 @@ class DiscordContext(Context):
 
         @bot.command(name="help")
         @is_registration()
-        async def _help(ctx) -> None:
+        async def cmd_help(ctx) -> None:
             await self.on_help(ctx)
 
         @bot.command(name="version")
         @is_registration()
-        async def _version(ctx) -> None:
+        async def cmd_version(ctx) -> None:
             await self.on_version(ctx)
 
         @bot.event
