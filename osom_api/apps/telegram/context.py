@@ -66,15 +66,21 @@ class TelegramContext(Context):
             )
             files.append(msg_file)
 
-        chat = message.chat
-        username = chat.username if chat.username else str()
+        from_user = message.from_user
+        if from_user is not None:
+            username = from_user.username if from_user.username else str()
+            full_name = from_user.full_name
+        else:
+            username = str()
+            full_name = str()
+
         text = message.text if message.text else str()
         msg = MsgRequest(
             provider=MsgProvider.Telegram,
             message_id=message.message_id,
-            channel_id=chat.id,
+            channel_id=message.chat.id,
             username=username,
-            nickname=chat.full_name,
+            nickname=full_name,
             text=text,
             created_at=message.date,
             files=files,

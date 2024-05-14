@@ -18,8 +18,13 @@ from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
 
 HELP_MESSAGE = f"""Available commands:
-  {COMMAND_PREFIX}help        Show help message
-  {COMMAND_PREFIX}version     Show version number
+{COMMAND_PREFIX}help - Show help message
+{COMMAND_PREFIX}version - Show version number
+{COMMAND_PREFIX}chat - Talk to the chatbot
+  model=gpt-4 - Model name
+  n=1 - Number of chat completions
+{COMMAND_PREFIX}reply - Reply to previous chat
+{COMMAND_PREFIX}done - Complete the stream
 """
 
 
@@ -148,7 +153,7 @@ class Context(MqClientCallback):
 
             reply_buffer = StringIO()
             if len(chat_completion.choices) == 1:
-                reply_buffer = chat_completion.choices[0].message.content
+                reply_buffer.write(chat_completion.choices[0].message.content)
             elif len(chat_completion.choices) >= 2:
                 choice = chat_completion.choices[0]
                 reply_buffer.write("[0] " + choice.message.content)
