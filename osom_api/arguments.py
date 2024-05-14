@@ -75,6 +75,7 @@ DEFAULT_SUPABASE_POSTGREST_TIMEOUT: Final[float] = 8.0
 DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
 DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
+DEFAULT_CHAT_MODEL: Final[str] = "gpt-4"
 
 DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/common"
 DEFAULT_MODULE_PATH: Final[str] = "osom_api.apps.worker.modules.common"
@@ -305,6 +306,7 @@ def add_supabase_arguments(
 def add_openai_arguments(
     parser: ArgumentParser,
     openai_timeout=DEFAULT_OPENAI_TIMEOUT,
+    openai_default_chat_model=DEFAULT_CHAT_MODEL,
 ) -> None:
     parser.add_argument(
         "--openai-api-key",
@@ -318,6 +320,12 @@ def add_openai_arguments(
         metavar="sec",
         type=float,
         help=f"OpenAI timeout. (default: {openai_timeout:.2f})",
+    )
+    parser.add_argument(
+        "--openai-default-chat-model",
+        default=get_eval("OPENAI_DEFAULT_CHAT_MODEL", openai_default_chat_model),
+        metavar="model",
+        help=f"OpenAI default chat model. (default: '{openai_default_chat_model}')",
     )
 
 

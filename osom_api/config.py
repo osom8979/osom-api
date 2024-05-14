@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from type_serialize.inspect.member import get_public_instance_attributes
 
 from osom_api.arguments import (
+    DEFAULT_CHAT_MODEL,
     DEFAULT_OPENAI_TIMEOUT,
     DEFAULT_REDIS_BLOCKING_TIMEOUT,
     DEFAULT_REDIS_CLOSE_TIMEOUT,
@@ -43,6 +44,7 @@ class Config:
         supabase_storage_timeout=DEFAULT_SUPABASE_STORAGE_TIMEOUT,
         openai_api_key: Optional[str] = None,
         openai_timeout=DEFAULT_OPENAI_TIMEOUT,
+        openai_default_chat_model=DEFAULT_CHAT_MODEL,
         severity=DEFAULT_SEVERITY,
         use_uvloop=False,
         debug=False,
@@ -69,6 +71,7 @@ class Config:
         self.supabase_storage_timeout = supabase_storage_timeout
         self.openai_api_key = openai_api_key
         self.openai_timeout = openai_timeout
+        self.openai_default_chat_model = openai_default_chat_model
         self.severity = severity
         self.use_uvloop = use_uvloop
         self.debug = debug
@@ -105,6 +108,7 @@ class Config:
 
         assert isinstance(args.openai_api_key, (type(None), str))
         assert isinstance(args.openai_timeout, float)
+        assert isinstance(args.openai_default_chat_model, str)
 
         assert isinstance(args.severity, str)
         assert isinstance(args.use_uvloop, bool)

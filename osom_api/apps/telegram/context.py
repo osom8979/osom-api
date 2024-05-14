@@ -3,7 +3,6 @@
 from argparse import Namespace
 
 from aiogram import Bot, Dispatcher, Router
-from aiogram.filters import Command
 from aiogram.types import Message
 from overrides import override
 
@@ -17,16 +16,6 @@ from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
 
 
-class HelpCommand(Command):
-    def __init__(self):
-        super().__init__("help")
-
-
-class VersionCommand(Command):
-    def __init__(self):
-        super().__init__("version")
-
-
 class TelegramContext(Context):
     def __init__(self, args: Namespace):
         self._config = TelegramConfig.from_namespace(args)
@@ -38,8 +27,6 @@ class TelegramContext(Context):
         self._router.message.outer_middleware.register(
             RegistrationVerifierMiddleware(self.db)
         )
-        self._router.message.register(self.on_help, HelpCommand())
-        self._router.message.register(self.on_version, VersionCommand())
         self._router.message.register(self.on_message)
 
         self._dispatcher = Dispatcher()
@@ -56,12 +43,6 @@ class TelegramContext(Context):
     @override
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
-
-    async def on_help(self, message: Message) -> None:
-        await message.answer(self.help)
-
-    async def on_version(self, message: Message) -> None:
-        await message.answer(self.version)
 
     async def on_message(self, message: Message) -> None:
         files = list()
@@ -103,10 +84,7 @@ class TelegramContext(Context):
         if response is None:
             return
 
-        if not response.text:
-            return
-
-        await message.reply(response.text)
+        await message.reply(response.reply_content)
 
     async def main(self) -> None:
         await self.open_common_context()

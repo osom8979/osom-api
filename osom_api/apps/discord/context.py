@@ -104,10 +104,7 @@ class DiscordContext(Context):
         if response is None:
             return
 
-        if not response.text:
-            return
-
-        await message.channel.send(response.text)
+        await message.channel.send(response.reply_content)
 
     async def main(self) -> None:
         await self.open_common_context()

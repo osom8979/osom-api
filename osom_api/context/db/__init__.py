@@ -12,15 +12,12 @@ from osom_api.arguments import (
     DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
     DEFAULT_SUPABASE_STORAGE_TIMEOUT,
 )
-from osom_api.context.db.mixins.discord_register import DiscordRegister
-from osom_api.context.db.mixins.members import Members
-from osom_api.context.db.mixins.progress import Progress
-from osom_api.context.db.mixins.telegram_register import TelegramRegister
+from osom_api.context.db.mixins import DbMixins
 from osom_api.exceptions import AlreadyInitializedError, NotInitializedError
 from osom_api.logging.logging import logger
 
 
-class DbClient(DiscordRegister, Progress, TelegramRegister, Members):
+class DbClient(DbMixins):
     _supabase: Optional[AsyncClient]
 
     def __init__(

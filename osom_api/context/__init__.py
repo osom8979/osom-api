@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
+from io import StringIO
 from signal import SIGINT, raise_signal
 from typing import Awaitable, Callable, Dict, Optional
 
 from overrides import override
 
+from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.arguments import version as osom_version
 from osom_api.commands import COMMAND_PREFIX
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
-from osom_api.context.msg import MsgRequest, MsgResponse
+from osom_api.context.msg import MsgRequest, MsgResponse, MsgResponseError
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
-from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 
 HELP_MESSAGE = f"""Available commands:
@@ -55,11 +56,16 @@ class Context(MqClientCallback):
         self._oai = OaiClient(
             api_key=config.openai_api_key,
             timeout=config.openai_timeout,
+            default_chat_model=config.openai_default_chat_model,
         )
         self._commands = {
-            "version": self.on_version,
-            "help": self.on_help,
+            "version": self._cmd_version,
+            "help": self._cmd_help,
+            "chat": self._cmd_chat,
         }
+
+        self.debug = config.debug
+        self.verbose = config.verbose
 
     @property
     def mq(self):
@@ -113,35 +119,84 @@ class Context(MqClientCallback):
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
 
-    async def on_version(self, message: MsgRequest) -> MsgResponse:
+    async def _cmd_version(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.version)
 
-    async def on_help(self, message: MsgRequest) -> MsgResponse:
+    async def _cmd_help(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.help)
 
-    async def on_openai_chat(self, message: MsgRequest) -> None:
+    async def _cmd_chat(self, message: MsgRequest) -> MsgResponse:
+        msg_uuid = message.msg_uuid
+        cmd_arg = message.parse_command_argument()
+        n = cmd_arg.get("n", 1)
+        model = cmd_arg.get("model", self._oai.default_chat_model)
+
+        if n < 1:
+            raise MsgResponseError(msg_uuid, "The 'n' argument must be 1 or greater")
+        if not model:
+            raise MsgResponseError(msg_uuid, "The 'model' argument is empty")
+        if not message.text:
+            raise MsgResponseError(msg_uuid, "The content is empty")
+
+        messages = [{"role": "user", "content": message.text}]
+        request = dict(messages=messages, model=model, n=n)
+        response = dict()
+
         try:
-            chat_completion = await self.oai.create_chat_completion(message.text)
-            content = chat_completion.choices[0].message.content
-            print(chat_completion.model_dump_json())
-            # chat_completion_json = chat_completion.model_dump_json()
-            # await message.reply(content if content else "")
+            chat_completion = await self.oai.create_chat_completion(messages, model, n)
+            assert len(chat_completion.choices) == n
+
+            reply_buffer = StringIO()
+            if len(chat_completion.choices) == 1:
+                reply_buffer = chat_completion.choices[0].message.content
+            elif len(chat_completion.choices) >= 2:
+                choice = chat_completion.choices[0]
+                reply_buffer.write("[0] " + choice.message.content)
+                for i, choice in enumerate(chat_completion.choices[1:]):
+                    reply_buffer.write(f"\n[{i + 1}] " + choice.message.content)
+            else:
+                assert False, "Inaccessible section"
+            reply_text = reply_buffer.getvalue()
+
+            response.update(chat_completion.model_dump())
+            return MsgResponse(msg_uuid, reply_text)
         except BaseException as e:
-            message_id = message.message_id
-            logger.error(f"Unexpected error occurred in message ({message_id}): {e}")
-            # await message.reply("Unexpected error occurred")
+            error_message = "OpenAI API request failed"
+            response.update(
+                error_type=type(e).__name__,
+                error_message=error_message,
+                msg_uuid=message.msg_uuid,
+            )
+            raise MsgResponseError(msg_uuid, error_message) from e
+        finally:
+            inserted = await self._db.insert_openai_chat(msg_uuid, request, response)
+            logger.debug(f"Msg({inserted.msg_uuid}) Insert OpenAI chat results")
 
     async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
-        logger.info(f"Message({message})")
+        msg_uuid = message.msg_uuid
+        logger.info("Do message: " + repr(message))
 
-        if message.text.startswith(COMMAND_PREFIX):
-            command, argument = message.split_command_argument()
-            command_begin = len(COMMAND_PREFIX)
-            command = command[command_begin:]
-            coro = self._commands.get(command)
-            if coro is None:
-                raise InvalidCommandError(f"Unregistered command: {command!r}")
+        if not message.is_command():
+            return None
 
+        command = message.command
+        coro = self._commands.get(command)
+        if coro is None:
+            logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")
+            return None
+
+        if self.verbose >= VERBOSE_LEVEL_1:
+            logger.info(f"Msg({msg_uuid}) Run '{command}' command")
+
+        try:
             return await coro(message)
-        else:
+        except MsgResponseError as e:
+            logger.error(f"Msg({e.msg_uuid}) {e}")
+            if self.debug and self.verbose >= VERBOSE_LEVEL_1:
+                logger.exception(e)
+            return MsgResponse(e.msg_uuid, str(e))
+        except BaseException as e:
+            logger.error(f"Msg({msg_uuid}) Unexpected error occurred: {e}")
+            if self.debug:
+                logger.exception(e)
             return None

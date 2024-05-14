@@ -3,7 +3,7 @@ drop table public.openai_chat;
 create table
     public.openai_chat
 (
-    id         bigserial primary key,
+    msg_uuid   uuid primary key     default NULL,
     request    jsonb,
     response   jsonb,
     created_at timestamptz not null default now()
