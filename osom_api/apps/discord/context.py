@@ -73,31 +73,27 @@ class DiscordContext(Context):
         files = list()
         for attach in message.attachments:
             content = await attach.read()
-            content_type = attach.content_type if attach.content_type else ""
-            image_width = attach.width if attach.width else 0
-            image_height = attach.height if attach.height else 0
             msg_file = MsgFile(
-                content_type=content_type,
+                provider=MsgProvider.Discord,
                 file_id=str(attach.id),
                 file_name=attach.filename,
-                file_size=attach.size,
-                image_width=image_width,
-                image_height=image_height,
                 content=content,
+                content_type=attach.content_type,
+                width=attach.width,
+                height=attach.height,
+                created_at=message.created_at,
             )
             files.append(msg_file)
 
-        author = message.author
-        global_name = author.global_name if author.global_name else author.name
         msg = MsgRequest(
             provider=MsgProvider.Discord,
             message_id=message.id,
             channel_id=message.channel.id,
-            username=author.name,
-            nickname=global_name,
-            text=message.content,
-            created_at=message.created_at,
+            content=message.content,
+            username=message.author.name,
+            nickname=message.author.global_name,
             files=files,
+            created_at=message.created_at,
         )
 
         response = await self.do_message(msg)

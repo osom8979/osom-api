@@ -56,34 +56,31 @@ class TelegramContext(Context):
             assert file_buffer is not None
             content = file_buffer.read()
             msg_file = MsgFile(
-                content_type="image/jpeg",
+                provider=MsgProvider.Telegram,
                 file_id=photo.file_id,
                 file_name=file_info.file_path,
-                file_size=photo.file_size if photo.file_size else 0,
-                image_width=photo.width,
-                image_height=photo.height,
                 content=content,
+                content_type="image/jpeg",
+                width=photo.width,
+                height=photo.height,
+                created_at=message.date,
             )
             files.append(msg_file)
 
         from_user = message.from_user
-        if from_user is not None:
-            username = from_user.username if from_user.username else str()
-            full_name = from_user.full_name
-        else:
-            username = str()
-            full_name = str()
+        username = from_user.username if from_user is not None else None
+        full_name = from_user.full_name if from_user is not None else None
 
         text = message.text if message.text else str()
         msg = MsgRequest(
             provider=MsgProvider.Telegram,
             message_id=message.message_id,
             channel_id=message.chat.id,
+            content=text,
             username=username,
             nickname=full_name,
-            text=text,
-            created_at=message.date,
             files=files,
+            created_at=message.date,
         )
 
         response = await self.do_message(msg)

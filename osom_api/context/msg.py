@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 
-from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum, unique
 from io import StringIO
-from typing import Dict, List, Optional, TypeVar, Union, overload
+from typing import Dict, Final, Iterable, List, Optional, TypeVar, Union, overload
 from uuid import uuid4
 
-from osom_api.commands import COMMAND_PREFIX
+from osom_api.commands import (
+    ARGUMENT_SEPERATOR,
+    COMMAND_PREFIX,
+    CONTENT_SEPERATOR,
+    KV_SEPERATOR,
+)
+from osom_api.exceptions import InvalidCommandError
 from osom_api.types.string.to_boolean import string_to_boolean
 
 DefaultT = TypeVar("DefaultT", str, bool, int, float)
+
+DEFAULT_CONTENT_TYPE: Final[str] = "application/octet-stream"
 
 
 @unique
@@ -21,23 +28,103 @@ class MsgProvider(IntEnum):
     Telegram = 3
 
 
-@dataclass
 class MsgFile:
-    content_type: str
-    file_id: str
-    file_name: str
-    file_size: int
-    image_width: int
-    image_height: int
-    content: bytes
-    file_uuid: str = field(default_factory=lambda: uuid4().hex)
+    def __init__(
+        self,
+        provider: MsgProvider,
+        file_id: str,
+        file_name: str,
+        content: bytes,
+        content_type: Optional[str] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        created_at: Optional[datetime] = None,
+        file_uuid: Optional[str] = None,
+    ):
+        self.provider = provider
+        self.file_id = file_id
+        self.file_name = file_name
+        self.content = content
+        self.content_type = content_type if content_type else DEFAULT_CONTENT_TYPE
+        self.width = width if width is not None else 0
+        self.height = height if height is not None else 0
+        self.created_at = created_at if created_at else datetime.utcnow()
+        self.file_uuid = file_uuid if file_uuid else uuid4().hex
+
+    @property
+    def content_size(self) -> int:
+        return len(self.content)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}<{self.file_name}>"
+
+    def __repr__(self):
+        buffer = StringIO()
+        buffer.write(
+            f"{self.__class__.__name__}"
+            f"<provider={self.provider.name}"
+            f",file_id={self.file_id}"
+            f",file_name={self.file_name}"
+            f",content_size={self.content_size}"
+            f",content_type={self.content_type}"
+            f",image={self.width}x{self.height}"
+            f",created_at={self.created_at}"
+            f",file_uuid={self.file_uuid}>"
+        )
+        return buffer.getvalue()
 
 
-@dataclass
+def files_repr(files: List[MsgFile]) -> str:
+    buffer = StringIO()
+    if len(files) >= 1:
+        f = files[0]
+        buffer.write(f"{f.file_name}({f.file_uuid})")
+    for f in files[1:]:
+        buffer.write(f",{f.file_name}({f.file_uuid})")
+    return buffer.getvalue()
+
+
 class MsgCommandArgument:
-    command: str
-    kwargs: Dict[str, str] = field(default_factory=dict)
-    content: Optional[str] = None
+    def __init__(
+        self,
+        command: str,
+        kwargs: Dict[str, str],
+        content: str,
+    ):
+        self.command = command
+        self.kwargs = kwargs
+        self.content = content
+
+    @classmethod
+    def from_text(
+        cls,
+        text: str,
+        command_prefix=COMMAND_PREFIX,
+        content_seperator=CONTENT_SEPERATOR,
+        argument_seperator=ARGUMENT_SEPERATOR,
+        kv_seperator=KV_SEPERATOR,
+    ):
+        tokens = text.split(content_seperator, 1)
+        assert len(tokens) in (1, 2)
+        command_arguments = tokens[0].split(argument_seperator)
+
+        command = command_arguments[0]
+        assert command.startswith(command_prefix)
+        command_begin = len(command_prefix)
+        command = command[command_begin:]
+
+        kwargs = dict()
+        for arg in command_arguments[1:]:
+            kv = arg.split(kv_seperator, 1)
+            key = kv[0]
+            if len(kv) == 1:
+                kwargs[key] = str()
+            else:
+                assert len(kv) == 2
+                kwargs[key] = kv[1]
+
+        content = tokens[1].strip() if len(tokens) == 2 else str()
+        return cls(command, kwargs, content)
 
     # fmt: off
     @overload
@@ -72,79 +159,94 @@ class MsgCommandArgument:
             raise TypeError(f"Unsupported default type: {type(default).__name__}")
 
 
-@dataclass
 class MsgRequest:
-    provider: MsgProvider
-    message_id: int
-    channel_id: int
-    username: str
-    nickname: str
-    text: str
-    created_at: datetime
-    files: List[MsgFile] = field(default_factory=list)
-    msg_uuid: str = field(default_factory=lambda: uuid4().hex)
+    def __init__(
+        self,
+        provider: MsgProvider,
+        message_id: int,
+        channel_id: int,
+        content: Optional[str] = None,
+        username: Optional[str] = None,
+        nickname: Optional[str] = None,
+        files: Optional[Iterable[MsgFile]] = None,
+        created_at: Optional[datetime] = None,
+        msg_uuid: Optional[str] = None,
+    ):
+        self.provider = provider
+        self.message_id = message_id
+        self.channel_id = channel_id
+        self.content = content if content else str()
+        self.username = username if username else str()
+        self.nickname = nickname if nickname else str()
+        self.files = list(files) if files is not None else list()
+        self.created_at = created_at if created_at else datetime.utcnow()
+        self.msg_uuid = msg_uuid if msg_uuid else uuid4().hex
+
+    def __str__(self):
+        return f"{self.__class__.__name__}<{self.msg_uuid}>"
 
     def __repr__(self):
         buffer = StringIO()
-        buffer.write(self.__class__.__name__)
-        buffer.write(f"<provider={self.provider.name}")
-        buffer.write(f",message_id={self.message_id}")
-        buffer.write(f",channel_id={self.channel_id}")
-        buffer.write(f",username={self.username}")
-        buffer.write(f",nickname={self.nickname}")
-        buffer.write(f",text={self.text}")
-        buffer.write(f",created_at={self.created_at}")
-        buffer.write(",files=[")
-        if len(self.files) >= 1:
-            f = self.files[0]
-            buffer.write(f"{f.file_name}({f.file_uuid})")
-        for f in self.files[1:]:
-            buffer.write(f",{f.file_name}({f.file_uuid})")
-        buffer.write(f"],msg_uuid={self.msg_uuid}>")
+        buffer.write(
+            f"{self.__class__.__name__}"
+            f"<provider={self.provider.name}"
+            f",message_id={self.message_id}"
+            f",channel_id={self.channel_id}"
+            f",username={self.username}"
+            f",nickname={self.nickname}"
+            f",content={self.content}"
+            f",files=[{files_repr(self.files)}]"
+            f",created_at={self.created_at}"
+            f",msg_uuid={self.msg_uuid}>"
+        )
         return buffer.getvalue()
 
     def is_command(self):
-        return self.text.startswith(COMMAND_PREFIX)
+        return self.content.startswith(COMMAND_PREFIX)
 
     def parse_command_argument(self):
-        tokens = self.text.split(" ", 1)
-        assert len(tokens) in (1, 2)
-        command_arguments = tokens[0].split(",")
-
-        command = command_arguments[0]
-        assert command.startswith(COMMAND_PREFIX)
-        command_begin = len(COMMAND_PREFIX)
-        command = command[command_begin:]
-
-        kwargs = dict()
-        for arg in command_arguments[1:]:
-            if arg.find("=") == -1:
-                kwargs[arg] = str()
-            else:
-                key, value = arg.split("=", 1)
-                kwargs[key] = value
-
-        content = tokens[1].strip() if len(tokens) == 2 else str()
-
-        return MsgCommandArgument(command, kwargs, content)
+        if not self.is_command():
+            raise InvalidCommandError
+        return MsgCommandArgument.from_text(self.content, COMMAND_PREFIX)
 
     @property
     def command(self):
         return self.parse_command_argument().command
 
 
-@dataclass
 class MsgResponse:
-    msg_uuid: str
-    text: Optional[str] = None
-    files: List[MsgFile] = field(default_factory=list)
+    def __init__(
+        self,
+        msg_uuid: str,
+        content: Optional[str] = None,
+        files: Optional[Iterable[MsgFile]] = None,
+        created_at: Optional[datetime] = None,
+    ):
+        self.msg_uuid = msg_uuid
+        self.content = content if content else str()
+        self.files = list(files) if files is not None else list()
+        self.created_at = created_at if created_at else datetime.utcnow()
+
+    def __str__(self):
+        return f"{self.__class__.__name__}<{self.msg_uuid}>"
+
+    def __repr__(self):
+        buffer = StringIO()
+        buffer.write(
+            f"{self.__class__.__name__}"
+            f"<msg_uuid={self.msg_uuid}"
+            f",content={self.content}"
+            f",files=[{files_repr(self.files)}]"
+            f",created_at={self.created_at}>"
+        )
+        return buffer.getvalue()
 
     @property
     def reply_content(self) -> str:
-        return self.text if self.text else ""
+        return self.content if self.content else ""
 
 
-class MsgResponseError(Exception):
+class MsgError(Exception):
     msg_uuid: str
 
     def __init__(self, msg_uuid: str, message: Optional[str] = None):

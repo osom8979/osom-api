@@ -12,7 +12,7 @@ from osom_api.commands import COMMAND_PREFIX
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
-from osom_api.context.msg import MsgRequest, MsgResponse, MsgResponseError
+from osom_api.context.msg import MsgError, MsgRequest, MsgResponse
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
@@ -137,13 +137,13 @@ class Context(MqClientCallback):
         model = cmd_arg.get("model", self._oai.default_chat_model)
 
         if n < 1:
-            raise MsgResponseError(msg_uuid, "The 'n' argument must be 1 or greater")
+            raise MsgError(msg_uuid, "The 'n' argument must be 1 or greater")
         if not model:
-            raise MsgResponseError(msg_uuid, "The 'model' argument is empty")
-        if not message.text:
-            raise MsgResponseError(msg_uuid, "The content is empty")
+            raise MsgError(msg_uuid, "The 'model' argument is empty")
+        if not message.content:
+            raise MsgError(msg_uuid, "The content is empty")
 
-        messages = [{"role": "user", "content": message.text}]
+        messages = [{"role": "user", "content": message.content}]
         request = dict(messages=messages, model=model, n=n)
         response = dict()
 
@@ -172,7 +172,7 @@ class Context(MqClientCallback):
                 error_message=error_message,
                 msg_uuid=message.msg_uuid,
             )
-            raise MsgResponseError(msg_uuid, error_message) from e
+            raise MsgError(msg_uuid, error_message) from e
         finally:
             inserted = await self._db.insert_openai_chat(msg_uuid, request, response)
             logger.debug(f"Msg({inserted.msg_uuid}) Insert OpenAI chat results")
@@ -195,7 +195,7 @@ class Context(MqClientCallback):
 
         try:
             return await coro(message)
-        except MsgResponseError as e:
+        except MsgError as e:
             logger.error(f"Msg({e.msg_uuid}) {e}")
             if self.debug and self.verbose >= VERBOSE_LEVEL_1:
                 logger.exception(e)

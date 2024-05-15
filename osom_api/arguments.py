@@ -75,7 +75,7 @@ DEFAULT_SUPABASE_POSTGREST_TIMEOUT: Final[float] = 8.0
 DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 
 DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
-DEFAULT_CHAT_MODEL: Final[str] = "gpt-4"
+DEFAULT_CHAT_MODEL: Final[str] = "gpt-4o"
 
 DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/common"
 DEFAULT_MODULE_PATH: Final[str] = "osom_api.apps.worker.modules.common"

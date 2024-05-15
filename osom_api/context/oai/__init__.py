@@ -12,7 +12,7 @@ from osom_api.exceptions import NotInitializedError
 
 def create_async_openai(
     api_key: Optional[str] = None,
-    timeout=DEFAULT_OPENAI_TIMEOUT,
+    timeout: Optional[float] = None,
 ) -> Optional[AsyncOpenAI]:
     if api_key:
         return AsyncOpenAI(api_key=api_key, timeout=timeout)
