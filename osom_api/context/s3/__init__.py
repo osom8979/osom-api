@@ -6,7 +6,7 @@ from typing import Any, BinaryIO, Dict, Optional
 from boto3 import client as boto3_client
 from botocore.exceptions import ClientError
 
-from osom_api.context.s3.protocol.client import Client
+from osom_api.context.s3.protocol.client import ALLOWED_UPLOAD_ARGS, Client
 from osom_api.exceptions import AlreadyInitializedError, NotInitializedError
 from osom_api.logging.logging import logger
 
@@ -94,11 +94,37 @@ class S3Client:
     def synced_get_object(self, key: str):
         return self.client.get_object(Bucket=self._bucket, Key=key)
 
-    def synced_upload_file(self, file: str, key: str) -> None:
-        self.client.upload_file(Filename=file, Bucket=self._bucket, Key=key)
+    def synced_upload_file(
+        self,
+        file: str,
+        key: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if extra is not None:
+            for k in extra.keys():
+                assert k in ALLOWED_UPLOAD_ARGS
+        self.client.upload_file(
+            Filename=file,
+            Bucket=self._bucket,
+            Key=key,
+            ExtraArgs=extra,
+        )
 
-    def synced_upload_data(self, data: BinaryIO, key: str) -> None:
-        self.client.upload_fileobj(Fileobj=data, Bucket=self._bucket, Key=key)
+    def synced_upload_data(
+        self,
+        data: BinaryIO,
+        key: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if extra is not None:
+            for k in extra.keys():
+                assert k in ALLOWED_UPLOAD_ARGS
+        self.client.upload_fileobj(
+            Fileobj=data,
+            Bucket=self._bucket,
+            Key=key,
+            ExtraArgs=extra,
+        )
 
     def synced_download_file(self, key: str, file: str) -> None:
         self.client.download_file(Bucket=self._bucket, Key=key, Filename=file)
@@ -140,11 +166,27 @@ class S3Client:
     async def get_object(self, key: str) -> Dict[str, Any]:
         return await to_thread(self.synced_get_object, key)
 
-    async def upload_file(self, file: str, key: str) -> None:
-        await to_thread(self.synced_upload_file, file, key)
+    async def upload_file(
+        self,
+        file: str,
+        key: str,
+        content_type: Optional[str] = None,
+    ) -> None:
+        extra = dict()
+        if content_type:
+            extra["ContentType"] = content_type
+        await to_thread(self.synced_upload_file, file, key, extra)
 
-    async def upload_data(self, data: BinaryIO, key: str) -> None:
-        await to_thread(self.synced_upload_data, data, key)
+    async def upload_data(
+        self,
+        data: BinaryIO,
+        key: str,
+        content_type: Optional[str] = None,
+    ) -> None:
+        extra = dict()
+        if content_type:
+            extra["ContentType"] = content_type
+        await to_thread(self.synced_upload_data, data, key, extra)
 
     async def download_file(self, key: str, file: str) -> None:
         await to_thread(self.synced_download_file, key, file)

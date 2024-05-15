@@ -37,7 +37,7 @@ class DbClientTestCase(IsolatedAsyncioTestCase):
         await self.db.close()
 
     async def test_get_members(self):
-        members = await self.db.get_members()
+        members = await self.db.select_members()
         self.assertIsNotNone(members)
         self.assertGreaterEqual(len(members.data), 1)
 

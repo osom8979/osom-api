@@ -74,9 +74,9 @@ class DiscordContext(Context):
         for attach in message.attachments:
             content = await attach.read()
             msg_file = MsgFile(
-                provider=MsgProvider.Discord,
-                file_id=str(attach.id),
-                file_name=attach.filename,
+                provider=MsgProvider.discord,
+                native_id=str(attach.id),
+                name=attach.filename,
                 content=content,
                 content_type=attach.content_type,
                 width=attach.width,
@@ -86,7 +86,7 @@ class DiscordContext(Context):
             files.append(msg_file)
 
         msg = MsgRequest(
-            provider=MsgProvider.Discord,
+            provider=MsgProvider.discord,
             message_id=message.id,
             channel_id=message.channel.id,
             content=message.content,

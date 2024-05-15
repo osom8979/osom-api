@@ -2,7 +2,10 @@
 
 from typing import Any, BinaryIO, Callable, Dict, Optional, Protocol
 
-from boto3.s3.transfer import TransferConfig
+from boto3.s3.transfer import S3Transfer, TransferConfig
+
+ALLOWED_DOWNLOAD_ARGS = S3Transfer.ALLOWED_DOWNLOAD_ARGS
+ALLOWED_UPLOAD_ARGS = S3Transfer.ALLOWED_UPLOAD_ARGS
 
 
 class Client(Protocol):
@@ -59,7 +62,7 @@ class Client(Protocol):
         Bucket: str,
         Key: str,
         Filename: str,
-        ExtraArgs: Optional[dict] = None,
+        ExtraArgs: Optional[Dict[str, Any]] = None,
         Callback: Optional[Callable] = None,
         Config: Optional[TransferConfig] = None,
     ) -> None:
@@ -73,7 +76,7 @@ class Client(Protocol):
         Bucket: str,
         Key: str,
         Fileobj: BinaryIO,
-        ExtraArgs: Optional[dict] = None,
+        ExtraArgs: Optional[Dict[str, Any]] = None,
         Callback: Optional[Callable] = None,
         Config: Optional[TransferConfig] = None,
     ) -> None:
@@ -205,7 +208,7 @@ class Client(Protocol):
         Filename: str,
         Bucket: str,
         Key: str,
-        ExtraArgs: Optional[dict] = None,
+        ExtraArgs: Optional[Dict[str, Any]] = None,
         Callback: Optional[Callable] = None,
         Config: Optional[TransferConfig] = None,
     ) -> None:
@@ -219,7 +222,7 @@ class Client(Protocol):
         Fileobj: BinaryIO,
         Bucket: str,
         Key: str,
-        ExtraArgs: Optional[dict] = None,
+        ExtraArgs: Optional[Dict[str, Any]] = None,
         Callback: Optional[Callable] = None,
         Config: Optional[TransferConfig] = None,
     ) -> None:

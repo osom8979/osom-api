@@ -3,6 +3,7 @@
 from argparse import Namespace
 
 from aiogram import Bot, Dispatcher, Router
+from aiogram.enums.content_type import ContentType
 from aiogram.types import Message
 from overrides import override
 
@@ -46,7 +47,9 @@ class TelegramContext(Context):
 
     async def on_message(self, message: Message) -> None:
         files = list()
+
         if message.photo is not None:
+            assert message.content_type == ContentType.PHOTO
             file_sizes = [p.file_size if p.file_size else 0 for p in message.photo]
             largest_file_index = file_sizes.index(max(file_sizes))
             photo = message.photo[largest_file_index]
@@ -54,12 +57,12 @@ class TelegramContext(Context):
             assert file_info.file_path
             file_buffer = await self._bot.download_file(file_info.file_path)
             assert file_buffer is not None
-            content = file_buffer.read()
+            file_content = file_buffer.read()
             msg_file = MsgFile(
-                provider=MsgProvider.Telegram,
-                file_id=photo.file_id,
-                file_name=file_info.file_path,
-                content=content,
+                provider=MsgProvider.telegram,
+                native_id=photo.file_id,
+                name=file_info.file_path,
+                content=file_content,
                 content_type="image/jpeg",
                 width=photo.width,
                 height=photo.height,
@@ -71,12 +74,18 @@ class TelegramContext(Context):
         username = from_user.username if from_user is not None else None
         full_name = from_user.full_name if from_user is not None else None
 
-        text = message.text if message.text else str()
+        if message.content_type == ContentType.TEXT and message.text:
+            msg_content = message.text
+        elif message.content_type == ContentType.PHOTO and message.caption:
+            msg_content = message.caption
+        else:
+            msg_content = str()
+
         msg = MsgRequest(
-            provider=MsgProvider.Telegram,
+            provider=MsgProvider.telegram,
             message_id=message.message_id,
             channel_id=message.chat.id,
-            content=text,
+            content=msg_content,
             username=username,
             nickname=full_name,
             files=files,

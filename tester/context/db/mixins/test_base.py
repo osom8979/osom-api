@@ -2,10 +2,17 @@
 
 from unittest import TestCase, main
 
-from osom_api.context.db.mixins import members, progress
+from osom_api.context.db.mixins import file, members, progress
 
 
 class DbMixinsBaseTestCase(TestCase):
+    def test_file(self):
+        self.assertEqual(file.T.file, "file")
+        self.assertEqual(file.C.id, "id")
+        self.assertEqual(file.C.id.name, "id")
+        self.assertEqual(file.C.name, "name")
+        self.assertEqual(file.C.name.name, "name")
+
     def test_members(self):
         self.assertEqual(members.T.members, "members")
         self.assertEqual(members.C.member, "member")

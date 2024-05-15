@@ -509,6 +509,13 @@ def default_argument_parser() -> ArgumentParser:
         version=version(),
     )
 
+    parser.add_argument(
+        "-D",
+        action="store_true",
+        default=False,
+        help="Same as ['-c', '-d', '-vv'] flags",
+    )
+
     subparsers = parser.add_subparsers(dest="cmd")
     add_cmd_discord_parser(subparsers)
     add_cmd_telegram_parser(subparsers)

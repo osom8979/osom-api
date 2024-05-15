@@ -14,7 +14,7 @@ class C(Columns):
 
 
 class Members(DbMixinBase):
-    async def get_members(self):
+    async def select_members(self):
         return (
             await self.supabase.table(T.members)
             .select(C.team, C.member, C.role)

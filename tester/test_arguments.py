@@ -14,12 +14,14 @@ class ArgumentsTestCase(TestCase):
             dotenv_path.write_text("VERBOSE=20")
             self.assertTrue(dotenv_path.is_file())
 
-            cmdline = ["--dotenv-path", str(dotenv_path), CMD_MASTER]
+            cmdline = ["--dotenv-path", str(dotenv_path), "-D", CMD_MASTER]
             args = get_default_arguments(cmdline)
             self.assertFalse(hasattr(args, "no_dotenv"))
             self.assertFalse(hasattr(args, "dotenv_path"))
+            self.assertTrue(hasattr(args, "D"))
             self.assertEqual(args.cmd, CMD_MASTER)
             self.assertEqual(args.verbose, 20)
+            self.assertTrue(args.D)
 
 
 if __name__ == "__main__":

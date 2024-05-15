@@ -44,6 +44,14 @@ def main(
     assert isinstance(args.severity, str)
     assert isinstance(args.debug, bool)
     assert isinstance(args.verbose, int)
+    assert isinstance(args.D, bool)
+
+    if args.D:
+        args.colored_logging = True
+        args.default_logging = False
+        args.simple_logging = False
+        args.debug = True
+        args.verbose = 2
 
     cmd = args.cmd
     colored_logging = args.colored_logging

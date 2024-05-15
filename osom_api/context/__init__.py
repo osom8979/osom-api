@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from io import StringIO
+from io import BytesIO, StringIO
 from signal import SIGINT, raise_signal
-from typing import Awaitable, Callable, Dict, Optional
+from typing import Awaitable, Callable, Dict, Iterable, Optional
 
 from overrides import override
 
@@ -12,9 +12,16 @@ from osom_api.commands import COMMAND_PREFIX
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
-from osom_api.context.msg import MsgError, MsgRequest, MsgResponse
+from osom_api.context.msg import (
+    MsgFile,
+    MsgFileStorage,
+    MsgFlow,
+    MsgRequest,
+    MsgResponse,
+)
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
+from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
 
 HELP_MESSAGE = f"""Available commands:
@@ -130,6 +137,76 @@ class Context(MqClientCallback):
     async def _cmd_help(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.help)
 
+    async def upload_msg_file(
+        self,
+        file: MsgFile,
+        msg_uuid: str,
+        flow: MsgFlow,
+        storage=MsgFileStorage.r2,
+    ) -> None:
+        if file.content is None:
+            raise BufferError("Empty file content")
+
+        await self._s3.upload_data(
+            data=BytesIO(file.content),
+            key=file.path,
+            content_type=file.content_type,
+        )
+        await self._db.insert_file(
+            file_uuid=file.file_uuid,
+            provider=file.provider,
+            storage=storage,
+            name=file.name,
+            content_type=file.content_type,
+            native_id=file.native_id,
+            created_at=file.created_at.isoformat(),
+        )
+        await self._db.insert_msg2file(
+            msg_uuid=msg_uuid,
+            file_uuid=file.file_uuid,
+            flow=flow,
+        )
+
+    async def upload_msg_files(
+        self,
+        files: Iterable[MsgFile],
+        msg_uuid: str,
+        flow: MsgFlow,
+        storage=MsgFileStorage.r2,
+    ) -> None:
+        for file in files:
+            await self.upload_msg_file(file, msg_uuid, flow, storage)
+
+    async def upload_msg_request(self, message: MsgRequest) -> None:
+        await self._db.insert_msg(
+            msg_uuid=message.msg_uuid,
+            provider=message.provider,
+            message_id=message.message_id,
+            channel_id=message.channel_id,
+            username=message.username,
+            nickname=message.nickname,
+            content=message.content,
+            created_at=message.created_at.isoformat(),
+        )
+        await self.upload_msg_files(
+            files=message.files,
+            msg_uuid=message.msg_uuid,
+            flow=MsgFlow.request,
+        )
+
+    async def upload_msg_response(self, message: MsgResponse) -> None:
+        await self._db.insert_reply(
+            msg=message.msg_uuid,
+            content=message.content,
+            error=message.error,
+            created_at=message.created_at.isoformat(),
+        )
+        await self.upload_msg_files(
+            files=message.files,
+            msg_uuid=message.msg_uuid,
+            flow=MsgFlow.response,
+        )
+
     async def _cmd_chat(self, message: MsgRequest) -> MsgResponse:
         msg_uuid = message.msg_uuid
         cmd_arg = message.parse_command_argument()
@@ -174,10 +251,10 @@ class Context(MqClientCallback):
             )
             raise MsgError(msg_uuid, error_message) from e
         finally:
-            inserted = await self._db.insert_openai_chat(msg_uuid, request, response)
-            logger.debug(f"Msg({inserted.msg_uuid}) Insert OpenAI chat results")
+            await self._db.insert_openai_chat(msg_uuid, request, response)
+            logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")
 
-    async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
+    async def _do_message_main(self, message: MsgRequest) -> Optional[MsgResponse]:
         msg_uuid = message.msg_uuid
         logger.info("Do message: " + repr(message))
 
@@ -205,3 +282,39 @@ class Context(MqClientCallback):
             if self.debug:
                 logger.exception(e)
             return None
+
+    async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
+        msg_uuid = message.msg_uuid
+        logger.info("Do message: " + repr(message))
+
+        if not message.is_command():
+            return None
+
+        command = message.command
+        coro = self._commands.get(command)
+        if coro is None:
+            logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")
+            return None
+
+        if self.verbose >= VERBOSE_LEVEL_1:
+            logger.info(f"Msg({msg_uuid}) Run '{command}' command")
+
+        try:
+            await self.upload_msg_request(message)
+        except BaseException as e:
+            logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
+            if self.debug:
+                logger.exception(e)
+            return MsgResponse(msg_uuid, error=str(e))
+
+        response = await self._do_message_main(message)
+
+        if response is not None:
+            try:
+                await self.upload_msg_response(response)
+            except BaseException as e:
+                logger.error(f"Msg({msg_uuid}) Response message upload failed: {e}")
+                if self.debug:
+                    logger.exception(e)
+
+        return response

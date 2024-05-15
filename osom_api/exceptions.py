@@ -38,7 +38,8 @@ class PacketDumpError(OsomApiError):
 
 
 class InsertError(OsomApiError):
-    pass
+    def __init__(self, table_name: str):
+        super().__init__(f"Failed to insert row into table '{table_name}'")
 
 
 class UnregisteredError(OsomApiError):
@@ -59,3 +60,9 @@ class AlreadyInitializedError(OsomApiError):
 
 class InvalidArgumentError(OsomApiError):
     pass
+
+
+class MsgError(OsomApiError):
+    def __init__(self, msg_uuid: str, *args):
+        super().__init__(*args)
+        self.msg_uuid = msg_uuid
