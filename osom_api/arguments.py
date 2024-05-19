@@ -77,8 +77,8 @@ DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
 DEFAULT_CHAT_MODEL: Final[str] = "gpt-4o"
 
-DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/common"
-DEFAULT_MODULE_PATH: Final[str] = "osom_api.apps.worker.modules.common"
+DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/default"
+DEFAULT_MODULE_PATH: Final[str] = "osom_api.worker.modules.default"
 
 OSOM_WEB_LINK: Final[str] = "https://www.osom.run/"
 NOT_REGISTERED_MSG: Final[str] = f"Not registered. Go to {OSOM_WEB_LINK} and sign up!"
@@ -410,12 +410,6 @@ def add_cmd_worker_parser(subparsers) -> None:
     )
     assert isinstance(parser, ArgumentParser)
     _add_context_arguments(parser)
-    parser.add_argument(
-        "--request-path",
-        default=get_eval("REQUEST_PATH", DEFAULT_REQUEST_PATH),
-        metavar="path",
-        help=f"Request path in message queue. (default: '{DEFAULT_REQUEST_PATH}')",
-    )
     parser.add_argument(
         "--module-path",
         default=get_eval("MODULE_PATH", DEFAULT_MODULE_PATH),

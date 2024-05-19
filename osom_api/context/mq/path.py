@@ -8,7 +8,7 @@ PATH_ENCODE: Final[str] = "Latin1"
 
 PATH_ROOT: Final[str] = "/osom/api"
 QUEUE_PATH: Final[str] = "/osom/api/queue"
-QUEUE_COMMON_PATH: Final[str] = "/osom/api/queue/common"
+QUEUE_DEFAULT_PATH: Final[str] = "/osom/api/queue/default"
 RESPONSE_PATH: Final[str] = "/osom/api/response"
 BROADCAST_PATH: Final[str] = "/osom/api/broadcast"
 

@@ -66,3 +66,7 @@ class MsgError(OsomApiError):
     def __init__(self, msg_uuid: str, *args):
         super().__init__(*args)
         self.msg_uuid = msg_uuid
+
+
+class NotACoroutineError(OsomApiError):
+    pass

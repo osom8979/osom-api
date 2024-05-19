@@ -9,7 +9,6 @@ from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
-from osom_api.apps.worker.module import Module
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path, make_response_path
@@ -24,6 +23,7 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
+from osom_api.worker.module import Module
 
 
 class WorkerContext(Context):
@@ -31,10 +31,11 @@ class WorkerContext(Context):
         self._config = WorkerConfig.from_namespace(args)
         super().__init__(self._config)
         self._module = Module(self._config.module_path, self._config.isolate_module)
-
-    @property
-    def request_path(self):
-        return floor(self._config.request_path)
+        self._name = self._module.name
+        self._version = self._module.version
+        self._doc = self._module.doc
+        self._path = self._module.path
+        self._cmds = self._module.cmds
 
     @property
     def timeout(self):
@@ -58,16 +59,19 @@ class WorkerContext(Context):
 
     async def open_module(self) -> None:
         logger.debug("Open modules ...")
-        await self._module.async_open()
+        await self._module.open(self)
         logger.info("Opened modules")
 
     async def close_module(self) -> None:
         logger.debug("Close modules ...")
-        await self._module.async_close()
+        await self._module.close()
         logger.info("Closed modules")
 
+    async def run_module(self, data):
+        pass
+
     async def polling_iter(self) -> None:
-        packet = await self.mq.brpop_bytes(self.request_path, self.timeout)
+        packet = await self.mq.brpop_bytes(self._path, self.timeout)
         if packet is None:
             raise PollingTimeoutError("Blocking Right POP operation timeout")
 
@@ -79,7 +83,7 @@ class WorkerContext(Context):
 
         recv_key = packet[0]
         recv_data = packet[1]
-        assert recv_key == encode_path(self.request_path)
+        assert recv_key == encode_path(self._path)
 
         try:
             request = loads(recv_data)
@@ -103,7 +107,7 @@ class WorkerContext(Context):
             logger.info(f"Request[{request_id}]")
 
         try:
-            result = await self._module.run(request_data)
+            result = await self.run_module(request_data)
         except BaseException as e:
             logger.exception(e)
             raise CommandRuntimeError("A command runtime error was detected")

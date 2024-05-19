@@ -1,23 +1,29 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Sequence
+from typing import Any, NamedTuple, Sequence
 
 from osom_api.context.msg import MsgRequest, MsgResponse
 
 
-class Arg(NamedTuple):
-    key: str
+class ParameterTuple(NamedTuple):
+    name: str
     summary: str
+    default: Any
 
 
-class Cmd(NamedTuple):
+class CommandTuple(NamedTuple):
     command: str
     summary: str
-    arguments: Sequence[Arg]
+    parameters: Sequence[ParameterTuple]
 
 
 class WorkerInterface(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
     @property
     @abstractmethod
     def version(self) -> str:
@@ -30,11 +36,16 @@ class WorkerInterface(ABC):
 
     @property
     @abstractmethod
-    def cmd(self) -> Sequence[Cmd]:
+    def path(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def cmds(self) -> Sequence[CommandTuple]:
         raise NotImplementedError
 
     @abstractmethod
-    async def open(self, *args, **kwargs) -> None:
+    async def open(self, context) -> None:
         raise NotImplementedError
 
     @abstractmethod
