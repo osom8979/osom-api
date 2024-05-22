@@ -1,5 +1,31 @@
 # -*- coding: utf-8 -*-
 
-from osom_api.worker.modules.default.worker import DefaultWorker
+from typing import Annotated
+
+from osom_api.arguments import version as osom_version
+from osom_api.worker.base import ParameterMeta, WorkerBase
+
+
+class DefaultWorker(WorkerBase):
+    def __init__(self):
+        super().__init__("default", osom_version(), "Default osom worker")
+        self.register_command(
+            command="chat",
+            summary="Talk to the chatbot",
+            callback=self.on_chat,
+        )
+
+    async def on_chat(
+        self,
+        n: Annotated[
+            int, ParameterMeta(summary="Number of chat completions", default=1)
+        ],
+        model: Annotated[
+            str, ParameterMeta(summary="Chat model name", default="gpt-4o")
+        ],
+    ) -> str:
+        assert self is not None
+        return f"{model}-{n}"
+
 
 __worker_context__ = DefaultWorker()

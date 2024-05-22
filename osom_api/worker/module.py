@@ -14,7 +14,7 @@ from osom_api.exceptions import (
     NotACoroutineError,
     NotInitializedError,
 )
-from osom_api.worker.interface import CommandTuple, WorkerInterface
+from osom_api.worker.interface import CmdTuple, WorkerInterface
 
 
 @unique
@@ -54,6 +54,7 @@ class Module(ModuleBase):
                 self.set(self.keys.path, worker.path)
             if not self.has(self.keys.cmds):
                 self.set(self.keys.cmds, worker.cmds)
+
             if not self.has(self.keys.open):
                 self.set(self.keys.open, worker.open)
             if not self.has(self.keys.close):
@@ -85,7 +86,7 @@ class Module(ModuleBase):
         return self.opt(self.keys.path, str())
 
     @property
-    def cmds(self) -> Sequence[CommandTuple]:
+    def cmds(self) -> Sequence[CmdTuple]:
         return self.opt(self.keys.cmds, list())
 
     @property

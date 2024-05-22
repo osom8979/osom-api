@@ -21,6 +21,10 @@ class InvalidCommandError(OsomApiError):
     pass
 
 
+class InvalidParameterError(OsomApiError):
+    pass
+
+
 class CommandRuntimeError(OsomApiError):
     pass
 

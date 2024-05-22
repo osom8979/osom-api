@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from inspect import signature
 from typing import (
     Any,
     Awaitable,
@@ -11,6 +12,7 @@ from typing import (
     Optional,
     Sequence,
     Union,
+    get_type_hints,
 )
 
 from overrides import override
@@ -18,9 +20,10 @@ from overrides import override
 from osom_api.context import Context
 from osom_api.context.mq.path import make_response_path
 from osom_api.context.msg import MsgRequest, MsgResponse
-from osom_api.exceptions import InvalidCommandError
+from osom_api.exceptions import InvalidCommandError, InvalidParameterError
+from osom_api.inspection.bind import assert_parameter_kind_order
 from osom_api.logging.logging import logger
-from osom_api.worker.interface import CommandTuple, ParameterTuple, WorkerInterface
+from osom_api.worker.interface import CmdTuple, ParamTuple, WorkerInterface
 
 
 @dataclass
@@ -57,14 +60,14 @@ CommandCallable = Callable[..., Awaitable[Reply]]
 class RegisterCommand:
     command: str
     summary: str
-    parameters: Dict[str, ParameterTuple]
+    parameters: Dict[str, ParamTuple]
     callback: CommandCallable
 
     def as_cmd(self):
-        return CommandTuple(
+        return CmdTuple(
             command=self.command,
-            summary=self.summary,
-            parameters=list(self.parameters.values()),
+            doc=self.summary,
+            params=list(self.parameters.values()),
         )
 
 
@@ -114,7 +117,7 @@ class WorkerBase(WorkerInterface):
 
     @property
     @override
-    def cmds(self) -> Sequence[CommandTuple]:
+    def cmds(self) -> Sequence[CmdTuple]:
         return [cmd.as_cmd() for cmd in self._commands.values()]
 
     @override
@@ -126,13 +129,13 @@ class WorkerBase(WorkerInterface):
         self._context = None
 
     @override
-    async def run(self, message: MsgRequest) -> MsgResponse:
-        logger.info("Recv message: " + repr(message))
+    async def run(self, request: MsgRequest) -> MsgResponse:
+        logger.info("Recv message: " + repr(request))
 
-        if not message.is_command():
-            raise InvalidCommandError(f"Not a command request: {message.content}")
+        if not request.is_command():
+            raise InvalidCommandError(f"Not a command request: {request.content}")
 
-        msg_cmd = message.parse_command_argument()
+        msg_cmd = request.parse_command_argument()
         command = msg_cmd.command
         reg_cmd = self._commands.get(command)
         if reg_cmd is None:
@@ -140,11 +143,11 @@ class WorkerBase(WorkerInterface):
 
         kwargs = dict()
         for key, param in reg_cmd.parameters.items():
-            kwargs[key] = msg_cmd.get(param.name, param.default)
+            kwargs[key] = msg_cmd.get(param.key, param.default)
 
         await reg_cmd.callback(**kwargs)
 
-        return MsgResponse(message.msg_uuid)
+        return MsgResponse(request.msg_uuid)
 
     @property
     def has_context(self) -> bool:
@@ -158,13 +161,66 @@ class WorkerBase(WorkerInterface):
     def clear_commands(self) -> None:
         self._commands.clear()
 
+    @staticmethod
+    def generate_parameters(callback: CommandCallable) -> Dict[str, ParamTuple]:
+        hints = get_type_hints(callback, include_extras=True)
+        result = dict()
+        sig = signature(callback)
+        assert_parameter_kind_order(sig)
+        for param in sig.parameters.values():
+            hint = hints.get(param.name, None)
+            meta = getattr(hint, "__metadata__", None) if hint is not None else None
+
+            if meta is not None:
+                if not isinstance(meta, ParameterMeta):
+                    raise InvalidParameterError(
+                        f"Invalid parameter meta type: {type(meta).__name__}"
+                    )
+                name = meta.name if meta.name else param.name
+                summary = meta.summary if meta.summary else str()
+                default = meta.default if meta.default is not None else param.default
+            else:
+                name = param.name
+                summary = str()
+                default = param.default
+
+            result[name] = ParamTuple(name, summary, default)
+
+        return result
+
     def register_command(
         self,
         command: str,
         summary: str,
         callback: CommandCallable,
     ) -> None:
-        # callback_hints = get_type_hints(callback, include_extras=True)
+        hints = get_type_hints(callback, include_extras=True)
+        # return_hint = hints.get("return", None)
+
+        sig = signature(callback)
+        assert_parameter_kind_order(sig)
+
+        parameters: Dict[str, ParamTuple] = dict()
+
+        for param in sig.parameters.values():
+            hint = hints.get(param.name, None)
+            meta = getattr(hint, "__metadata__", None) if hint is not None else None
+
+            if meta is not None:
+                if not isinstance(meta, ParameterMeta):
+                    raise InvalidParameterError(
+                        f"Invalid parameter meta type: {type(meta).__name__}"
+                    )
+                name = meta.name if meta.name else param.name
+                summary = meta.summary if meta.summary else str()
+                default = meta.default if meta.default is not None else param.default
+            else:
+                name = param.name
+                summary = str()
+                default = param.default
+
+            parameters[name] = ParamTuple(name, summary, default)
+
         self._commands[command] = RegisterCommand(
             command=command,
             summary=summary,

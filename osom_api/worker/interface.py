@@ -6,16 +6,16 @@ from typing import Any, NamedTuple, Sequence
 from osom_api.context.msg import MsgRequest, MsgResponse
 
 
-class ParameterTuple(NamedTuple):
-    name: str
-    summary: str
+class ParamTuple(NamedTuple):
+    key: str
+    doc: str
     default: Any
 
 
-class CommandTuple(NamedTuple):
+class CmdTuple(NamedTuple):
     command: str
-    summary: str
-    parameters: Sequence[ParameterTuple]
+    doc: str
+    params: Sequence[ParamTuple]
 
 
 class WorkerInterface(ABC):
@@ -41,7 +41,7 @@ class WorkerInterface(ABC):
 
     @property
     @abstractmethod
-    def cmds(self) -> Sequence[CommandTuple]:
+    def cmds(self) -> Sequence[CmdTuple]:
         raise NotImplementedError
 
     @abstractmethod
@@ -53,5 +53,5 @@ class WorkerInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def run(self, data: MsgRequest) -> MsgResponse:
+    async def run(self, request: MsgRequest) -> MsgResponse:
         raise NotImplementedError
