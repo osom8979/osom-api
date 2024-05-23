@@ -9,7 +9,7 @@ from os import R_OK, access, path
 from typing import Literal, Optional, Sequence
 
 from redis.asyncio import from_url
-from redis.asyncio.client import PubSub
+from redis.asyncio.client import PubSub, Redis
 
 from osom_api.aio.shield_any import shield_any
 from osom_api.arguments import (
@@ -21,6 +21,7 @@ from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
 from osom_api.context.mq.path import BROADCAST_PATH, encode_path
+from osom_api.exceptions import NotInitializedError
 from osom_api.logging.logging import logger
 
 SslCertReqs = Literal["none", "optional", "required"]
@@ -52,6 +53,7 @@ class MqClientCallback(metaclass=ABCMeta):
 
 
 class MqClient:
+    _redis: Optional[Redis]
     _task: Optional[Task[None]]
     _subscribe_begin: Optional[datetime]
 
@@ -68,11 +70,14 @@ class MqClient:
         debug=False,
         verbose=0,
     ):
-        self._redis = from_url(
-            url,
-            socket_connect_timeout=connection_timeout,
-            ssl_cert_reqs=ssl_cert_reqs,
-        )
+        if url:
+            options = dict(socket_connect_timeout=connection_timeout)
+            if url.startswith("rediss://"):
+                options["ssl_cert_reqs"] = ssl_cert_reqs
+            self._redis = from_url(url, **options)
+        else:
+            self._redis = None
+
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
         self._callback = callback
@@ -83,13 +88,27 @@ class MqClient:
         self._debug = debug
         self._verbose = verbose
 
+    @property
+    def redis(self):
+        if self._redis is None:
+            raise NotInitializedError(f"Redis is not initialized")
+        return self._redis
+
     async def open(self) -> None:
+        if self._redis is None:
+            logger.warning("Redis is not initialized. Cancels the open operation.")
+            return
+
         assert self._task is None
         self._done.clear()
         self._task = create_task(self._redis_main(), name=self._task_name)
         self._task.add_done_callback(self._task_done)
 
     async def close(self) -> None:
+        if self._redis is None:
+            logger.warning("Redis is not initialized. Cancels the close operation.")
+            return
+
         assert self._task is not None
         self._done.set()
 
@@ -127,6 +146,8 @@ class MqClient:
             logger.exception(e)
 
     async def _redis_main(self) -> None:
+        assert self._redis is not None
+
         try:
             logger.debug("Redis PING ...")
             await self._redis.ping()
@@ -197,26 +218,26 @@ class MqClient:
     async def ping(self, timeout: Optional[float] = None) -> bool:
         try:
             async with async_timeout(timeout):
-                await self._redis.ping()
+                await self.redis.ping()
         except:  # noqa
             return False
         else:
             return True
 
     async def exists(self, key: str) -> bool:
-        exists = 1 == await self._redis.exists(key)
+        exists = 1 == await self.redis.exists(key)
         logger.info(f"Exists '{key}' -> {exists}")
         return exists
 
     async def get_bytes(self, key: str) -> bytes:
-        value = await self._redis.get(key)
+        value = await self.redis.get(key)
         assert isinstance(value, bytes)
         logger.info(f"Get '{key}' -> {value!r}")
         return value
 
     async def set_bytes(self, key: str, value: bytes) -> None:
         logger.info(f"Set '{key}' -> {value!r}")
-        await self._redis.set(key, value)
+        await self.redis.set(key, value)
 
     async def get_str(self, key: str) -> str:
         return str(await self.get_bytes(key), encoding="utf8")
@@ -229,11 +250,11 @@ class MqClient:
     ) -> None:
         if expire is not None:
             logger.info(f"Left PUSH '{key}' -> {value!r} (expire: {expire}s)")
-            async with self._redis.pipeline(transaction=True) as pipeline:
+            async with self.redis.pipeline(transaction=True) as pipeline:
                 await pipeline.lpush(key, value).expire(key, expire).execute()
         else:
             logger.info(f"Left PUSH '{key}' -> {value!r}")
-            await self._redis.lpush(key, value)
+            await self.redis.lpush(key, value)
 
     async def brpop_bytes(
         self,
@@ -241,7 +262,7 @@ class MqClient:
         timeout: Optional[int] = None,
     ) -> Optional[Sequence[bytes]]:
         logger.debug(f"Blocking Right POP '{key}' {timeout}s ...")
-        value = await self._redis.brpop(key, timeout)
+        value = await self.redis.brpop([key], timeout)
 
         if value is None:
             logger.debug(f"Blocking Right POP '{key}' ... timeout!")
