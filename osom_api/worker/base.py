@@ -1,71 +1,64 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from inspect import signature
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterable,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Union,
-    get_type_hints,
-)
+from inspect import Parameter, signature
+from typing import Awaitable, Callable, Dict, Optional, Sequence
 
 from overrides import override
 
 from osom_api.context import Context
 from osom_api.context.mq.path import make_response_path
 from osom_api.context.msg import MsgRequest, MsgResponse
-from osom_api.exceptions import InvalidCommandError, InvalidParameterError
+from osom_api.exceptions import InvalidCommandError
 from osom_api.inspection.bind import assert_parameter_kind_order
 from osom_api.logging.logging import logger
-from osom_api.worker.interface import CmdTuple, ParamTuple, WorkerInterface
-
-
-@dataclass
-class ParameterMeta:
-    name: Optional[str] = None
-    summary: Optional[str] = None
-    default: Any = None
-
-
-class ReplyFile(NamedTuple):
-    name: str
-    data: bytes
-    content_type: Optional[str] = None
-
-
-class ReplyTuple(NamedTuple):
-    content: Optional[str] = None
-    files: Optional[Iterable[ReplyFile]] = None
-
-
-Reply = Union[
-    None,
-    str,
-    ReplyFile,
-    Iterable[ReplyFile],
-    ReplyTuple,
-    MsgResponse,
-]
+from osom_api.worker.descs import CmdDesc, ParamDesc
+from osom_api.worker.interface import WorkerInterface
+from osom_api.worker.metas import AnnotatedMeta, NoDefault, ParamMeta
+from osom_api.worker.replys import Reply
 
 CommandCallable = Callable[..., Awaitable[Reply]]
 
 
+def make_parameter_desc(param: Parameter) -> ParamDesc:
+    name = param.name
+    metadata = getattr(param.annotation, "__metadata__", None)
+    default = param.default if param.default != param.empty else None
+    summary = str()
+
+    if metadata is not None:
+        assert isinstance(metadata, tuple)
+        for meta in metadata:
+            if not isinstance(meta, AnnotatedMeta):
+                continue
+
+            if isinstance(meta, ParamMeta):
+                if meta.name is not None:
+                    name = meta.name
+                if meta.summary is not None:
+                    summary = meta.summary
+                if meta.default != NoDefault:
+                    default = meta.default
+
+    return ParamDesc(name, summary, default)
+
+
+def make_parameter_desc_map(callback: CommandCallable) -> Dict[str, ParamDesc]:
+    sig = signature(callback)
+    assert_parameter_kind_order(sig)
+    return {p.name: make_parameter_desc(p) for p in sig.parameters.values()}
+
+
 @dataclass
-class RegisterCommand:
+class _RegisterCommand:
     command: str
     summary: str
-    parameters: Dict[str, ParamTuple]
+    parameters: Dict[str, ParamDesc]
     callback: CommandCallable
 
     def as_cmd(self):
-        return CmdTuple(
-            command=self.command,
+        return CmdDesc(
+            key=self.command,
             doc=self.summary,
             params=list(self.parameters.values()),
         )
@@ -73,7 +66,7 @@ class RegisterCommand:
 
 class WorkerBase(WorkerInterface):
     _context: Optional[Context]
-    _commands: Dict[str, RegisterCommand]
+    _commands: Dict[str, _RegisterCommand]
 
     def __init__(
         self,
@@ -117,7 +110,7 @@ class WorkerBase(WorkerInterface):
 
     @property
     @override
-    def cmds(self) -> Sequence[CmdTuple]:
+    def cmds(self) -> Sequence[CmdDesc]:
         return [cmd.as_cmd() for cmd in self._commands.values()]
 
     @override
@@ -161,69 +154,20 @@ class WorkerBase(WorkerInterface):
     def clear_commands(self) -> None:
         self._commands.clear()
 
-    @staticmethod
-    def generate_parameters(callback: CommandCallable) -> Dict[str, ParamTuple]:
-        hints = get_type_hints(callback, include_extras=True)
-        result = dict()
-        sig = signature(callback)
-        assert_parameter_kind_order(sig)
-        for param in sig.parameters.values():
-            hint = hints.get(param.name, None)
-            meta = getattr(hint, "__metadata__", None) if hint is not None else None
-
-            if meta is not None:
-                if not isinstance(meta, ParameterMeta):
-                    raise InvalidParameterError(
-                        f"Invalid parameter meta type: {type(meta).__name__}"
-                    )
-                name = meta.name if meta.name else param.name
-                summary = meta.summary if meta.summary else str()
-                default = meta.default if meta.default is not None else param.default
-            else:
-                name = param.name
-                summary = str()
-                default = param.default
-
-            result[name] = ParamTuple(name, summary, default)
-
-        return result
-
     def register_command(
         self,
-        command: str,
-        summary: str,
         callback: CommandCallable,
+        *,
+        command: Optional[str] = None,
+        summary: Optional[str] = None,
     ) -> None:
-        hints = get_type_hints(callback, include_extras=True)
-        # return_hint = hints.get("return", None)
-
-        sig = signature(callback)
-        assert_parameter_kind_order(sig)
-
-        parameters: Dict[str, ParamTuple] = dict()
-
-        for param in sig.parameters.values():
-            hint = hints.get(param.name, None)
-            meta = getattr(hint, "__metadata__", None) if hint is not None else None
-
-            if meta is not None:
-                if not isinstance(meta, ParameterMeta):
-                    raise InvalidParameterError(
-                        f"Invalid parameter meta type: {type(meta).__name__}"
-                    )
-                name = meta.name if meta.name else param.name
-                summary = meta.summary if meta.summary else str()
-                default = meta.default if meta.default is not None else param.default
-            else:
-                name = param.name
-                summary = str()
-                default = param.default
-
-            parameters[name] = ParamTuple(name, summary, default)
-
-        self._commands[command] = RegisterCommand(
+        command = command if command is not None else callback.__name__
+        summary = summary if summary is not None else callback.__doc__
+        assert command is not None
+        assert summary is not None
+        self._commands[command] = _RegisterCommand(
             command=command,
             summary=summary,
-            parameters={},
+            parameters=make_parameter_desc_map(callback),
             callback=callback,
         )

@@ -4,7 +4,7 @@ from unittest import IsolatedAsyncioTestCase, main
 
 from osom_api.context.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.worker.module import Module
-from osom_api.worker.modules import tester
+from tester.worker.modules import tester
 
 
 class ModuleTestCase(IsolatedAsyncioTestCase):

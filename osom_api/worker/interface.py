@@ -1,21 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple, Sequence
+from typing import Sequence
 
 from osom_api.context.msg import MsgRequest, MsgResponse
-
-
-class ParamTuple(NamedTuple):
-    key: str
-    doc: str
-    default: Any
-
-
-class CmdTuple(NamedTuple):
-    command: str
-    doc: str
-    params: Sequence[ParamTuple]
+from osom_api.worker.descs import CmdDesc
 
 
 class WorkerInterface(ABC):
@@ -41,7 +30,7 @@ class WorkerInterface(ABC):
 
     @property
     @abstractmethod
-    def cmds(self) -> Sequence[CmdTuple]:
+    def cmds(self) -> Sequence[CmdDesc]:
         raise NotImplementedError
 
     @abstractmethod

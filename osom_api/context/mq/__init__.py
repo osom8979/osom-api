@@ -91,7 +91,7 @@ class MqClient:
     @property
     def redis(self):
         if self._redis is None:
-            raise NotInitializedError(f"Redis is not initialized")
+            raise NotInitializedError("Redis is not initialized")
         return self._redis
 
     async def open(self) -> None:
