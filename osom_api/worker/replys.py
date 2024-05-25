@@ -1,26 +1,46 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
 from typing import List, NamedTuple, Optional, Union
+from uuid import uuid4
+
+from osom_api.chrono.datetime import tznow
+from osom_api.context.msg import MsgFile, MsgProvider
+
+ContentReply = str
 
 
-class FileReply:
+class FileReply(NamedTuple):
     name: str
     data: bytes
     mime: Optional[str] = None
 
+    def as_msg(self, created_at: Optional[datetime] = None):
+        file_uuid = str(uuid4())
+        return MsgFile(
+            provider=MsgProvider.worker,
+            native_id=file_uuid,
+            name=self.name,
+            content=self.data,
+            content_type=self.mime,
+            created_at=created_at if created_at is not None else tznow(),
+            file_uuid=file_uuid,
+        )
+
 
 class FilesReply(List[FileReply]):
-    pass
+    def as_msg(self, created_at: Optional[datetime] = None):
+        return [file.as_msg(created_at) for file in self]
 
 
 class ReplyTuple(NamedTuple):
-    content: str
+    content: ContentReply
     files: FilesReply
 
 
 Reply = Union[
     None,
-    str,
+    ContentReply,
     FileReply,
     FilesReply,
     ReplyTuple,

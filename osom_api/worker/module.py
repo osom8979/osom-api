@@ -151,7 +151,7 @@ class Module(ModuleBase):
         finally:
             self._opened = False
 
-    async def run(self, data: MsgRequest) -> MsgResponse:
+    async def run(self, request: MsgRequest) -> MsgResponse:
         if not self._opened:
             raise NotInitializedError(
                 f"The module is not initialized: {self.module_name}"
@@ -169,7 +169,7 @@ class Module(ModuleBase):
             )
 
         try:
-            result = await callback(data)
+            result = await callback(request)
             if not isinstance(result, MsgResponse):
                 raise TypeError(f"Invalid response type: {type(result).__name__}")
             return result

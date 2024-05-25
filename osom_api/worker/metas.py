@@ -2,9 +2,7 @@
 
 from typing import Any, Optional
 
-
-class NoDefault:
-    pass
+from osom_api.worker.values import NoDefault
 
 
 class AnnotatedMeta:
@@ -15,9 +13,9 @@ class ParamMeta(AnnotatedMeta):
     def __init__(
         self,
         name: Optional[str] = None,
-        summary: Optional[str] = None,
+        doc: Optional[str] = None,
         default: Any = NoDefault,
     ):
         self.name = name
-        self.summary = summary
+        self.doc = doc
         self.default = default
