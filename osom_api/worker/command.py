@@ -37,19 +37,6 @@ RUNTIME_REQUEST_TYPES = Param, MsgRequest
 
 
 def make_parameter_desc(param: Parameter) -> ParamDesc:
-    # if isinstance(param.annotation, type):
-    #     origin = param.annotation
-    # else:
-    #     # isinstance(param.annotation, typing._AnnotatedAlias)
-    #     origin = getattr(param.annotation, "__origin__", None)
-    #
-    # if (
-    #     origin is not None
-    #     and isinstance(origin, type)
-    #     and issubclass(origin, RUNTIME_REQUEST_TYPES)
-    # ):
-    #     return None
-
     name = param.name
     summary = str()
     metadata = getattr(param.annotation, "__metadata__", None)
@@ -72,44 +59,35 @@ def make_parameter_desc(param: Parameter) -> ParamDesc:
     return ParamDesc(name, summary, default)
 
 
-def make_parameter_desc_map(callback: CommandCallable) -> Dict[str, ParamDesc]:
-    sig = signature(callback)
-    hints = get_type_hints(callback)
-
-    result = dict()
-    for param in sig.parameters.values():
-        hint = hints.get(param.name, None)
-        if (
-            hint is not None
-            and isinstance(hint, type)
-            and issubclass(hint, RUNTIME_REQUEST_TYPES)
-        ):
-            continue
-
-        desc = make_parameter_desc(param)
-        result[desc.key] = desc
-
-    return result
-
-
 class WorkerCommand:
     def __init__(
         self,
         key: str,
         doc: str,
-        params: Dict[str, ParamDesc],
         callback: CommandCallable,
     ):
         self._key = key
         self._doc = doc
-        self._params = params
         self._callback = callback
+
         self._sig = signature(callback)
         self._hints = get_type_hints(callback)
+        self._params = dict()
 
         for param in self._sig.parameters.values():
             if param.kind not in SUPPORTED_PARAMETER_KINDS:
                 raise InvalidCommandError(f"Unsupported parameter kind: {param.kind}")
+
+            hint = self._hints.get(param.name, None)
+            if (
+                hint is not None
+                and isinstance(hint, type)
+                and issubclass(hint, RUNTIME_REQUEST_TYPES)
+            ):
+                continue
+
+            desc = make_parameter_desc(param)
+            self._params[param.name] = desc
 
     @property
     def key(self):
@@ -127,15 +105,15 @@ class WorkerCommand:
     def from_callback(
         cls,
         callback: CommandCallable,
-        *,
-        key: Optional[str] = None,
-        doc: Optional[str] = None,
         prefix: Optional[str] = DEFAULT_KEY_PREFIX,
     ):
-        key = key if key is not None else callback.__name__
-        doc = doc if doc is not None else callback.__doc__
+        key = callback.__name__
+        doc = callback.__doc__
+        doc = doc if doc is not None else str()
 
-        assert key is not None
+        assert isinstance(key, str)
+        assert isinstance(doc, str)
+
         if prefix and key.startswith(prefix):
             begin = len(prefix)
             key = key[begin:]
@@ -143,12 +121,7 @@ class WorkerCommand:
         if not key:
             raise KeyError("key must *NOT* be empty")
 
-        return cls(
-            key=key,
-            doc=doc if doc is not None else str(),
-            params=make_parameter_desc_map(callback),
-            callback=callback,
-        )
+        return cls(key, doc, callback)
 
     def as_desc(self):
         return CmdDesc(
@@ -189,9 +162,15 @@ class WorkerCommand:
                     elif issubclass(hint, FilesParam):
                         value = FilesParam.from_msg(request.files)
                     elif issubclass(hint, NicknameParam):
-                        value = NicknameParam(request.nickname)
+                        if request.nickname is not None:
+                            value = NicknameParam(request.nickname)
+                        else:
+                            value = None
                     elif issubclass(hint, UsernameParam):
-                        value = UsernameParam(request.username)
+                        if request.username is not None:
+                            value = UsernameParam(request.username)
+                        else:
+                            value = None
                     elif issubclass(hint, MsgUUIDParam):
                         value = MsgUUIDParam(request.msg_uuid)
                     else:

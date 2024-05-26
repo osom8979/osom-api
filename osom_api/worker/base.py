@@ -97,15 +97,7 @@ class WorkerBase(WorkerInterface):
     def register_command(
         self,
         callback: CommandCallable,
-        *,
-        key: Optional[str] = None,
-        doc: Optional[str] = None,
         prefix: Optional[str] = DEFAULT_KEY_PREFIX,
     ) -> None:
-        cmd = WorkerCommand.from_callback(
-            callback=callback,
-            key=key,
-            doc=doc,
-            prefix=prefix,
-        )
+        cmd = WorkerCommand.from_callback(callback, prefix)
         self._commands[cmd.key] = cmd
