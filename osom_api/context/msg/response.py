@@ -2,13 +2,23 @@
 
 from datetime import datetime
 from io import StringIO
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
+
+from type_serialize import decode, encode
+from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
+from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 
 from osom_api.chrono.datetime import tznow
 from osom_api.context.msg.file import MsgFile, files_repr
 
 
 class MsgResponse:
+    msg_uuid: str
+    content: Optional[str]
+    error: Optional[str]
+    files: List[MsgFile]
+    created_at: datetime
+
     def __init__(
         self,
         msg_uuid: str,
@@ -50,3 +60,12 @@ class MsgResponse:
             return self.content
         else:
             return str()
+
+    def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
+        return encode(self, level=level, coding=coding)
+
+    @classmethod
+    def decode(cls, data: bytes, coding=DEFAULT_BYTE_CODING_TYPE):
+        result = decode(data, cls=cls, coding=coding)
+        assert isinstance(result, cls)
+        return result

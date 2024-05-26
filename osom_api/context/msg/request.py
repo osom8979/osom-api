@@ -2,8 +2,12 @@
 
 from datetime import datetime
 from io import StringIO
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 from uuid import uuid4
+
+from type_serialize import decode, encode
+from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
+from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 
 from osom_api.chrono.datetime import tznow
 from osom_api.commands import COMMAND_PREFIX
@@ -14,6 +18,16 @@ from osom_api.exceptions import InvalidCommandError
 
 
 class MsgRequest:
+    provider: MsgProvider
+    message_id: Optional[int]
+    channel_id: Optional[int]
+    content: Optional[str]
+    username: Optional[str]
+    nickname: Optional[str]
+    files: List[MsgFile]
+    created_at: datetime
+    msg_uuid: str
+
     def __init__(
         self,
         provider: MsgProvider,
@@ -66,3 +80,12 @@ class MsgRequest:
     @property
     def command(self):
         return self.parse_command_argument().command
+
+    def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
+        return encode(self, level=level, coding=coding)
+
+    @classmethod
+    def decode(cls, data: bytes, coding=DEFAULT_BYTE_CODING_TYPE):
+        result = decode(data, cls=cls, coding=coding)
+        assert isinstance(result, cls)
+        return result

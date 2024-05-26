@@ -3,19 +3,17 @@
 from argparse import Namespace
 from math import floor
 
-from orjson import dumps, loads
 from overrides import override
-from type_serialize import serialize
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path, make_response_path
-from osom_api.context.mq.protocol.worker import Keys
+from osom_api.context.mq.protocol.worker import RegisterWorker
+from osom_api.context.msg.request import MsgRequest
 from osom_api.exceptions import (
     CommandRuntimeError,
-    NoMessageDataError,
     NoMessageIdError,
     OsomApiError,
     PacketDumpError,
@@ -36,6 +34,15 @@ class WorkerContext(Context):
         self._doc = self._module.doc
         self._path = self._module.path
         self._cmds = self._module.cmds
+
+        register = RegisterWorker(
+            name=self._name,
+            version=self._version,
+            doc=self._doc,
+            path=self._path,
+            cmds=self._cmds,
+        )
+        self._register_packet = register.encode()
 
     @property
     def timeout(self):
@@ -67,9 +74,6 @@ class WorkerContext(Context):
         await self._module.close()
         logger.info("Closed modules")
 
-    async def run_module(self, data):
-        pass
-
     async def polling_iter(self) -> None:
         packet = await self.mq.brpop_bytes(self._path, self.timeout)
         if packet is None:
@@ -85,45 +89,39 @@ class WorkerContext(Context):
         recv_data = packet[1]
         assert recv_key == encode_path(self._path)
 
+        request: MsgRequest
         try:
-            request = loads(recv_data)
-            if not isinstance(request, dict):
-                raise TypeError(f"Unsupported request type: {type(request).__name__}")
-
-            request_id = request.get(Keys.id)
-            request_data = request.get(Keys.data)
+            request = MsgRequest.decode(recv_data)
         except BaseException as e:
             logger.exception(e)
-            raise PacketLoadError("Packet decoding fail")
+            raise PacketLoadError("Packet decoding fail") from e
 
-        if not request_id:
-            raise NoMessageIdError("Message ID does not exist")
+        if not request.msg_uuid:
+            raise NoMessageIdError("Message UUID does not exist")
 
-        assert isinstance(request_id, str)
-
+        msg_uuid = request.msg_uuid
         if self._config.verbose >= VERBOSE_LEVEL_1:
-            logger.info(f"Request[{request_id}] {request_data}")
+            logger.info(f"Request[{msg_uuid}] {request.content}")
         else:
-            logger.info(f"Request[{request_id}]")
+            logger.info(f"Request[{msg_uuid}]")
 
         try:
-            result = await self.run_module(request_data)
+            result = await self._module.run(request)
         except BaseException as e:
             logger.exception(e)
-            raise CommandRuntimeError("A command runtime error was detected")
+            raise CommandRuntimeError("A command runtime error was detected") from e
 
-        if not result:
-            raise NoMessageDataError("Message Data does not exist")
+        assert result.msg_uuid == msg_uuid
 
         try:
-            response_data = dumps(serialize(result))
-            assert isinstance(response_data, bytes)
+            response_packet = result.encode()
+            assert isinstance(response_packet, bytes)
         except BaseException as e:
             logger.exception(e)
             raise PacketDumpError("Response packet encoding fail")
 
-        response_path = make_response_path(request_id)
-        await self.mq.lpush_bytes(response_path, response_data, self.expire)
+        response_path = make_response_path(msg_uuid)
+        await self.mq.lpush_bytes(response_path, response_packet, self.expire)
 
     async def start_polling(self) -> None:
         while True:
