@@ -10,7 +10,7 @@ from osom_api.apps.worker.config import WorkerConfig
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path, make_response_path
-from osom_api.context.mq.protocol.worker import RegisterWorker
+from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.context.msg.request import MsgRequest
 from osom_api.exceptions import (
     CommandRuntimeError,

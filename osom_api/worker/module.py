@@ -3,7 +3,7 @@
 from enum import StrEnum, auto, unique
 from inspect import iscoroutinefunction
 from types import ModuleType
-from typing import Sequence, Union
+from typing import List, Union
 
 # noinspection PyProtectedMember
 from plugpack.module.mixin._base import ModuleBase
@@ -86,7 +86,7 @@ class Module(ModuleBase):
         return self.opt(self.keys.path, str())
 
     @property
-    def cmds(self) -> Sequence[CmdDesc]:
+    def cmds(self) -> List[CmdDesc]:
         return self.opt(self.keys.cmds, list())
 
     @property

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import List
 
 from type_serialize import decode, encode
 from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
@@ -16,7 +16,7 @@ class RegisterWorker:
     version: str
     doc: str
     path: str
-    cmds: Sequence[CmdDesc]
+    cmds: List[CmdDesc]
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
         return encode(self, level=level, coding=coding)

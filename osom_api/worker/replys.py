@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List, NamedTuple, Optional, Union
+from typing import List, Optional, Union
 from uuid import uuid4
 
 from osom_api.chrono.datetime import tznow
@@ -10,7 +11,8 @@ from osom_api.context.msg import MsgFile, MsgProvider
 ContentReply = str
 
 
-class FileReply(NamedTuple):
+@dataclass
+class FileReply:
     name: str
     data: bytes
     mime: Optional[str] = None
@@ -33,7 +35,8 @@ class FilesReply(List[FileReply]):
         return [file.as_msg(created_at) for file in self]
 
 
-class ReplyTuple(NamedTuple):
+@dataclass
+class ReplyTuple:
     content: ContentReply
     files: FilesReply
 

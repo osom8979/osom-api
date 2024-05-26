@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import List
 
 from osom_api.context.msg import MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc
@@ -30,7 +30,7 @@ class WorkerInterface(ABC):
 
     @property
     @abstractmethod
-    def cmds(self) -> Sequence[CmdDesc]:
+    def cmds(self) -> List[CmdDesc]:
         raise NotImplementedError
 
     @abstractmethod

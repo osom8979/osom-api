@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from typing import Any, NamedTuple, Sequence
+from dataclasses import dataclass
+from typing import Any, List
 
 
-class ParamDesc(NamedTuple):
+@dataclass
+class ParamDesc:
     key: str
     doc: str
     default: Any
 
 
-class CmdDesc(NamedTuple):
+@dataclass
+class CmdDesc:
     key: str
     doc: str
-    params: Sequence[ParamDesc]
+    params: List[ParamDesc]

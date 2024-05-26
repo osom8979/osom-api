@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict, Optional, Sequence
+from typing import Dict, List, Optional
 
 from overrides import override
 
@@ -60,7 +60,7 @@ class WorkerBase(WorkerInterface):
 
     @property
     @override
-    def cmds(self) -> Sequence[CmdDesc]:
+    def cmds(self) -> List[CmdDesc]:
         return list(cmd.as_desc() for cmd in self._commands.values())
 
     @override
