@@ -20,9 +20,10 @@ from osom_api.arguments import (
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
-from osom_api.context.mq.path import BROADCAST_PATH, encode_path
+from osom_api.context.mq.path import encode_path
 from osom_api.exceptions import NotInitializedError
 from osom_api.logging.logging import logger
+from osom_api.mq_paths import BROADCAST_PATH
 
 SslCertReqs = Literal["none", "optional", "required"]
 

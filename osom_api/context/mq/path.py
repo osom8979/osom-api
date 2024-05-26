@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from functools import reduce
-from typing import Final, Union
+from typing import Union
 
-PATH_SEPARATOR: Final[str] = "/"
-PATH_ENCODE: Final[str] = "Latin1"
-
-PATH_ROOT: Final[str] = "/osom/api"
-QUEUE_PATH: Final[str] = "/osom/api/queue"
-QUEUE_DEFAULT_PATH: Final[str] = "/osom/api/queue/default"
-RESPONSE_PATH: Final[str] = "/osom/api/response"
-BROADCAST_PATH: Final[str] = "/osom/api/broadcast"
+from osom_api.mq_paths import PATH_ENCODE, PATH_SEPARATOR, RESPONSE_PATH
 
 
 def join_path(*paths: str, separator=PATH_SEPARATOR, root=PATH_SEPARATOR) -> str:
