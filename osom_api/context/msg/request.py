@@ -77,8 +77,7 @@ class MsgRequest:
             raise InvalidCommandError
         return MsgCmd.from_text(self.content, COMMAND_PREFIX)
 
-    @property
-    def command(self):
+    def get_command(self):
         return self.parse_command_argument().command
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):

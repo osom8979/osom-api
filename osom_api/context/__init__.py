@@ -272,14 +272,14 @@ class Context(MqClientCallback):
             await self._db.insert_openai_chat(msg_uuid, request, response)
             logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")
 
-    async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
-        msg_uuid = message.msg_uuid
-        logger.info("Do message: " + repr(message))
+    async def do_message(self, request: MsgRequest) -> Optional[MsgResponse]:
+        msg_uuid = request.msg_uuid
+        logger.info("Do message: " + repr(request))
 
-        if not message.is_command():
+        if not request.is_command():
             return None
 
-        command = message.command
+        command = request.get_command()
         coro = self._commands.get(command)
         if coro is None:
             logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")
@@ -289,7 +289,7 @@ class Context(MqClientCallback):
             logger.info(f"Msg({msg_uuid}) Run '{command}' command")
 
         try:
-            await self.upload_msg_request(message)
+            await self.upload_msg_request(request)
         except BaseException as e:
             logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
             if self.debug:
@@ -297,7 +297,7 @@ class Context(MqClientCallback):
             return MsgResponse(msg_uuid, error=str(e))
 
         try:
-            return await coro(message)
+            return await coro(request)
         except MsgError as e:
             logger.error(f"Msg({e.msg_uuid}) {e}")
             if self.debug and self.verbose >= VERBOSE_LEVEL_1:
