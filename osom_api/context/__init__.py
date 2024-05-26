@@ -137,6 +137,9 @@ class Context(MqClientCallback):
     async def _cmd_help(self, message: MsgRequest) -> MsgResponse:
         return MsgResponse(message.msg_uuid, self.help)
 
+    async def publish(self, key: str, data: bytes) -> None:
+        await self._mq.publish(key, data)
+
     async def upload_msg_file(
         self,
         file: MsgFile,
@@ -152,6 +155,8 @@ class Context(MqClientCallback):
             key=file.path,
             content_type=file.content_type,
         )
+        logger.info(f"Successfully uploaded file to S3: '{file.path}'")
+
         await self._db.insert_file(
             file_uuid=file.file_uuid,
             provider=file.provider,
@@ -161,10 +166,19 @@ class Context(MqClientCallback):
             native_id=file.native_id,
             created_at=file.created_at.isoformat(),
         )
+        logger.info(
+            "Successfully inserted file info to DB: "
+            f"'{file.file_uuid}' -> '{file.path}'"
+        )
+
         await self._db.insert_msg2file(
             msg_uuid=msg_uuid,
             file_uuid=file.file_uuid,
             flow=flow,
+        )
+        logger.info(
+            "Successfully inserted msg2file info to DB: "
+            f"'{msg_uuid}' -> {file.file_uuid}"
         )
 
     async def upload_msg_files(
@@ -188,6 +202,8 @@ class Context(MqClientCallback):
             content=message.content,
             created_at=message.created_at.isoformat(),
         )
+        logger.info(f"Successfully inserted msg_request to DB: '{message.msg_uuid}'")
+
         await self.upload_msg_files(
             files=message.files,
             msg_uuid=message.msg_uuid,
@@ -201,6 +217,8 @@ class Context(MqClientCallback):
             error=message.error,
             created_at=message.created_at.isoformat(),
         )
+        logger.info(f"Successfully inserted msg_response to DB: '{message.msg_uuid}'")
+
         await self.upload_msg_files(
             files=message.files,
             msg_uuid=message.msg_uuid,
@@ -254,35 +272,6 @@ class Context(MqClientCallback):
             await self._db.insert_openai_chat(msg_uuid, request, response)
             logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")
 
-    async def _do_message_main(self, message: MsgRequest) -> Optional[MsgResponse]:
-        msg_uuid = message.msg_uuid
-        logger.info("Do message: " + repr(message))
-
-        if not message.is_command():
-            return None
-
-        command = message.command
-        coro = self._commands.get(command)
-        if coro is None:
-            logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")
-            return None
-
-        if self.verbose >= VERBOSE_LEVEL_1:
-            logger.info(f"Msg({msg_uuid}) Run '{command}' command")
-
-        try:
-            return await coro(message)
-        except MsgError as e:
-            logger.error(f"Msg({e.msg_uuid}) {e}")
-            if self.debug and self.verbose >= VERBOSE_LEVEL_1:
-                logger.exception(e)
-            return MsgResponse(e.msg_uuid, str(e))
-        except BaseException as e:
-            logger.error(f"Msg({msg_uuid}) Unexpected error occurred: {e}")
-            if self.debug:
-                logger.exception(e)
-            return None
-
     async def do_message(self, message: MsgRequest) -> Optional[MsgResponse]:
         msg_uuid = message.msg_uuid
         logger.info("Do message: " + repr(message))
@@ -307,14 +296,15 @@ class Context(MqClientCallback):
                 logger.exception(e)
             return MsgResponse(msg_uuid, error=str(e))
 
-        response = await self._do_message_main(message)
-
-        if response is not None:
-            try:
-                await self.upload_msg_response(response)
-            except BaseException as e:
-                logger.error(f"Msg({msg_uuid}) Response message upload failed: {e}")
-                if self.debug:
-                    logger.exception(e)
-
-        return response
+        try:
+            return await coro(message)
+        except MsgError as e:
+            logger.error(f"Msg({e.msg_uuid}) {e}")
+            if self.debug and self.verbose >= VERBOSE_LEVEL_1:
+                logger.exception(e)
+            return MsgResponse(e.msg_uuid, str(e))
+        except BaseException as e:
+            logger.error(f"Msg({msg_uuid}) Unexpected error occurred: {e}")
+            if self.debug:
+                logger.exception(e)
+            return None

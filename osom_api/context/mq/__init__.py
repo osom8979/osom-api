@@ -215,6 +215,10 @@ class MqClient:
             if self._callback is not None:
                 await shield_any(self._callback.on_mq_subscribe(channel, data), logger)
 
+    async def publish(self, key: str, data: bytes) -> None:
+        logger.info(f"Publish '{key}' -> {data!r}")
+        await self.redis.publish(key, data)
+
     async def ping(self, timeout: Optional[float] = None) -> bool:
         try:
             async with async_timeout(timeout):
@@ -251,6 +255,7 @@ class MqClient:
         if expire is not None:
             logger.info(f"Left PUSH '{key}' -> {value!r} (expire: {expire}s)")
             async with self.redis.pipeline(transaction=True) as pipeline:
+                # noinspection PyUnresolvedReferences
                 await pipeline.lpush(key, value).expire(key, expire).execute()
         else:
             logger.info(f"Left PUSH '{key}' -> {value!r}")
