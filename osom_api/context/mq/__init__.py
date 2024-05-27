@@ -6,7 +6,7 @@ from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
 from datetime import datetime
 from os import R_OK, access, path
-from typing import Literal, Optional, Sequence
+from typing import AnyStr, Literal, Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub, Redis
@@ -68,6 +68,7 @@ class MqClient:
         done: Optional[Event] = None,
         task_name: Optional[str] = None,
         ssl_cert_reqs: Literal["none", "optional", "required"] = "none",
+        subscribe_paths: Optional[Sequence[AnyStr]] = None,
         debug=False,
         verbose=0,
     ):
@@ -83,11 +84,24 @@ class MqClient:
         self._close_timeout = close_timeout
         self._callback = callback
         self._done = done if done is not None else Event()
-        self._task_name = task_name if task_name else self.__class__.__name__
-        self._task = None
-        self._subscribe_begin = None
         self._debug = debug
         self._verbose = verbose
+
+        self._task = None
+        self._task_name = task_name if task_name else self.__class__.__name__
+
+        self._subscribe_begin = None
+        self._subscribe_paths = set()
+        if subscribe_paths:
+            for sp in subscribe_paths:
+                if isinstance(sp, str):
+                    self._subscribe_paths.add(encode_path(sp))
+                elif isinstance(sp, bytes):
+                    self._subscribe_paths.add(sp)
+                else:
+                    raise TypeError(f"Unexpected type {type(sp).__name__}")
+        else:
+            self._subscribe_paths.add(encode_path(BROADCAST_PATH))
 
     @property
     def redis(self):
@@ -175,14 +189,12 @@ class MqClient:
             await self._redis.close()
 
     async def _redis_subscribe_main(self, pubsub: PubSub) -> None:
-        subscribe_paths = (encode_path(BROADCAST_PATH),)
-
         logger.debug("Requesting a subscription ...")
-        await pubsub.subscribe(*subscribe_paths)
+        await pubsub.subscribe(*self._subscribe_paths)
         logger.info("Subscription completed!")
 
         if self._debug:
-            logger.info(f"Subscription paths: {subscribe_paths}")
+            logger.info(f"Subscription paths: {self._subscribe_paths}")
 
         while not self._done.is_set():
             if self._debug and self._verbose >= VL2:

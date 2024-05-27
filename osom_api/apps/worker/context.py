@@ -21,28 +21,35 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
+from osom_api.mq_paths import (
+    BROADCAST_PATH,
+    REGISTER_WORKER_PATH,
+    REGISTER_WORKER_REQUEST_PATH,
+)
 from osom_api.worker.module import Module
 
 
 class WorkerContext(Context):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig.from_namespace(args)
-        super().__init__(self._config)
-        self._module = Module(self._config.module_path, self._config.isolate_module)
-        self._name = self._module.name
-        self._version = self._module.version
-        self._doc = self._module.doc
-        self._path = self._module.path
-        self._cmds = self._module.cmds
+        self._broadcast_path = encode_path(BROADCAST_PATH)
+        self._register_worker_request_path = encode_path(REGISTER_WORKER_REQUEST_PATH)
+        subscribe_paths = self._broadcast_path, self._register_worker_request_path
+        super().__init__(config=self._config, subscribe_paths=subscribe_paths)
 
-        register = RegisterWorker(
-            name=self._name,
-            version=self._version,
-            doc=self._doc,
-            path=self._path,
-            cmds=self._cmds,
+        self._module = Module(self._config.module_path, self._config.isolate_module)
+        self._register = RegisterWorker(
+            name=self._module.name,
+            version=self._module.version,
+            doc=self._module.doc,
+            path=self._module.path,
+            cmds=self._module.cmds,
         )
-        self._register_packet = register.encode()
+        self._register_packet = self._register.encode()
+
+    async def publish_register_worker(self) -> None:
+        await self.publish(REGISTER_WORKER_PATH, self._register_packet)
+        logger.info("Published register worker packet!")
 
     @property
     def timeout(self):
@@ -55,10 +62,13 @@ class WorkerContext(Context):
     @override
     async def on_mq_connect(self) -> None:
         logger.info("Connection to redis was successful!")
+        await self.publish_register_worker()
 
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
         logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
+        if self._register_worker_request_path == channel:
+            await self.publish_register_worker()
 
     @override
     async def on_mq_done(self) -> None:
@@ -75,7 +85,7 @@ class WorkerContext(Context):
         logger.info("Closed modules")
 
     async def polling_iter(self) -> None:
-        packet = await self.mq.brpop_bytes(self._path, self.timeout)
+        packet = await self.mq.brpop_bytes(self._module.path, self.timeout)
         if packet is None:
             raise PollingTimeoutError("Blocking Right POP operation timeout")
 
@@ -87,7 +97,7 @@ class WorkerContext(Context):
 
         recv_key = packet[0]
         recv_data = packet[1]
-        assert recv_key == encode_path(self._path)
+        assert recv_key == encode_path(self._module.path)
 
         request: MsgRequest
         try:

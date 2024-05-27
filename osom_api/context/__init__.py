@@ -2,7 +2,7 @@
 
 from io import BytesIO, StringIO
 from signal import SIGINT, raise_signal
-from typing import Awaitable, Callable, Dict, Iterable, Optional
+from typing import AnyStr, Awaitable, Callable, Dict, Iterable, Optional, Sequence
 
 from overrides import override
 
@@ -38,7 +38,12 @@ HELP_MESSAGE = f"""Available commands:
 class Context(MqClientCallback):
     _commands: Dict[str, Callable[[MsgRequest], Awaitable[MsgResponse]]]
 
-    def __init__(self, config: Config):
+    def __init__(
+        self,
+        config: Config,
+        *,
+        subscribe_paths: Optional[Sequence[AnyStr]] = None,
+    ):
         self._mq = MqClient(
             url=config.redis_url,
             connection_timeout=config.redis_connection_timeout,
@@ -47,6 +52,8 @@ class Context(MqClientCallback):
             callback=self,
             done=None,
             task_name=None,
+            ssl_cert_reqs="none",
+            subscribe_paths=subscribe_paths,
             debug=config.debug,
             verbose=config.verbose,
         )

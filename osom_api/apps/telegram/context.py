@@ -13,14 +13,24 @@ from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
 )
 from osom_api.context import Context
+from osom_api.context.mq.path import encode_path
+from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
+from osom_api.mq_paths import (
+    BROADCAST_PATH,
+    REGISTER_WORKER_PATH,
+    REGISTER_WORKER_REQUEST_PATH,
+)
 
 
 class TelegramContext(Context):
     def __init__(self, args: Namespace):
         self._config = TelegramConfig.from_namespace(args)
-        super().__init__(self._config)
+        self._broadcast_path = encode_path(BROADCAST_PATH)
+        self._register_worker_path = encode_path(REGISTER_WORKER_PATH)
+        subscribe_paths = self._broadcast_path, self._register_worker_path
+        super().__init__(config=self._config, subscribe_paths=subscribe_paths)
 
         self._bot = Bot(token=self._config.telegram_token)
 
@@ -33,13 +43,20 @@ class TelegramContext(Context):
         self._dispatcher = Dispatcher()
         self._dispatcher.include_routers(self._router)
 
+    async def publish_register_worker_request(self) -> None:
+        await self.publish(REGISTER_WORKER_REQUEST_PATH, MsgProvider.telegram.encode())
+        logger.info("Published register worker request packet!")
+
     @override
     async def on_mq_connect(self) -> None:
         logger.info("Connection to redis was successful!")
+        await self.publish_register_worker_request()
 
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
         logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
+        if self._register_worker_path == channel:
+            worker_info = RegisterWorker.decode(data)
 
     @override
     async def on_mq_done(self) -> None:
