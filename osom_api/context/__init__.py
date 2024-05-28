@@ -2,13 +2,10 @@
 
 from io import BytesIO, StringIO
 from signal import SIGINT, raise_signal
-from typing import AnyStr, Awaitable, Callable, Dict, Iterable, Optional, Sequence
+from typing import AnyStr, Iterable, Optional, Sequence
 
 from overrides import override
 
-from osom_api.arguments import VERBOSE_LEVEL_1
-from osom_api.arguments import version as osom_version
-from osom_api.commands import COMMAND_PREFIX
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
@@ -24,20 +21,8 @@ from osom_api.context.s3 import S3Client
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
 
-HELP_MESSAGE = f"""Available commands:
-{COMMAND_PREFIX}help - Show help message
-{COMMAND_PREFIX}version - Show version number
-{COMMAND_PREFIX}chat - Talk to the chatbot
-  model=gpt-4 - Model name
-  n=1 - Number of chat completions
-{COMMAND_PREFIX}reply - Reply to previous chat
-{COMMAND_PREFIX}done - Complete the stream
-"""
-
 
 class Context(MqClientCallback):
-    _commands: Dict[str, Callable[[MsgRequest], Awaitable[MsgResponse]]]
-
     def __init__(
         self,
         config: Config,
@@ -77,11 +62,6 @@ class Context(MqClientCallback):
             timeout=config.openai_timeout,
             default_chat_model=config.openai_default_chat_model,
         )
-        self._commands = {
-            "version": self._cmd_version,
-            "help": self._cmd_help,
-            "chat": self._cmd_chat,
-        }
 
         self.debug = config.debug
         self.verbose = config.verbose
@@ -114,14 +94,6 @@ class Context(MqClientCallback):
         await self._db.close()
         await self._mq.close()
 
-    @property
-    def version(self):
-        return osom_version()
-
-    @property
-    def help(self):
-        return HELP_MESSAGE
-
     @staticmethod
     def raise_interrupt_signal() -> None:
         raise_signal(SIGINT)
@@ -137,12 +109,6 @@ class Context(MqClientCallback):
     @override
     async def on_mq_done(self) -> None:
         logger.warning("The Redis subscription task is completed")
-
-    async def _cmd_version(self, message: MsgRequest) -> MsgResponse:
-        return MsgResponse(message.msg_uuid, self.version)
-
-    async def _cmd_help(self, message: MsgRequest) -> MsgResponse:
-        return MsgResponse(message.msg_uuid, self.help)
 
     async def publish(self, key: str, data: bytes) -> None:
         await self._mq.publish(key, data)
@@ -232,7 +198,7 @@ class Context(MqClientCallback):
             flow=MsgFlow.response,
         )
 
-    async def _cmd_chat(self, message: MsgRequest) -> MsgResponse:
+    async def on_cmd_chat(self, message: MsgRequest) -> MsgResponse:
         msg_uuid = message.msg_uuid
         cmd_arg = message.parse_command_argument()
         n = cmd_arg.get("n", 1)
@@ -278,40 +244,3 @@ class Context(MqClientCallback):
         finally:
             await self._db.insert_openai_chat(msg_uuid, request, response)
             logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")
-
-    async def do_message(self, request: MsgRequest) -> Optional[MsgResponse]:
-        msg_uuid = request.msg_uuid
-        logger.info("Do message: " + repr(request))
-
-        if not request.is_command():
-            return None
-
-        command = request.get_command()
-        coro = self._commands.get(command)
-        if coro is None:
-            logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")
-            return None
-
-        if self.verbose >= VERBOSE_LEVEL_1:
-            logger.info(f"Msg({msg_uuid}) Run '{command}' command")
-
-        try:
-            await self.upload_msg_request(request)
-        except BaseException as e:
-            logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
-            if self.debug:
-                logger.exception(e)
-            return MsgResponse(msg_uuid, error=str(e))
-
-        try:
-            return await coro(request)
-        except MsgError as e:
-            logger.error(f"Msg({e.msg_uuid}) {e}")
-            if self.debug and self.verbose >= VERBOSE_LEVEL_1:
-                logger.exception(e)
-            return MsgResponse(e.msg_uuid, str(e))
-        except BaseException as e:
-            logger.error(f"Msg({msg_uuid}) Unexpected error occurred: {e}")
-            if self.debug:
-                logger.exception(e)
-            return None

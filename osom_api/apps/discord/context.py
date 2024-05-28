@@ -6,31 +6,20 @@ from discord import Intents
 from discord.ext.commands import Bot, check
 from discord.ext.commands.context import Context as CommandContext
 from discord.message import Message
-from overrides import override
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.discord.config import DiscordConfig
 from osom_api.arguments import NOT_REGISTERED_MSG
 from osom_api.commands import COMMAND_PREFIX
-from osom_api.context import Context
-from osom_api.context.mq.path import encode_path
-from osom_api.context.mq.protocols.worker import RegisterWorker
+from osom_api.context.endpoint import EndpointContext
 from osom_api.context.msg import MsgFile, MsgProvider, MsgRequest
 from osom_api.logging.logging import logger
-from osom_api.mq_paths import (
-    BROADCAST_PATH,
-    REGISTER_WORKER_PATH,
-    REGISTER_WORKER_REQUEST_PATH,
-)
 
 
-class DiscordContext(Context):
+class DiscordContext(EndpointContext):
     def __init__(self, args: Namespace):
         self._config = DiscordConfig.from_namespace(args)
-        self._broadcast_path = encode_path(BROADCAST_PATH)
-        self._register_worker_path = encode_path(REGISTER_WORKER_PATH)
-        subscribe_paths = self._broadcast_path, self._register_worker_path
-        super().__init__(config=self._config, subscribe_paths=subscribe_paths)
+        super().__init__(config=self._config)
 
         self._intents = Intents.all()
         self._intents.members = False
@@ -55,25 +44,6 @@ class DiscordContext(Context):
         @is_registration()
         async def on_message(message) -> None:
             await self.on_message(message)
-
-    async def publish_register_worker_request(self) -> None:
-        await self.publish(REGISTER_WORKER_REQUEST_PATH, MsgProvider.discord.encode())
-        logger.info("Published register worker request packet!")
-
-    @override
-    async def on_mq_connect(self) -> None:
-        logger.info("Connection to redis was successful!")
-        await self.publish_register_worker_request()
-
-    @override
-    async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
-        logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
-        if self._register_worker_path == channel:
-            worker_info = RegisterWorker.decode(data)
-
-    @override
-    async def on_mq_done(self) -> None:
-        logger.warning("Redis task is done")
 
     async def is_registration(self, ctx: CommandContext) -> bool:
         if await self.db.registered_discord_channel_id(ctx.channel.id):
