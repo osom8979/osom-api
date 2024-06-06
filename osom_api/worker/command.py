@@ -6,7 +6,7 @@ from typing import Any, Awaitable, Callable, Dict, Final, Optional, get_type_hin
 from osom_api.chrono.datetime import tznow
 from osom_api.exceptions import CommandRuntimeError, InvalidCommandError
 from osom_api.logging.logging import logger
-from osom_api.msg import MsgCmd, MsgRequest, MsgResponse
+from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc, ParamDesc
 from osom_api.worker.metas import AnnotatedMeta, ParamMeta
 from osom_api.worker.params import (
@@ -130,28 +130,21 @@ class WorkerCommand:
             params=list(self._params.values()),
         )
 
-    def bind_kwargs(
-        self,
-        request: MsgRequest,
-        msg_cmd: Optional[MsgCmd] = None,
-    ) -> Dict[str, Any]:
+    def bind_kwargs(self, request: MsgRequest) -> Dict[str, Any]:
         result = dict()
-
-        msg_cmd = msg_cmd if msg_cmd is not None else request.msg_cmd
-        assert msg_cmd is not None
 
         for param in self._sig.parameters.values():
             assert param.kind in SUPPORTED_PARAMETER_KINDS
             desc = self._params.get(param.name)
             if desc is not None:
-                value = msg_cmd.get(desc.key, desc.default)
+                value = request.msg_cmd.get(desc.key, desc.default)
             else:
                 hint = self._hints.get(param.name, None)
                 assert hint is not None
                 assert isinstance(hint, type)
                 if issubclass(hint, Param):
                     if issubclass(hint, ContentParam):
-                        value = ContentParam(msg_cmd.content)
+                        value = ContentParam(request.msg_cmd.body)
                     elif issubclass(hint, CreatedAtParam):
                         value = CreatedAtParam.from_datetime(request.created_at)
                     elif issubclass(hint, FileParam):
@@ -190,8 +183,7 @@ class WorkerCommand:
         created_at = tznow()
 
         try:
-            msg_cmd = request.msg_cmd
-            kwargs = self.bind_kwargs(request, msg_cmd)
+            kwargs = self.bind_kwargs(request)
             reply = await self._callback(**kwargs)
 
             if reply is not None:

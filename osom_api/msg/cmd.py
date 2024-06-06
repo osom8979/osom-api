@@ -8,8 +8,8 @@ from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 
 from osom_api.commands import (
     ARGUMENT_SEPERATOR,
+    BODY_SEPERATOR,
     COMMAND_PREFIX,
-    CONTENT_SEPERATOR,
     KV_SEPERATOR,
 )
 from osom_api.types.string.to_boolean import string_to_boolean
@@ -20,28 +20,28 @@ _DefaultT = TypeVar("_DefaultT", str, bool, int, float)
 class MsgCmd:
     command: str
     kwargs: Dict[str, str]
-    content: str
+    body: str
 
     def __init__(
         self,
         command: Optional[str] = None,
         kwargs: Optional[Dict[str, str]] = None,
-        content: Optional[str] = None,
+        body: Optional[str] = None,
     ):
         self.command = command if command else str()
         self.kwargs = kwargs if kwargs else dict()
-        self.content = content if content else str()
+        self.body = body if body else str()
 
     @classmethod
-    def from_text(
+    def from_content(
         cls,
         text: str,
         command_prefix=COMMAND_PREFIX,
-        content_seperator=CONTENT_SEPERATOR,
+        body_seperator=BODY_SEPERATOR,
         argument_seperator=ARGUMENT_SEPERATOR,
         kv_seperator=KV_SEPERATOR,
     ):
-        tokens = text.split(content_seperator, 1)
+        tokens = text.split(body_seperator, 1)
         assert len(tokens) in (1, 2)
         command_arguments = tokens[0].split(argument_seperator)
 
@@ -60,8 +60,8 @@ class MsgCmd:
                 assert len(kv) == 2
                 kwargs[key] = kv[1]
 
-        content = tokens[1].strip() if len(tokens) == 2 else str()
-        return cls(command, kwargs, content)
+        body = tokens[1].strip() if len(tokens) == 2 else str()
+        return cls(command, kwargs, body)
 
     def __str__(self):
         return f"{self.__class__.__name__}<{self.command}>"
@@ -71,8 +71,19 @@ class MsgCmd:
             f"{self.__class__.__name__}"
             f"<command={self.command}"
             f",kwargs={self.kwargs}"
-            f",content={self.content}>"
+            f",body={self.body}>"
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, type(self)):
+            return False
+        if other.command != self.command:
+            return False
+        if other.kwargs != self.kwargs:
+            return False
+        if other.body != self.body:
+            return False
+        return True
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
         return encode(self, level=level, coding=coding)

@@ -8,6 +8,7 @@ certfile
 certificatesresolvers
 certresolver
 cloudflarestorage
+commandable
 datefmt
 defval
 dhsize

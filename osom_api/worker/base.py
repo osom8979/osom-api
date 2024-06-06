@@ -75,10 +75,10 @@ class WorkerBase(WorkerInterface):
     async def run(self, request: MsgRequest) -> MsgResponse:
         logger.info("Recv message: " + repr(request))
 
-        if not request.is_command():
+        if not request.commandable:
             raise InvalidCommandError(f"Not a command request: {request.content}")
 
-        command = request.get_command()
+        command = request.command
         reg_cmd = self._commands.get(command)
         if reg_cmd is None:
             raise InvalidCommandError(f"Unregistered command: {command}")

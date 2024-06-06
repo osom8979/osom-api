@@ -86,10 +86,10 @@ class EndpointContext(Context):
         msg_uuid = request.msg_uuid
         logger.info("Do message: " + repr(request))
 
-        if not request.is_command():
+        if not request.commandable:
             return None
 
-        command = request.get_command()
+        command = request.command
         coro = self._commands.get(command)
         if coro is None:
             logger.warning(f"Msg({msg_uuid}) Unregistered command: {command}")

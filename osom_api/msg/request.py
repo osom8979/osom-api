@@ -11,11 +11,10 @@ from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 from osom_api.chrono.datetime import tznow
 from osom_api.commands import (
     ARGUMENT_SEPERATOR,
+    BODY_SEPERATOR,
     COMMAND_PREFIX,
-    CONTENT_SEPERATOR,
     KV_SEPERATOR,
 )
-from osom_api.exceptions import InvalidCommandError
 from osom_api.msg.cmd import MsgCmd
 from osom_api.msg.enums.provider import MsgProvider
 from osom_api.msg.file import MsgFile, files_repr
@@ -31,7 +30,8 @@ class MsgRequest:
     files: List[MsgFile]
     created_at: datetime
     msg_uuid: str
-    msg_cmd: Optional[MsgCmd]
+
+    _msg_cmd: MsgCmd
 
     def __init__(
         self,
@@ -46,7 +46,7 @@ class MsgRequest:
         msg_uuid: Optional[str] = None,
         *,
         command_prefix=COMMAND_PREFIX,
-        content_seperator=CONTENT_SEPERATOR,
+        body_seperator=BODY_SEPERATOR,
         argument_seperator=ARGUMENT_SEPERATOR,
         kv_seperator=KV_SEPERATOR,
     ):
@@ -61,15 +61,15 @@ class MsgRequest:
         self.msg_uuid = msg_uuid if msg_uuid else str(uuid4())
 
         if self.content and self.content.startswith(command_prefix):
-            self.msg_cmd = MsgCmd.from_text(
+            self._msg_cmd = MsgCmd.from_content(
                 text=self.content,
                 command_prefix=command_prefix,
-                content_seperator=content_seperator,
+                body_seperator=body_seperator,
                 argument_seperator=argument_seperator,
                 kv_seperator=kv_seperator,
             )
         else:
-            self.msg_cmd = None
+            self._msg_cmd = MsgCmd()
 
     def __str__(self):
         return f"{self.__class__.__name__}<{self.msg_uuid}>"
@@ -86,7 +86,6 @@ class MsgRequest:
             f",files=[{files_repr(self.files)}]"
             f",created_at={self.created_at}"
             f",msg_uuid={self.msg_uuid}>"
-            f",msg_cmd={bool(self.msg_cmd is not None)}>"
         )
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
@@ -98,20 +97,22 @@ class MsgRequest:
         assert isinstance(result, cls)
         return result
 
-    def is_command(self) -> bool:
-        return True if self.msg_cmd is not None else False
+    @property
+    def msg_cmd(self):
+        return self._msg_cmd
 
-    def get_command(self) -> str:
-        if self.msg_cmd is None:
-            raise InvalidCommandError("This message is not a command")
-        return self.msg_cmd.command
+    @property
+    def commandable(self) -> bool:
+        return True if self._msg_cmd.command else False
 
-    def get_command_kwargs(self):
-        if self.msg_cmd is None:
-            raise InvalidCommandError("This message is not a command")
-        return self.msg_cmd.kwargs
+    @property
+    def command(self) -> str:
+        return self._msg_cmd.command
 
-    def get_command_content(self):
-        if self.msg_cmd is None:
-            raise InvalidCommandError("This message is not a command")
-        return self.msg_cmd.content
+    @property
+    def kwargs(self):
+        return self._msg_cmd.kwargs
+
+    @property
+    def body(self):
+        return self._msg_cmd.body

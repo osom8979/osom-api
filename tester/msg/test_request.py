@@ -8,7 +8,10 @@ from osom_api.msg.request import MsgRequest
 
 class RequestTestCase(TestCase):
     def test_encode_decode(self):
-        msg0 = MsgRequest(MsgProvider.tester, content="content")
+        msg0 = MsgRequest(
+            MsgProvider.tester,
+            content="/chat,model=gpt-4o,n=1 your_message",
+        )
         data = msg0.encode()
         msg1 = MsgRequest.decode(data)
 
@@ -21,6 +24,7 @@ class RequestTestCase(TestCase):
         self.assertEqual(msg1.files, msg0.files)
         self.assertEqual(msg1.created_at, msg0.created_at)
         self.assertEqual(msg1.msg_uuid, msg0.msg_uuid)
+        self.assertEqual(msg1._msg_cmd, msg0._msg_cmd)
 
 
 if __name__ == "__main__":
