@@ -78,10 +78,9 @@ class WorkerBase(WorkerInterface):
         if not request.commandable:
             raise InvalidCommandError(f"Not a command request: {request.content}")
 
-        command = request.command
-        reg_cmd = self._commands.get(command)
+        reg_cmd = self._commands.get(request.command)
         if reg_cmd is None:
-            raise InvalidCommandError(f"Unregistered command: {command}")
+            raise InvalidCommandError(f"Unregistered command: {request.command}")
 
         return await reg_cmd(request)
 

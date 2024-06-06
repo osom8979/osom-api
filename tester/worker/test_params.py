@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest import TestCase, main
 
 from osom_api.worker.params import (
+    BodyParam,
     ContentParam,
     CreatedAtParam,
     FileParam,
@@ -21,6 +22,7 @@ class ParamsTestCase(TestCase):
         self.assertEqual(CreatedAtParam.from_datetime(now), now)
 
     def test_isinstance_param(self):
+        self.assertIsInstance(BodyParam(), Param)
         self.assertIsInstance(ContentParam(), Param)
         self.assertIsInstance(FileParam(), Param)
         self.assertIsInstance(FilesParam(), Param)
@@ -29,6 +31,7 @@ class ParamsTestCase(TestCase):
         self.assertIsInstance(CreatedAtParam.now(), Param)
         self.assertIsInstance(MsgUUIDParam(), Param)
 
+        self.assertIsInstance(BodyParam(), str)
         self.assertIsInstance(ContentParam(), str)
         self.assertIsInstance(FilesParam(), list)
         self.assertIsInstance(UsernameParam(), str)

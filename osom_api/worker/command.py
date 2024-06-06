@@ -10,6 +10,7 @@ from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc, ParamDesc
 from osom_api.worker.metas import AnnotatedMeta, ParamMeta
 from osom_api.worker.params import (
+    BodyParam,
     ContentParam,
     CreatedAtParam,
     FileParam,
@@ -143,8 +144,10 @@ class WorkerCommand:
                 assert hint is not None
                 assert isinstance(hint, type)
                 if issubclass(hint, Param):
-                    if issubclass(hint, ContentParam):
-                        value = ContentParam(request.msg_cmd.body)
+                    if issubclass(hint, BodyParam):
+                        value = BodyParam(request.msg_cmd.body)
+                    elif issubclass(hint, ContentParam):
+                        value = ContentParam(request.content)
                     elif issubclass(hint, CreatedAtParam):
                         value = CreatedAtParam.from_datetime(request.created_at)
                     elif issubclass(hint, FileParam):

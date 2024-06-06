@@ -10,6 +10,10 @@ class Param:
     pass
 
 
+class BodyParam(str, Param):
+    pass
+
+
 class ContentParam(str, Param):
     pass
 

@@ -7,7 +7,7 @@ from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.worker.command import WorkerCommand
 from osom_api.worker.metas import ParamMeta
 from osom_api.worker.params import (
-    ContentParam,
+    BodyParam,
     CreatedAtParam,
     FileParam,
     FilesParam,
@@ -25,7 +25,7 @@ class CommandTestCase(IsolatedAsyncioTestCase):
     async def _on_test_callback(
         self,
         n0: MsgRequest,
-        n1: ContentParam,
+        n1: BodyParam,
         n2: FileParam,
         n3: FilesParam,
         n4: UsernameParam,
