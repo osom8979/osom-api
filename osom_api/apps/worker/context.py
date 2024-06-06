@@ -9,7 +9,6 @@ from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
-from osom_api.context.mq.path import encode_path, make_response_path
 from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.exceptions import (
     CommandRuntimeError,
@@ -20,21 +19,22 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
-from osom_api.mq_paths import (
-    BROADCAST_PATH,
-    REGISTER_WORKER_PATH,
-    REGISTER_WORKER_REQUEST_PATH,
-)
 from osom_api.msg.request import MsgRequest
+from osom_api.paths import (
+    MQ_BROADCAST_PATH,
+    MQ_REGISTER_WORKER_PATH,
+    MQ_REGISTER_WORKER_REQUEST_PATH,
+)
+from osom_api.utils.path.mq import encode_path, make_response_path
 from osom_api.worker.module import Module
 
 
 class WorkerContext(Context):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig.from_namespace(args)
-        self._broadcast_path = encode_path(BROADCAST_PATH)
-        self._register_worker_request_path = encode_path(REGISTER_WORKER_REQUEST_PATH)
-        subscribe_paths = self._broadcast_path, self._register_worker_request_path
+        self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
+        self._register_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
+        subscribe_paths = self._broadcast_path, self._register_path
         super().__init__(config=self._config, subscribe_paths=subscribe_paths)
 
         self._module = Module(self._config.module_path, self._config.isolate_module)
@@ -48,7 +48,7 @@ class WorkerContext(Context):
         self._register_packet = self._register.encode()
 
     async def publish_register_worker(self) -> None:
-        await self.publish(REGISTER_WORKER_PATH, self._register_packet)
+        await self.publish(MQ_REGISTER_WORKER_PATH, self._register_packet)
         logger.info("Published register worker packet!")
 
     @property
@@ -67,7 +67,7 @@ class WorkerContext(Context):
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
         logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
-        if self._register_worker_request_path == channel:
+        if self._register_path == channel:
             await self.publish_register_worker()
 
     @override

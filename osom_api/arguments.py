@@ -77,7 +77,6 @@ DEFAULT_SUPABASE_STORAGE_TIMEOUT: Final[float] = 24.0
 DEFAULT_OPENAI_TIMEOUT: Final[float] = 60.0
 DEFAULT_CHAT_MODEL: Final[str] = "gpt-4o"
 
-DEFAULT_REQUEST_PATH: Final[str] = "/osom/api/queue/default"
 DEFAULT_MODULE_PATH: Final[str] = "osom_api.worker.modules.default"
 
 OSOM_WEB_LINK: Final[str] = "https://www.osom.run/"

@@ -19,7 +19,7 @@ from osom_api.msg import MsgFile, MsgProvider, MsgRequest
 class DiscordContext(EndpointContext):
     def __init__(self, args: Namespace):
         self._config = DiscordConfig.from_namespace(args)
-        super().__init__(config=self._config)
+        super().__init__(MsgProvider.discord, self._config)
 
         self._intents = Intents.all()
         self._intents.members = False

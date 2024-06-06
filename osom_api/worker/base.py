@@ -5,10 +5,10 @@ from typing import Dict, List, Optional
 from overrides import override
 
 from osom_api.context import Context
-from osom_api.context.mq.path import make_response_path
 from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 from osom_api.msg import MsgRequest, MsgResponse
+from osom_api.utils.path.mq import make_response_path
 from osom_api.worker.command import DEFAULT_KEY_PREFIX, CommandCallable, WorkerCommand
 from osom_api.worker.descs import CmdDesc
 from osom_api.worker.interface import WorkerInterface

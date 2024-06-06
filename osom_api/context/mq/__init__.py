@@ -20,10 +20,10 @@ from osom_api.arguments import (
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
-from osom_api.context.mq.path import encode_path
 from osom_api.exceptions import NotInitializedError
 from osom_api.logging.logging import logger
-from osom_api.mq_paths import BROADCAST_PATH
+from osom_api.paths import MQ_BROADCAST_PATH
+from osom_api.utils.path.mq import encode_path
 
 SslCertReqs = Literal["none", "optional", "required"]
 
@@ -101,7 +101,7 @@ class MqClient:
                 else:
                     raise TypeError(f"Unexpected type {type(sp).__name__}")
         else:
-            self._subscribe_paths.add(encode_path(BROADCAST_PATH))
+            self._subscribe_paths.add(encode_path(MQ_BROADCAST_PATH))
 
     @property
     def redis(self):

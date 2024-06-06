@@ -10,35 +10,39 @@ from osom_api.arguments import version as osom_version
 from osom_api.commands import EndpointCommands
 from osom_api.config import Config
 from osom_api.context import Context
-from osom_api.context.mq.path import encode_path
 from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
-from osom_api.mq_paths import (
-    BROADCAST_PATH,
-    REGISTER_WORKER_PATH,
-    REGISTER_WORKER_REQUEST_PATH,
-)
 from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
+from osom_api.paths import (
+    MQ_BROADCAST_PATH,
+    MQ_REGISTER_WORKER_PATH,
+    MQ_REGISTER_WORKER_REQUEST_PATH,
+)
+from osom_api.utils.path.mq import encode_path
 
 
 class EndpointContext(Context):
     _commands: Dict[str, Callable[[MsgRequest], Awaitable[MsgResponse]]]
     _workers: Dict[str, RegisterWorker]
 
-    def __init__(self, config: Config):
-        self._broadcast_path = encode_path(BROADCAST_PATH)
-        self._register_worker_path = encode_path(REGISTER_WORKER_PATH)
+    def __init__(self, provider: MsgProvider, config: Config):
+        self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
+        self._register_worker_path = encode_path(MQ_REGISTER_WORKER_PATH)
         subscribe_paths = self._broadcast_path, self._register_worker_path
         super().__init__(config=config, subscribe_paths=subscribe_paths)
 
+        self._provider = provider
         self._commands = dict()
         self._commands[EndpointCommands.version] = self.on_cmd_version
         self._commands[EndpointCommands.help] = self.on_cmd_help
         self._workers = dict()
 
     async def publish_register_worker_request(self) -> None:
-        await self.publish(REGISTER_WORKER_REQUEST_PATH, MsgProvider.telegram.encode())
+        await self.publish(
+            key=MQ_REGISTER_WORKER_REQUEST_PATH,
+            data=self._provider.encode(),
+        )
         logger.info("Published register worker request packet!")
 
     @override
