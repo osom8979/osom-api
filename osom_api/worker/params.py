@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional, Sequence
 
-from osom_api.context.msg import MsgFile
+from osom_api.msg import MsgFile
 
 
 class Param:

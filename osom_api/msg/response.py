@@ -9,7 +9,7 @@ from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
 from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 
 from osom_api.chrono.datetime import tznow
-from osom_api.context.msg.file import MsgFile, files_repr
+from osom_api.msg.file import MsgFile, files_repr
 
 
 class MsgResponse:

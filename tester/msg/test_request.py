@@ -2,7 +2,8 @@
 
 from unittest import TestCase, main
 
-from osom_api.context.msg.request import MsgProvider, MsgRequest
+from osom_api.msg.enums.provider import MsgProvider
+from osom_api.msg.request import MsgRequest
 
 
 class RequestTestCase(TestCase):

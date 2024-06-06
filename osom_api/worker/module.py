@@ -8,12 +8,12 @@ from typing import List, Union
 # noinspection PyProtectedMember
 from plugpack.module.mixin._base import ModuleBase
 
-from osom_api.context.msg import MsgRequest, MsgResponse
 from osom_api.exceptions import (
     AlreadyInitializedError,
     NotACoroutineError,
     NotInitializedError,
 )
+from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.interface import CmdDesc, WorkerInterface
 
 

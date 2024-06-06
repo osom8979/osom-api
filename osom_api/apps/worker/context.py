@@ -11,7 +11,6 @@ from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path, make_response_path
 from osom_api.context.mq.protocols.worker import RegisterWorker
-from osom_api.context.msg.request import MsgRequest
 from osom_api.exceptions import (
     CommandRuntimeError,
     NoMessageIdError,
@@ -26,6 +25,7 @@ from osom_api.mq_paths import (
     REGISTER_WORKER_PATH,
     REGISTER_WORKER_REQUEST_PATH,
 )
+from osom_api.msg.request import MsgRequest
 from osom_api.worker.module import Module
 
 

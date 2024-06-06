@@ -4,9 +4,9 @@ from inspect import Parameter, signature
 from typing import Any, Awaitable, Callable, Dict, Final, Optional, get_type_hints
 
 from osom_api.chrono.datetime import tznow
-from osom_api.context.msg import MsgCmd, MsgRequest, MsgResponse
 from osom_api.exceptions import CommandRuntimeError, InvalidCommandError
 from osom_api.logging.logging import logger
+from osom_api.msg import MsgCmd, MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc, ParamDesc
 from osom_api.worker.metas import AnnotatedMeta, ParamMeta
 from osom_api.worker.params import (

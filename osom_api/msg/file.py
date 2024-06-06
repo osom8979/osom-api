@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from osom_api.chrono.datetime import tznow
-from osom_api.context.msg.enums.provider import MsgProvider
+from osom_api.msg.enums.provider import MsgProvider
 
 
 class MsgFile:

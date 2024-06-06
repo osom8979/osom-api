@@ -9,16 +9,10 @@ from overrides import override
 from osom_api.config import Config
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
-from osom_api.context.msg import (
-    MsgFile,
-    MsgFileStorage,
-    MsgFlow,
-    MsgRequest,
-    MsgResponse,
-)
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
+from osom_api.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
 
 
 class Context(MqClientCallback):
@@ -118,7 +112,7 @@ class Context(MqClientCallback):
         file: MsgFile,
         msg_uuid: str,
         flow: MsgFlow,
-        storage=MsgFileStorage.r2,
+        storage=MsgStorage.r2,
     ) -> None:
         if file.content is None:
             raise BufferError("Empty file content")
@@ -159,7 +153,7 @@ class Context(MqClientCallback):
         files: Iterable[MsgFile],
         msg_uuid: str,
         flow: MsgFlow,
-        storage=MsgFileStorage.r2,
+        storage=MsgStorage.r2,
     ) -> None:
         for file in files:
             await self.upload_msg_file(file, msg_uuid, flow, storage)

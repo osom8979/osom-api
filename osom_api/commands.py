@@ -8,6 +8,8 @@ CONTENT_SEPERATOR: Final[str] = " "
 ARGUMENT_SEPERATOR: Final[str] = ","
 KV_SEPERATOR: Final[str] = "="
 
+__COMMAND_EXAMPLE__ = "/chat,model=gpt-4o,n=1 your_message"
+
 
 BASIC_DISCORD_COMMANDS: Final[Sequence[str]] = (
     "ban",

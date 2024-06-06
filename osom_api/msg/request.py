@@ -15,10 +15,10 @@ from osom_api.commands import (
     CONTENT_SEPERATOR,
     KV_SEPERATOR,
 )
-from osom_api.context.msg.cmd import MsgCmd
-from osom_api.context.msg.enums.provider import MsgProvider
-from osom_api.context.msg.file import MsgFile, files_repr
 from osom_api.exceptions import InvalidCommandError
+from osom_api.msg.cmd import MsgCmd
+from osom_api.msg.enums.provider import MsgProvider
+from osom_api.msg.file import MsgFile, files_repr
 
 
 class MsgRequest:

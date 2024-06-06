@@ -12,7 +12,6 @@ from osom_api.config import Config
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path
 from osom_api.context.mq.protocols.worker import RegisterWorker
-from osom_api.context.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
 from osom_api.mq_paths import (
@@ -20,6 +19,7 @@ from osom_api.mq_paths import (
     REGISTER_WORKER_PATH,
     REGISTER_WORKER_REQUEST_PATH,
 )
+from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
 
 
 class EndpointContext(Context):
