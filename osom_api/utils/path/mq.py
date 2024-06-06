@@ -2,17 +2,24 @@
 
 from typing import Final, Union
 
-from osom_api.paths import MQ_RESPONSE_PATH
+from osom_api.paths import MQ_REQUEST_PATH, MQ_RESPONSE_PATH
 from osom_api.utils.path.join import join_path
 
 PATH_ENCODE: Final[str] = "Latin1"
 
 
-def make_response_path(request_msg: Union[str, bytes]):
-    if isinstance(request_msg, bytes):
-        return join_path(MQ_RESPONSE_PATH, str(request_msg, encoding=PATH_ENCODE))
+def make_request_path(worker_name: Union[str, bytes]):
+    if isinstance(worker_name, bytes):
+        return join_path(MQ_REQUEST_PATH, str(worker_name, encoding=PATH_ENCODE))
     else:
-        return join_path(MQ_RESPONSE_PATH, request_msg)
+        return join_path(MQ_REQUEST_PATH, worker_name)
+
+
+def make_response_path(msg_uuid: Union[str, bytes]):
+    if isinstance(msg_uuid, bytes):
+        return join_path(MQ_RESPONSE_PATH, str(msg_uuid, encoding=PATH_ENCODE))
+    else:
+        return join_path(MQ_RESPONSE_PATH, msg_uuid)
 
 
 def encode_path(path: str) -> bytes:

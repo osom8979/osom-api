@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from dataclasses import dataclass
 from io import StringIO
 from typing import List
 
@@ -12,13 +11,26 @@ from osom_api.commands import COMMAND_PREFIX
 from osom_api.worker.descs import CmdDesc
 
 
-@dataclass
 class RegisterWorker:
     name: str
     version: str
     doc: str
     path: str
     cmds: List[CmdDesc]
+
+    def __init__(
+        self,
+        name: str,
+        version: str,
+        doc: str,
+        path: str,
+        cmds: List[CmdDesc],
+    ):
+        self.name = name
+        self.version = version
+        self.doc = doc
+        self.path = path
+        self.cmds = cmds
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
         return encode(self, level=level, coding=coding)

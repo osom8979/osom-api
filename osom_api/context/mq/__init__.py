@@ -12,7 +12,12 @@ from redis.asyncio import from_url
 from redis.asyncio.client import PubSub, Redis
 
 from osom_api.aio.shield_any import shield_any
-from osom_api.arguments import DEFAULT_REDIS_CLOSE_TIMEOUT
+from osom_api.arguments import (
+    DEFAULT_REDIS_CLOSE_TIMEOUT,
+    DEFAULT_REDIS_EXPIRE_LONG,
+    DEFAULT_REDIS_EXPIRE_MEDIUM,
+    DEFAULT_REDIS_EXPIRE_SHORT,
+)
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
@@ -60,6 +65,9 @@ class MqClient:
         connection_timeout: Optional[float] = None,
         subscribe_timeout: Optional[float] = None,
         close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
+        redis_expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
+        redis_expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
+        redis_expire_long=DEFAULT_REDIS_EXPIRE_LONG,
         callback: Optional[MqClientCallback] = None,
         done: Optional[Event] = None,
         task_name: Optional[str] = None,
@@ -80,6 +88,9 @@ class MqClient:
 
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
+        self._redis_expire_short = redis_expire_short
+        self._redis_expire_medium = redis_expire_medium
+        self._redis_expire_long = redis_expire_long
         self._callback = callback
         self._done = done if done is not None else Event()
         self._debug = debug

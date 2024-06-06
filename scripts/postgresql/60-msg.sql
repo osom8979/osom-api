@@ -8,6 +8,7 @@ create table
     provider   provider_type not null,
     message_id int8                                default null,
     channel_id int8                                default null,
+    unique (provider, message_id, channel_id),
     username   text check (length(username) < 256) default null,
     nickname   text check (length(nickname) < 256) default null,
     content    text                                default null,

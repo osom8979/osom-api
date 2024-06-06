@@ -8,7 +8,7 @@ from osom_api.context import Context
 from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 from osom_api.msg import MsgRequest, MsgResponse
-from osom_api.utils.path.mq import make_response_path
+from osom_api.utils.path.mq import make_request_path
 from osom_api.worker.command import DEFAULT_KEY_PREFIX, CommandCallable, WorkerCommand
 from osom_api.worker.descs import CmdDesc
 from osom_api.worker.interface import WorkerInterface
@@ -30,7 +30,7 @@ class WorkerBase(WorkerInterface):
         self._name = name if name else str()
         self._version = version if version else str()
         self._docs = docs if docs else str()
-        self._path = path if path else make_response_path(self._name)
+        self._path = path if path else make_request_path(self._name)
 
         self.args = list(args)
         self.kwargs = dict(**kwargs)
