@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-from io import StringIO
 from typing import Iterable, List, Optional
 from uuid import uuid4
 
@@ -10,7 +9,12 @@ from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
 from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
 
 from osom_api.chrono.datetime import tznow
-from osom_api.commands import COMMAND_PREFIX
+from osom_api.commands import (
+    ARGUMENT_SEPERATOR,
+    COMMAND_PREFIX,
+    CONTENT_SEPERATOR,
+    KV_SEPERATOR,
+)
 from osom_api.context.msg.cmd import MsgCmd
 from osom_api.context.msg.enums.provider import MsgProvider
 from osom_api.context.msg.file import MsgFile, files_repr
@@ -27,6 +31,7 @@ class MsgRequest:
     files: List[MsgFile]
     created_at: datetime
     msg_uuid: str
+    msg_cmd: Optional[MsgCmd]
 
     def __init__(
         self,
@@ -39,6 +44,11 @@ class MsgRequest:
         files: Optional[Iterable[MsgFile]] = None,
         created_at: Optional[datetime] = None,
         msg_uuid: Optional[str] = None,
+        *,
+        command_prefix=COMMAND_PREFIX,
+        content_seperator=CONTENT_SEPERATOR,
+        argument_seperator=ARGUMENT_SEPERATOR,
+        kv_seperator=KV_SEPERATOR,
     ):
         self.provider = provider
         self.message_id = message_id
@@ -50,12 +60,22 @@ class MsgRequest:
         self.created_at = created_at if created_at else tznow()
         self.msg_uuid = msg_uuid if msg_uuid else str(uuid4())
 
+        if self.content and self.content.startswith(command_prefix):
+            self.msg_cmd = MsgCmd.from_text(
+                text=self.content,
+                command_prefix=command_prefix,
+                content_seperator=content_seperator,
+                argument_seperator=argument_seperator,
+                kv_seperator=kv_seperator,
+            )
+        else:
+            self.msg_cmd = None
+
     def __str__(self):
         return f"{self.__class__.__name__}<{self.msg_uuid}>"
 
     def __repr__(self):
-        buffer = StringIO()
-        buffer.write(
+        return (
             f"{self.__class__.__name__}"
             f"<provider={self.provider.name}"
             f",message_id={self.message_id}"
@@ -66,19 +86,8 @@ class MsgRequest:
             f",files=[{files_repr(self.files)}]"
             f",created_at={self.created_at}"
             f",msg_uuid={self.msg_uuid}>"
+            f",msg_cmd={bool(self.msg_cmd is not None)}>"
         )
-        return buffer.getvalue()
-
-    def is_command(self):
-        return self.content.startswith(COMMAND_PREFIX)
-
-    def parse_command_argument(self):
-        if not self.is_command():
-            raise InvalidCommandError
-        return MsgCmd.from_text(self.content, COMMAND_PREFIX)
-
-    def get_command(self):
-        return self.parse_command_argument().command
 
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
         return encode(self, level=level, coding=coding)
@@ -88,3 +97,21 @@ class MsgRequest:
         result = decode(data, cls=cls, coding=coding)
         assert isinstance(result, cls)
         return result
+
+    def is_command(self) -> bool:
+        return True if self.msg_cmd is not None else False
+
+    def get_command(self) -> str:
+        if self.msg_cmd is None:
+            raise InvalidCommandError("This message is not a command")
+        return self.msg_cmd.command
+
+    def get_command_kwargs(self):
+        if self.msg_cmd is None:
+            raise InvalidCommandError("This message is not a command")
+        return self.msg_cmd.kwargs
+
+    def get_command_content(self):
+        if self.msg_cmd is None:
+            raise InvalidCommandError("This message is not a command")
+        return self.msg_cmd.content

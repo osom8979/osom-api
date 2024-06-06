@@ -19,6 +19,7 @@ from osom_api.arguments import (
     DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
     DEFAULT_SUPABASE_STORAGE_TIMEOUT,
 )
+from osom_api.commands import COMMAND_PREFIX
 from osom_api.logging.logging import DEBUG, convert_level_number, logger
 
 
@@ -45,6 +46,7 @@ class Config:
         openai_api_key: Optional[str] = None,
         openai_timeout=DEFAULT_OPENAI_TIMEOUT,
         openai_default_chat_model=DEFAULT_CHAT_MODEL,
+        command_prefix=COMMAND_PREFIX,
         severity=DEFAULT_SEVERITY,
         use_uvloop=False,
         debug=False,
@@ -72,6 +74,7 @@ class Config:
         self.openai_api_key = openai_api_key
         self.openai_timeout = openai_timeout
         self.openai_default_chat_model = openai_default_chat_model
+        self.command_prefix = command_prefix
         self.severity = severity
         self.use_uvloop = use_uvloop
         self.debug = debug
@@ -109,6 +112,8 @@ class Config:
         assert isinstance(args.openai_api_key, (type(None), str))
         assert isinstance(args.openai_timeout, float)
         assert isinstance(args.openai_default_chat_model, str)
+
+        assert isinstance(args.command_prefix, str)
 
         assert isinstance(args.severity, str)
         assert isinstance(args.use_uvloop, bool)

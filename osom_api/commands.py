@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from enum import StrEnum, auto, unique
 from typing import Final, Sequence
 
 COMMAND_PREFIX: Final[str] = "/"
@@ -24,3 +25,9 @@ BASIC_DISCORD_COMMANDS: Final[Sequence[str]] = (
     "tts",
     "unflip",
 )
+
+
+@unique
+class EndpointCommands(StrEnum):
+    version = auto()
+    help = auto()

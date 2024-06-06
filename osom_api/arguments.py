@@ -6,6 +6,7 @@ from os import R_OK, access, getcwd
 from os.path import isfile, join
 from typing import Final, List, Optional
 
+from osom_api.commands import COMMAND_PREFIX
 from osom_api.logging.logging import (
     DEFAULT_TIMED_ROTATING_WHEN,
     SEVERITIES,
@@ -54,6 +55,7 @@ Simply usage:
 CMDS = (CMD_DISCORD, CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
 
 DEFAULT_DOTENV_FILENAME: Final[str] = ".env.local"
+TEST_DOTENV_FILENAME: Final[str] = ".env.test"
 
 DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_HTTP_PORT: Final[int] = 10503
@@ -327,6 +329,18 @@ def add_openai_arguments(
     )
 
 
+def add_command_arguments(
+    parser: ArgumentParser,
+    command_prefix=COMMAND_PREFIX,
+) -> None:
+    parser.add_argument(
+        "--command-prefix",
+        default=get_eval("COMMAND_PREFIX", command_prefix),
+        metavar="prefix",
+        help=f"Command prefix. (default: '{command_prefix}')",
+    )
+
+
 def add_telegram_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--telegram-token",
@@ -356,6 +370,7 @@ def _add_context_arguments(parser: ArgumentParser) -> None:
     add_s3_arguments(parser)
     add_supabase_arguments(parser)
     add_openai_arguments(parser)
+    add_command_arguments(parser)
 
 
 def add_cmd_discord_parser(subparsers) -> None:

@@ -137,7 +137,7 @@ class WorkerCommand:
     ) -> Dict[str, Any]:
         result = dict()
 
-        msg_cmd = msg_cmd if msg_cmd is not None else request.parse_command_argument()
+        msg_cmd = msg_cmd if msg_cmd is not None else request.msg_cmd
         assert msg_cmd is not None
 
         for param in self._sig.parameters.values():
@@ -190,7 +190,7 @@ class WorkerCommand:
         created_at = tznow()
 
         try:
-            msg_cmd = request.parse_command_argument()
+            msg_cmd = request.msg_cmd
             kwargs = self.bind_kwargs(request, msg_cmd)
             reply = await self._callback(**kwargs)
 

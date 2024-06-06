@@ -7,7 +7,7 @@ from overrides import override
 
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.arguments import version as osom_version
-from osom_api.commands import COMMAND_PREFIX
+from osom_api.commands import EndpointCommands
 from osom_api.config import Config
 from osom_api.context import Context
 from osom_api.context.mq.path import encode_path
@@ -33,8 +33,8 @@ class EndpointContext(Context):
         super().__init__(config=config, subscribe_paths=subscribe_paths)
 
         self._commands = dict()
-        self._commands["version"] = self.on_cmd_version
-        self._commands["help"] = self.on_cmd_help
+        self._commands[EndpointCommands.version] = self.on_cmd_version
+        self._commands[EndpointCommands.help] = self.on_cmd_help
         self._workers = dict()
 
     async def publish_register_worker_request(self) -> None:
@@ -63,12 +63,17 @@ class EndpointContext(Context):
 
     @property
     def help(self):
+        version_command = self.command_prefix + EndpointCommands.version
+        help_command = self.command_prefix + EndpointCommands.help
+
         buffer = StringIO()
         buffer.write("Available commands:\n")
-        buffer.write(f"{COMMAND_PREFIX}help - Show help message\n")
-        buffer.write(f"{COMMAND_PREFIX}version - Show version number\n")
+        buffer.write(f"{version_command} - Show help message\n")
+        buffer.write(f"{help_command} - Show version number\n")
+
         for worker in self._workers.values():
-            buffer.write(worker.as_help())
+            buffer.write(worker.as_help(self.command_prefix))
+
         return buffer.getvalue()
 
     async def on_cmd_version(self, request: MsgRequest) -> MsgResponse:

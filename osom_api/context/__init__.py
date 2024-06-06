@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from io import BytesIO, StringIO
+from io import BytesIO
 from signal import SIGINT, raise_signal
 from typing import AnyStr, Iterable, Optional, Sequence
 
@@ -18,7 +18,6 @@ from osom_api.context.msg import (
 )
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
-from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
 
 
@@ -63,6 +62,7 @@ class Context(MqClientCallback):
             default_chat_model=config.openai_default_chat_model,
         )
 
+        self.command_prefix = config.command_prefix
         self.debug = config.debug
         self.verbose = config.verbose
 
@@ -198,49 +198,51 @@ class Context(MqClientCallback):
             flow=MsgFlow.response,
         )
 
-    async def on_cmd_chat(self, message: MsgRequest) -> MsgResponse:
-        msg_uuid = message.msg_uuid
-        cmd_arg = message.parse_command_argument()
-        n = cmd_arg.get("n", 1)
-        model = cmd_arg.get("model", self._oai.default_chat_model)
-
-        if n < 1:
-            raise MsgError(msg_uuid, "The 'n' argument must be 1 or greater")
-        if not model:
-            raise MsgError(msg_uuid, "The 'model' argument is empty")
-        if not message.content:
-            raise MsgError(msg_uuid, "The content is empty")
-
-        messages = [{"role": "user", "content": message.content}]
-        request = dict(messages=messages, model=model, n=n)
-        response = dict()
-
-        try:
-            chat_completion = await self.oai.create_chat_completion(messages, model, n)
-            assert len(chat_completion.choices) == n
-
-            reply_buffer = StringIO()
-            if len(chat_completion.choices) == 1:
-                reply_buffer.write(chat_completion.choices[0].message.content)
-            elif len(chat_completion.choices) >= 2:
-                choice = chat_completion.choices[0]
-                reply_buffer.write("[0] " + choice.message.content)
-                for i, choice in enumerate(chat_completion.choices[1:]):
-                    reply_buffer.write(f"\n[{i + 1}] " + choice.message.content)
-            else:
-                assert False, "Inaccessible section"
-            reply_text = reply_buffer.getvalue()
-
-            response.update(chat_completion.model_dump())
-            return MsgResponse(msg_uuid, reply_text)
-        except BaseException as e:
-            error_message = "OpenAI API request failed"
-            response.update(
-                error_type=type(e).__name__,
-                error_message=error_message,
-                msg_uuid=message.msg_uuid,
-            )
-            raise MsgError(msg_uuid, error_message) from e
-        finally:
-            await self._db.insert_openai_chat(msg_uuid, request, response)
-            logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")
+    # async def on_cmd_chat(self, message: MsgRequest) -> MsgResponse:
+    #     msg_uuid = message.msg_uuid
+    #     cmd_arg = message.msg_cmd
+    #     n = cmd_arg.get("n", 1)
+    #     model = cmd_arg.get("model", self._oai.default_chat_model)
+    #
+    #     if n < 1:
+    #         raise MsgError(msg_uuid, "The 'n' argument must be 1 or greater")
+    #     if not model:
+    #         raise MsgError(msg_uuid, "The 'model' argument is empty")
+    #     if not message.content:
+    #         raise MsgError(msg_uuid, "The content is empty")
+    #
+    #     messages = [{"role": "user", "content": message.content}]
+    #     request = dict(messages=messages, model=model, n=n)
+    #     response = dict()
+    #
+    #     try:
+    #         chat_completion = await self.oai.create_chat_completion(
+    #             messages, model, n
+    #         )
+    #         assert len(chat_completion.choices) == n
+    #
+    #         reply_buffer = StringIO()
+    #         if len(chat_completion.choices) == 1:
+    #             reply_buffer.write(chat_completion.choices[0].message.content)
+    #         elif len(chat_completion.choices) >= 2:
+    #             choice = chat_completion.choices[0]
+    #             reply_buffer.write("[0] " + choice.message.content)
+    #             for i, choice in enumerate(chat_completion.choices[1:]):
+    #                 reply_buffer.write(f"\n[{i + 1}] " + choice.message.content)
+    #         else:
+    #             assert False, "Inaccessible section"
+    #         reply_text = reply_buffer.getvalue()
+    #
+    #         response.update(chat_completion.model_dump())
+    #         return MsgResponse(msg_uuid, reply_text)
+    #     except BaseException as e:
+    #         error_message = "OpenAI API request failed"
+    #         response.update(
+    #             error_type=type(e).__name__,
+    #             error_message=error_message,
+    #             msg_uuid=message.msg_uuid,
+    #         )
+    #         raise MsgError(msg_uuid, error_message) from e
+    #     finally:
+    #         await self._db.insert_openai_chat(msg_uuid, request, response)
+    #         logger.debug(f"Msg({msg_uuid}) Insert OpenAI chat results")

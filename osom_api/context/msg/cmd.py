@@ -2,6 +2,10 @@
 
 from typing import Dict, Optional, TypeVar, Union, overload
 
+from type_serialize import decode, encode
+from type_serialize.byte.byte_coder import DEFAULT_BYTE_CODING_TYPE
+from type_serialize.variables import COMPRESS_LEVEL_TRADEOFF
+
 from osom_api.commands import (
     ARGUMENT_SEPERATOR,
     COMMAND_PREFIX,
@@ -14,15 +18,19 @@ _DefaultT = TypeVar("_DefaultT", str, bool, int, float)
 
 
 class MsgCmd:
+    command: str
+    kwargs: Dict[str, str]
+    content: str
+
     def __init__(
         self,
-        command: str,
-        kwargs: Dict[str, str],
-        content: str,
+        command: Optional[str] = None,
+        kwargs: Optional[Dict[str, str]] = None,
+        content: Optional[str] = None,
     ):
-        self.command = command
-        self.kwargs = kwargs
-        self.content = content
+        self.command = command if command else str()
+        self.kwargs = kwargs if kwargs else dict()
+        self.content = content if content else str()
 
     @classmethod
     def from_text(
@@ -54,6 +62,26 @@ class MsgCmd:
 
         content = tokens[1].strip() if len(tokens) == 2 else str()
         return cls(command, kwargs, content)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}<{self.command}>"
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}"
+            f"<command={self.command}"
+            f",kwargs={self.kwargs}"
+            f",content={self.content}>"
+        )
+
+    def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
+        return encode(self, level=level, coding=coding)
+
+    @classmethod
+    def decode(cls, data: bytes, coding=DEFAULT_BYTE_CODING_TYPE):
+        result = decode(data, cls=cls, coding=coding)
+        assert isinstance(result, cls)
+        return result
 
     # fmt: off
     @overload
