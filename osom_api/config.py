@@ -10,11 +10,9 @@ from osom_api.arguments import (
     DEFAULT_OPENAI_TIMEOUT,
     DEFAULT_REDIS_BLOCKING_TIMEOUT,
     DEFAULT_REDIS_CLOSE_TIMEOUT,
-    DEFAULT_REDIS_CONNECTION_TIMEOUT,
     DEFAULT_REDIS_EXPIRE_LONG,
     DEFAULT_REDIS_EXPIRE_MEDIUM,
     DEFAULT_REDIS_EXPIRE_SHORT,
-    DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     DEFAULT_SEVERITY,
     DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
     DEFAULT_SUPABASE_STORAGE_TIMEOUT,
@@ -27,8 +25,8 @@ class Config:
     def __init__(
         self,
         redis_url: Optional[str] = None,
-        redis_connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
-        redis_subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
+        redis_connection_timeout: Optional[float] = None,
+        redis_subscribe_timeout: Optional[float] = None,
         redis_blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
         redis_close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
         redis_expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
@@ -90,8 +88,8 @@ class Config:
     @staticmethod
     def assert_common_properties(args: Namespace) -> None:
         assert isinstance(args.redis_url, (type(None), str))
-        assert isinstance(args.redis_connection_timeout, float)
-        assert isinstance(args.redis_subscribe_timeout, float)
+        assert isinstance(args.redis_connection_timeout, (type(None), float))
+        assert isinstance(args.redis_subscribe_timeout, (type(None), float))
         assert isinstance(args.redis_blocking_timeout, float)
         assert isinstance(args.redis_close_timeout, float)
         assert isinstance(args.redis_expire_short, float)

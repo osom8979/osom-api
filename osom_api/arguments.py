@@ -63,8 +63,6 @@ DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 
 DEFAULT_API_OPENAPI_URL: Final[str] = "/spec/openapi.json"
 
-DEFAULT_REDIS_CONNECTION_TIMEOUT: Final[float] = 16.0
-DEFAULT_REDIS_SUBSCRIBE_TIMEOUT: Final[float] = 0.0
 DEFAULT_REDIS_BLOCKING_TIMEOUT: Final[float] = 0.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 4.0
 DEFAULT_REDIS_EXPIRE_SHORT: Final[float] = 4.0
@@ -165,8 +163,6 @@ def add_api_arguments(parser: ArgumentParser) -> None:
 
 def add_redis_arguments(
     parser: ArgumentParser,
-    connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
-    subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
     blocking_timeout=DEFAULT_REDIS_BLOCKING_TIMEOUT,
     expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
     expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
@@ -182,17 +178,17 @@ def add_redis_arguments(
 
     parser.add_argument(
         "--redis-connection-timeout",
-        default=get_eval("REDIS_CONNECTION_TIMEOUT", connection_timeout),
+        default=get_eval("REDIS_CONNECTION_TIMEOUT"),
         metavar="sec",
         type=float,
-        help=f"Redis connection timeout in seconds (default: {connection_timeout:.2f})",
+        help="Redis connection timeout in seconds",
     )
     parser.add_argument(
         "--redis-subscribe-timeout",
-        default=get_eval("REDIS_SUBSCRIBE_TIMEOUT", subscribe_timeout),
+        default=get_eval("REDIS_SUBSCRIBE_TIMEOUT"),
         metavar="sec",
         type=float,
-        help=f"Redis subscribe timeout in seconds (default: {subscribe_timeout:.2f})",
+        help="Redis subscribe timeout in seconds",
     )
     parser.add_argument(
         "--redis-blocking-timeout",

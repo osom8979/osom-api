@@ -6,17 +6,13 @@ from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
 from datetime import datetime
 from os import R_OK, access, path
-from typing import AnyStr, Literal, Optional, Sequence
+from typing import Any, AnyStr, Dict, Literal, Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub, Redis
 
 from osom_api.aio.shield_any import shield_any
-from osom_api.arguments import (
-    DEFAULT_REDIS_CLOSE_TIMEOUT,
-    DEFAULT_REDIS_CONNECTION_TIMEOUT,
-    DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
-)
+from osom_api.arguments import DEFAULT_REDIS_CLOSE_TIMEOUT
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
 from osom_api.context.mq.message import Message
@@ -61,8 +57,8 @@ class MqClient:
     def __init__(
         self,
         url: Optional[str] = None,
-        connection_timeout=DEFAULT_REDIS_CONNECTION_TIMEOUT,
-        subscribe_timeout=DEFAULT_REDIS_SUBSCRIBE_TIMEOUT,
+        connection_timeout: Optional[float] = None,
+        subscribe_timeout: Optional[float] = None,
         close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
         callback: Optional[MqClientCallback] = None,
         done: Optional[Event] = None,
@@ -73,7 +69,9 @@ class MqClient:
         verbose=0,
     ):
         if url:
-            options = dict(socket_connect_timeout=connection_timeout)
+            options: Dict[str, Any] = dict()
+            if connection_timeout is not None:
+                options["socket_connect_timeout"] = connection_timeout
             if url.startswith("rediss://"):
                 options["ssl_cert_reqs"] = ssl_cert_reqs
             self._redis = from_url(url, **options)
@@ -127,7 +125,11 @@ class MqClient:
         assert self._task is not None
         self._done.set()
 
-        if not self._task.cancelled() and self._subscribe_begin is not None:
+        if (
+            not self._task.cancelled()
+            and self._subscribe_begin is not None
+            and self._subscribe_timeout is not None
+        ):
             # If the waiting time is longer than the close timeout,
             # Forcefully cancels the task.
             # This will prevent the shutdown wait time from becoming too long.
@@ -198,7 +200,11 @@ class MqClient:
 
         while not self._done.is_set():
             if self._debug and self._verbose >= VL2:
-                logger.debug(f"Subscription message ... {self._subscribe_timeout:.1f}s")
+                if self._subscribe_timeout is not None:
+                    subscribe_timeout_text = f" {self._subscribe_timeout:.1f}s"
+                else:
+                    subscribe_timeout_text = ""
+                logger.debug(f"Subscription message ...{subscribe_timeout_text}")
 
             try:
                 self._subscribe_begin = datetime.now()
