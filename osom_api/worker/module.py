@@ -13,7 +13,7 @@ from osom_api.exceptions import (
     NotACoroutineError,
     NotInitializedError,
 )
-from osom_api.msg import MsgRequest, MsgResponse
+from osom_api.protocols.msg import MsgRequest, MsgResponse
 from osom_api.worker.interface import CmdDesc, WorkerInterface
 
 

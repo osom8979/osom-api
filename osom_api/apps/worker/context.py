@@ -9,7 +9,6 @@ from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
-from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.exceptions import (
     CommandRuntimeError,
     NoMessageIdError,
@@ -19,12 +18,13 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
-from osom_api.msg.request import MsgRequest
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
 )
+from osom_api.protocols.msg.request import MsgRequest
+from osom_api.protocols.worker import RegisterWorker
 from osom_api.utils.path.mq import encode_path, make_response_path
 from osom_api.worker.module import Module
 

@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 from uuid import uuid4
 
 from osom_api.chrono.datetime import tznow
-from osom_api.msg import MsgFile, MsgProvider
+from osom_api.protocols.msg import MsgFile, MsgProvider
 
 ContentReply = str
 

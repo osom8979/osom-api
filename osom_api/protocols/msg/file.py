@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from osom_api.chrono.datetime import tznow
-from osom_api.msg.enums.provider import MsgProvider
+from osom_api.protocols.msg.enums.provider import MsgProvider
 
 
 class MsgFile:
@@ -48,8 +48,7 @@ class MsgFile:
         return f"{self.__class__.__name__}<{self.name}>"
 
     def __repr__(self):
-        buffer = StringIO()
-        buffer.write(
+        return (
             f"{self.__class__.__name__}"
             f"<provider={self.provider.name}"
             f",file_id={self.native_id}"
@@ -60,7 +59,6 @@ class MsgFile:
             f",created_at={self.created_at}"
             f",file_uuid={self.file_uuid}>"
         )
-        return buffer.getvalue()
 
 
 def files_repr(files: List[MsgFile]) -> str:

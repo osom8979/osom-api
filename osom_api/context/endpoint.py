@@ -10,16 +10,16 @@ from osom_api.arguments import version as osom_version
 from osom_api.commands import EndpointCommands
 from osom_api.config import Config
 from osom_api.context import Context
-from osom_api.context.mq.protocols.worker import RegisterWorker
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
-from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
     MQ_UNREGISTER_WORKER_PATH,
 )
+from osom_api.protocols.msg import MsgProvider, MsgRequest, MsgResponse
+from osom_api.protocols.worker import RegisterWorker
 from osom_api.utils.path.mq import encode_path
 
 
@@ -175,13 +175,13 @@ class EndpointContext(Context):
         if self.verbose >= VERBOSE_LEVEL_1:
             logger.info(f"Msg({msg_uuid}) Run '{request.command}' command")
 
-        try:
-            await self.upload_msg_request(request)
-        except BaseException as e:
-            logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
-            if self.debug:
-                logger.exception(e)
-            return MsgResponse(msg_uuid, error=str(e))
+        # try:
+        #     await self.upload_msg_request(request)
+        # except BaseException as e:
+        #     logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
+        #     if self.debug:
+        #         logger.exception(e)
+        #     return MsgResponse(msg_uuid, error=str(e))
 
         try:
             return await cmd_callable(request)

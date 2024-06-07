@@ -12,7 +12,7 @@ from osom_api.context.mq import MqClient, MqClientCallback
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
-from osom_api.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
+from osom_api.protocols.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
 from osom_api.utils.path.mq import encode_path, make_response_path
 
 

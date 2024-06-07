@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_api.msg.response import MsgResponse
+from osom_api.protocols.msg.response import MsgResponse
 
 
 class ResponseTestCase(TestCase):

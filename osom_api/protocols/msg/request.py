@@ -15,9 +15,9 @@ from osom_api.commands import (
     COMMAND_PREFIX,
     KV_SEPERATOR,
 )
-from osom_api.msg.cmd import MsgCmd
-from osom_api.msg.enums.provider import MsgProvider
-from osom_api.msg.file import MsgFile, files_repr
+from osom_api.protocols.msg.cmd import MsgCmd
+from osom_api.protocols.msg.enums.provider import MsgProvider
+from osom_api.protocols.msg.file import MsgFile, files_repr
 
 
 class MsgRequest:
@@ -30,8 +30,6 @@ class MsgRequest:
     files: List[MsgFile]
     created_at: datetime
     msg_uuid: str
-
-    _msg_cmd: MsgCmd
 
     def __init__(
         self,

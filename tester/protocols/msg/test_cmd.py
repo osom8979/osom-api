@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_api.msg.cmd import MsgCmd
+from osom_api.protocols.msg.cmd import MsgCmd
 
 
 class CmdTestCase(TestCase):

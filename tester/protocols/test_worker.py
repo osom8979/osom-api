@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_api.context.mq.protocols.worker import RegisterWorker
+from osom_api.protocols.worker import RegisterWorker
 from osom_api.worker.descs import CmdDesc, ParamDesc
 
 

@@ -2,7 +2,7 @@
 
 from unittest import IsolatedAsyncioTestCase, main
 
-from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
+from osom_api.protocols.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.worker.module import Module
 from tester.worker.modules import tester
 
