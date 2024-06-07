@@ -11,6 +11,7 @@ from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.context import Context
 from osom_api.exceptions import (
     CommandRuntimeError,
+    InvalidMessageIdError,
     NoMessageIdError,
     OsomApiError,
     PacketDumpError,
@@ -18,14 +19,13 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
-from osom_api.msg.request import MsgRequest
-from osom_api.msg.worker import MsgWorker
+from osom_api.msg import MsgRequest, MsgResponse, MsgWorker
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
 )
-from osom_api.utils.path.mq import encode_path, make_response_path
+from osom_api.utils.path.mq import encode_path
 from osom_api.worker.module import Module
 
 
@@ -33,8 +33,8 @@ class WorkerContext(Context):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig.from_namespace(args)
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
-        self._register_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
-        subscribe_paths = self._broadcast_path, self._register_path
+        self._register_request_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
+        subscribe_paths = self._broadcast_path, self._register_request_path
         super().__init__(config=self._config, subscribe_paths=subscribe_paths)
 
         self._module = Module(self._config.module_path, self._config.isolate_module)
@@ -67,7 +67,7 @@ class WorkerContext(Context):
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
         logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
-        if self._register_path == channel:
+        if self._register_request_path == channel:
             await self.publish_register_worker()
 
     @override
@@ -109,29 +109,47 @@ class WorkerContext(Context):
         if not request.msg_uuid:
             raise NoMessageIdError("Message UUID does not exist")
 
-        msg_uuid = request.msg_uuid
         if self._config.verbose >= VERBOSE_LEVEL_1:
-            logger.info(f"Request[{msg_uuid}] {request.content}")
+            logger.info(f"Request[{request.msg_uuid}] {request.content}")
         else:
-            logger.info(f"Request[{msg_uuid}]")
+            logger.info(f"Request[{request.msg_uuid}]")
 
+        response: MsgResponse
         try:
-            result = await self._module.run(request)
+            response = await self.on_message(request)
         except BaseException as e:
-            logger.exception(e)
-            raise CommandRuntimeError("A command runtime error was detected") from e
-
-        assert result.msg_uuid == msg_uuid
+            logger.error(f"Msg({request.msg_uuid}) Request message upload failed: {e}")
+            if self.debug:
+                logger.exception(e)
+            response = MsgResponse(request.msg_uuid, error=str(e))
 
         try:
-            response_packet = result.encode()
-            assert isinstance(response_packet, bytes)
+            response_packet = response.encode()
         except BaseException as e:
             logger.exception(e)
             raise PacketDumpError("Response packet encoding fail")
 
-        response_path = make_response_path(msg_uuid)
+        assert isinstance(response_packet, bytes)
+        response_path = request.get_response_path()
         await self.mq.lpush_bytes(response_path, response_packet, self.expire)
+
+    async def on_message(self, request: MsgRequest) -> MsgResponse:
+        await self.upload_msg_request(request)
+
+        try:
+            response = await self._module.run(request)
+        except BaseException as e:
+            raise CommandRuntimeError("A command runtime error was detected") from e
+
+        await self.upload_msg_response(response)
+
+        if response.msg_uuid != request.msg_uuid:
+            raise InvalidMessageIdError(
+                "The UUID in the request message and "
+                "the UUID in the response message must be the same"
+            )
+
+        return response
 
     async def start_polling(self) -> None:
         while True:

@@ -32,6 +32,10 @@ class CommandCallable:
         self.callback = callback
         self.request_path = request_path if request_path else str()
 
+    @property
+    def builtin(self):
+        return not self.request_path
+
     async def __call__(self, request: MsgRequest) -> MsgResponse:
         return await self.callback(request, self.request_path)
 
@@ -75,7 +79,7 @@ class EndpointContext(Context):
             key=MQ_REGISTER_WORKER_REQUEST_PATH,
             data=self._provider.encode(),
         )
-        logger.info("Published register worker request packet!")
+        logger.info("Published a packet requesting worker information ...")
 
     @override
     async def on_mq_connect(self) -> None:
@@ -102,13 +106,10 @@ class EndpointContext(Context):
             return
 
         if worker.name in self._workers:
-            logger.warning(
-                f"Register worker: '{worker.name}'"
-                " (It already exists. Overwrite with new worker)"
-            )
+            logger.warning(f"Overwrite and register a new worker: '{worker.name}'")
             self.unregister_worker(worker.name)
         else:
-            logger.info(f"Register worker: '{worker.name}'")
+            logger.info(f"Register a new worker: '{worker.name}'")
 
         self.register_worker(worker)
 
@@ -158,7 +159,7 @@ class EndpointContext(Context):
 
     async def _cmd_worker(self, request: MsgRequest, path: str) -> MsgResponse:
         request_data = request.encode()
-        await self._mq.lpush_bytes(path, request_data, expire=10)
+        await self._mq.lpush_bytes(path, request_data, expire=30)
 
         response_path = make_response_path(request.msg_uuid)
         response_datas = await self._mq.brpop_bytes(response_path, timeout=10)
@@ -189,14 +190,6 @@ class EndpointContext(Context):
 
         if self.verbose >= VERBOSE_LEVEL_1:
             logger.info(f"Msg({msg_uuid}) Run '{request.command}' command")
-
-        # try:
-        #     await self.upload_msg_request(request)
-        # except BaseException as e:
-        #     logger.error(f"Msg({msg_uuid}) Request message upload failed: {e}")
-        #     if self.debug:
-        #         logger.exception(e)
-        #     return MsgResponse(msg_uuid, error=str(e))
 
         try:
             return await coro(request)

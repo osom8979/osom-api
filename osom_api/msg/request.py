@@ -18,6 +18,7 @@ from osom_api.commands import (
 from osom_api.msg.cmd import MsgCmd
 from osom_api.msg.enums.provider import MsgProvider
 from osom_api.msg.file import MsgFile, files_repr
+from osom_api.utils.path.mq import make_response_path
 
 
 class MsgRequest:
@@ -114,3 +115,6 @@ class MsgRequest:
     @property
     def body(self):
         return self._msg_cmd.body
+
+    def get_response_path(self) -> str:
+        return make_response_path(self.msg_uuid)

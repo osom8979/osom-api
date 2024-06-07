@@ -29,6 +29,10 @@ class CommandRuntimeError(OsomApiError):
     pass
 
 
+class InvalidMessageIdError(OsomApiError):
+    pass
+
+
 class NoMessageIdError(OsomApiError):
     pass
 
