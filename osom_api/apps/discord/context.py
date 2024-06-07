@@ -13,7 +13,7 @@ from osom_api.arguments import NOT_REGISTERED_MSG
 from osom_api.commands import COMMAND_PREFIX
 from osom_api.context.endpoint import EndpointContext
 from osom_api.logging.logging import logger
-from osom_api.protocols.msg import MsgFile, MsgProvider, MsgRequest
+from osom_api.msg import MsgFile, MsgProvider, MsgRequest
 
 
 class DiscordContext(EndpointContext):

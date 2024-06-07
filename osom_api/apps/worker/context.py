@@ -18,13 +18,13 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
+from osom_api.msg.request import MsgRequest
+from osom_api.msg.worker import MsgWorker
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
 )
-from osom_api.protocols.msg.request import MsgRequest
-from osom_api.protocols.worker import RegisterWorker
 from osom_api.utils.path.mq import encode_path, make_response_path
 from osom_api.worker.module import Module
 
@@ -38,7 +38,7 @@ class WorkerContext(Context):
         super().__init__(config=self._config, subscribe_paths=subscribe_paths)
 
         self._module = Module(self._config.module_path, self._config.isolate_module)
-        self._register = RegisterWorker(
+        self._register = MsgWorker(
             name=self._module.name,
             version=self._module.version,
             doc=self._module.doc,

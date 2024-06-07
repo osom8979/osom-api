@@ -3,7 +3,7 @@
 from typing import Annotated, Optional
 from unittest import IsolatedAsyncioTestCase, main
 
-from osom_api.protocols.msg import MsgProvider, MsgRequest, MsgResponse
+from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
 from osom_api.worker.command import WorkerCommand
 from osom_api.worker.metas import ParamMeta
 from osom_api.worker.params import (

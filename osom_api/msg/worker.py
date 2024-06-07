@@ -11,7 +11,7 @@ from osom_api.commands import COMMAND_PREFIX
 from osom_api.worker.descs import CmdDesc
 
 
-class RegisterWorker:
+class MsgWorker:
     name: str
     version: str
     doc: str

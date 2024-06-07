@@ -12,7 +12,7 @@ from osom_api.apps.telegram.middlewares.registration_verifier import (
     RegistrationVerifierMiddleware,
 )
 from osom_api.context.endpoint import EndpointContext
-from osom_api.protocols.msg import MsgFile, MsgProvider, MsgRequest
+from osom_api.msg import MsgFile, MsgProvider, MsgRequest
 
 
 class TelegramContext(EndpointContext):

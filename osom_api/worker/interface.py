@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from osom_api.protocols.msg import MsgRequest, MsgResponse
+from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc
 
 

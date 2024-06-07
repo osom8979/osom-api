@@ -12,8 +12,7 @@ from osom_api.context.mq import MqClient, MqClientCallback
 from osom_api.context.oai import OaiClient
 from osom_api.context.s3 import S3Client
 from osom_api.logging.logging import logger
-from osom_api.protocols.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
-from osom_api.utils.path.mq import encode_path, make_response_path
+from osom_api.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
 
 
 class Context(MqClientCallback):
@@ -195,24 +194,6 @@ class Context(MqClientCallback):
             msg_uuid=message.msg_uuid,
             flow=MsgFlow.response,
         )
-
-    async def request_command(self, path: str, message: MsgRequest) -> MsgResponse:
-        request_data = message.encode()
-        await self._mq.lpush_bytes(path, request_data, expire=10)
-
-        response_path = make_response_path(message.msg_uuid)
-        response_datas = await self._mq.brpop_bytes(response_path, timeout=10)
-
-        assert isinstance(response_datas, tuple)
-        assert len(response_datas) == 2
-
-        recv_key = response_datas[0]
-        recv_data = response_datas[1]
-        assert isinstance(recv_key, bytes)
-        assert isinstance(recv_data, bytes)
-        assert recv_key == encode_path(response_path)
-
-        return MsgResponse.decode(recv_data)
 
     # async def on_cmd_chat(self, message: MsgRequest) -> MsgResponse:
     #     msg_uuid = message.msg_uuid

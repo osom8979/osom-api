@@ -12,15 +12,15 @@ from osom_api.config import Config
 from osom_api.context import Context
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
+from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
+from osom_api.msg.worker import MsgWorker
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
     MQ_UNREGISTER_WORKER_PATH,
 )
-from osom_api.protocols.msg import MsgProvider, MsgRequest, MsgResponse
-from osom_api.protocols.worker import RegisterWorker
-from osom_api.utils.path.mq import encode_path
+from osom_api.utils.path.mq import encode_path, make_response_path
 
 
 class CommandCallable:
@@ -37,8 +37,8 @@ class CommandCallable:
 
 
 class EndpointContext(Context):
+    _workers: Dict[str, MsgWorker]
     _commands: Dict[str, CommandCallable]
-    _workers: Dict[str, RegisterWorker]
 
     def __init__(self, provider: MsgProvider, config: Config):
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
@@ -52,12 +52,12 @@ class EndpointContext(Context):
         super().__init__(config=config, subscribe_paths=subscribe_paths)
 
         self._provider = provider
+        self._workers = dict()
         self._commands = dict()
         self._commands[EndpointCommands.version] = CommandCallable(self._cmd_version)
         self._commands[EndpointCommands.help] = CommandCallable(self._cmd_help)
-        self._workers = dict()
 
-    def register_worker(self, worker: RegisterWorker) -> None:
+    def register_worker(self, worker: MsgWorker) -> None:
         self._workers[worker.name] = worker
         for cmd in worker.cmds:
             self._commands[cmd.key] = CommandCallable(self._cmd_worker, worker.path)
@@ -96,7 +96,7 @@ class EndpointContext(Context):
 
     def on_register_worker(self, data: bytes) -> None:
         try:
-            worker = RegisterWorker.decode(data)
+            worker = MsgWorker.decode(data)
         except BaseException as e:
             logger.error(e)
             return
@@ -157,18 +157,33 @@ class EndpointContext(Context):
         return MsgResponse(request.msg_uuid, self.help)
 
     async def _cmd_worker(self, request: MsgRequest, path: str) -> MsgResponse:
-        return await self.request_command(path, request)
+        request_data = request.encode()
+        await self._mq.lpush_bytes(path, request_data, expire=10)
+
+        response_path = make_response_path(request.msg_uuid)
+        response_datas = await self._mq.brpop_bytes(response_path, timeout=10)
+
+        assert isinstance(response_datas, tuple)
+        assert len(response_datas) == 2
+
+        recv_key = response_datas[0]
+        recv_data = response_datas[1]
+        assert isinstance(recv_key, bytes)
+        assert isinstance(recv_data, bytes)
+        assert recv_key == encode_path(response_path)
+
+        return MsgResponse.decode(recv_data)
 
     async def do_message(self, request: MsgRequest) -> Optional[MsgResponse]:
         msg_uuid = request.msg_uuid
-        logger.info(f"Msg({msg_uuid}) Recv message: " + repr(request))
+        logger.info(f"Msg({msg_uuid}) recv message: " + repr(request))
 
         if not request.commandable:
             logger.debug(f"Msg({msg_uuid}) is not commandable")
             return None
 
-        cmd_callable = self._commands.get(request.command)
-        if cmd_callable is None:
+        coro = self._commands.get(request.command)
+        if coro is None:
             logger.warning(f"Msg({msg_uuid}) Unregistered command: {request.command}")
             return None
 
@@ -184,7 +199,7 @@ class EndpointContext(Context):
         #     return MsgResponse(msg_uuid, error=str(e))
 
         try:
-            return await cmd_callable(request)
+            return await coro(request)
         except MsgError as e:
             logger.error(f"Msg({e.msg_uuid}) {e}")
             if self.debug and self.verbose >= VERBOSE_LEVEL_1:

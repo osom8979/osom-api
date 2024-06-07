@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from osom_api.protocols.worker import RegisterWorker
+from osom_api.msg.worker import MsgWorker
 from osom_api.worker.descs import CmdDesc, ParamDesc
 
 
@@ -10,9 +10,9 @@ class WorkerTestCase(TestCase):
     def test_encode_decode(self):
         param = ParamDesc("param", "param_desc", 10)
         cmd = CmdDesc("cmd", "cmd_desc", [param])
-        msg0 = RegisterWorker("name", "version", "doc", "path", [cmd])
+        msg0 = MsgWorker("name", "version", "doc", "path", [cmd])
         data = msg0.encode()
-        msg1 = RegisterWorker.decode(data)
+        msg1 = MsgWorker.decode(data)
 
         self.assertEqual(msg1.name, msg0.name)
         self.assertEqual(msg1.version, msg0.version)

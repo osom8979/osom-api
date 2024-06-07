@@ -15,9 +15,9 @@ from osom_api.commands import (
     COMMAND_PREFIX,
     KV_SEPERATOR,
 )
-from osom_api.protocols.msg.cmd import MsgCmd
-from osom_api.protocols.msg.enums.provider import MsgProvider
-from osom_api.protocols.msg.file import MsgFile, files_repr
+from osom_api.msg.cmd import MsgCmd
+from osom_api.msg.enums.provider import MsgProvider
+from osom_api.msg.file import MsgFile, files_repr
 
 
 class MsgRequest:

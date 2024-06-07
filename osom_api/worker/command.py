@@ -6,7 +6,7 @@ from typing import Any, Awaitable, Callable, Dict, Final, Optional, get_type_hin
 from osom_api.chrono.datetime import tznow
 from osom_api.exceptions import CommandRuntimeError, InvalidCommandError
 from osom_api.logging.logging import logger
-from osom_api.protocols.msg import MsgRequest, MsgResponse
+from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.descs import CmdDesc, ParamDesc
 from osom_api.worker.metas import AnnotatedMeta, ParamMeta
 from osom_api.worker.params import (
