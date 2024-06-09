@@ -6,7 +6,7 @@ from typing import AnyStr, Iterable, Optional, Sequence
 
 from overrides import override
 
-from osom_api.config import Config
+from osom_api.config.base import BaseConfig
 from osom_api.context.db import DbClient
 from osom_api.context.mq import MqClient, MqClientCallback
 from osom_api.context.oai import OaiClient
@@ -18,7 +18,7 @@ from osom_api.msg import MsgFile, MsgFlow, MsgRequest, MsgResponse, MsgStorage
 class Context(MqClientCallback):
     def __init__(
         self,
-        config: Config,
+        config: BaseConfig,
         *,
         subscribe_paths: Optional[Sequence[AnyStr]] = None,
     ):

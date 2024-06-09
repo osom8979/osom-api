@@ -8,7 +8,7 @@ from overrides import override
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.arguments import version as osom_version
 from osom_api.commands import EndpointCommands
-from osom_api.config import Config
+from osom_api.config.base import BaseConfig
 from osom_api.context import Context
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
@@ -44,7 +44,7 @@ class EndpointContext(Context):
     _workers: Dict[str, MsgWorker]
     _commands: Dict[str, CommandCallable]
 
-    def __init__(self, provider: MsgProvider, config: Config):
+    def __init__(self, provider: MsgProvider, config: BaseConfig):
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
         self._register_worker_path = encode_path(MQ_REGISTER_WORKER_PATH)
         self._unregister_worker_path = encode_path(MQ_UNREGISTER_WORKER_PATH)

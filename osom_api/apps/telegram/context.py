@@ -17,7 +17,7 @@ from osom_api.msg import MsgFile, MsgProvider, MsgRequest
 
 class TelegramContext(EndpointContext):
     def __init__(self, args: Namespace):
-        self._config = TelegramConfig.from_namespace(args)
+        self._config = TelegramConfig(args)
         super().__init__(MsgProvider.telegram, self._config)
 
         self._bot = Bot(token=self._config.telegram_token)

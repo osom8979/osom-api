@@ -2,27 +2,28 @@
 
 from argparse import Namespace
 
-from osom_api.config import Config
+from osom_api.config.base import BaseConfig
+from osom_api.config.mixins import (
+    CommonProps,
+    ModuleProps,
+    RedisProps,
+    S3Props,
+    SupabaseProps,
+)
 
 
-class WorkerConfig(Config):
-    def __init__(
-        self,
-        module_path: str,
-        isolate_module=False,
-        **kwargs,
-    ):
-        self.module_path = module_path
-        self.isolate_module = isolate_module
-        super().__init__(**kwargs)
-
-    @classmethod
-    def from_namespace(cls, args: Namespace):
-        if not args.module_path:
-            raise ValueError("Missing module path")
-
-        assert isinstance(args.module_path, str)
-        assert isinstance(args.isolate_module, bool)
-
-        cls.assert_common_properties(args)
-        return cls(**cls.namespace_to_dict(args))
+class WorkerConfig(
+    BaseConfig,
+    CommonProps,
+    RedisProps,
+    S3Props,
+    SupabaseProps,
+    ModuleProps,
+):
+    def __init__(self, args: Namespace):
+        super().__init__(**self.namespace_to_dict(args))
+        self.assert_common_properties()
+        self.assert_redis_properties()
+        self.assert_s3_properties()
+        self.assert_supabase_properties()
+        self.assert_module_properties()

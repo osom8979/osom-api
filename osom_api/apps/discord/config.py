@@ -2,25 +2,13 @@
 
 from argparse import Namespace
 
-from osom_api.config import Config
+from osom_api.config.base import BaseConfig
+from osom_api.config.mixins import CommonProps, DiscordProps, RedisProps
 
 
-class DiscordConfig(Config):
-    def __init__(
-        self,
-        discord_application_id: str,
-        discord_token: str,
-        **kwargs,
-    ):
-        self.discord_application_id = discord_application_id
-        self.discord_token = discord_token
-        super().__init__(**kwargs)
-
-    @classmethod
-    def from_namespace(cls, args: Namespace):
-        if not args.discord_token:
-            raise ValueError("A telegram token is required")
-        assert isinstance(args.discord_application_id, str)
-        assert isinstance(args.discord_token, str)
-        cls.assert_common_properties(args)
-        return cls(**cls.namespace_to_dict(args))
+class DiscordConfig(BaseConfig, CommonProps, DiscordProps, RedisProps):
+    def __init__(self, args: Namespace):
+        super().__init__(**self.namespace_to_dict(args))
+        self.assert_common_properties()
+        self.assert_discord_properties()
+        self.assert_redis_properties()

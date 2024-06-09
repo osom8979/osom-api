@@ -13,6 +13,7 @@ from osom_api.logging.logging import (
     SEVERITY_NAME_INFO,
     TIMED_ROTATING_WHEN,
 )
+from osom_api.random.hex import generate_hexdigits
 from osom_api.system.environ import get_typed_environ_value as get_eval
 
 PROG: Final[str] = "osom-api"
@@ -57,10 +58,9 @@ CMDS = (CMD_DISCORD, CMD_TELEGRAM, CMD_MASTER, CMD_WORKER)
 DEFAULT_DOTENV_FILENAME: Final[str] = ".env.local"
 TEST_DOTENV_FILENAME: Final[str] = ".env.test"
 
-DEFAULT_HTTP_HOST: Final[str] = "0.0.0.0"
-DEFAULT_HTTP_PORT: Final[int] = 10503
-DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
-
+DEFAULT_API_HTTP_HOST: Final[str] = "0.0.0.0"
+DEFAULT_API_HTTP_PORT: Final[int] = 10503
+DEFAULT_API_HTTP_TIMEOUT: Final[float] = 8.0
 DEFAULT_API_OPENAPI_URL: Final[str] = "/spec/openapi.json"
 
 DEFAULT_REDIS_BLOCKING_TIMEOUT: Final[float] = 0.0
@@ -110,34 +110,30 @@ def add_dotenv_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def add_http_arguments(parser: ArgumentParser) -> None:
+def add_api_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
-        "--http-host",
-        default=get_eval("HTTP_HOST", DEFAULT_HTTP_HOST),
+        "--api-http-bind",
+        default=get_eval("API_HTTP_HOST", DEFAULT_API_HTTP_HOST),
         metavar="host",
-        help=f"Host address (default: '{DEFAULT_HTTP_HOST}')",
+        help=f"Host address (default: '{DEFAULT_API_HTTP_HOST}')",
     )
     parser.add_argument(
-        "--http-port",
-        default=get_eval("HTTP_PORT", DEFAULT_HTTP_PORT),
+        "--api-http-port",
+        default=get_eval("API_HTTP_PORT", DEFAULT_API_HTTP_PORT),
         metavar="port",
         type=int,
-        help=f"Port number (default: {DEFAULT_HTTP_PORT})",
+        help=f"Port number (default: {DEFAULT_API_HTTP_PORT})",
     )
     parser.add_argument(
-        "--http-timeout",
-        default=get_eval("HTTP_TIMEOUT", DEFAULT_HTTP_TIMEOUT),
+        "--api-http-timeout",
+        default=get_eval("API_HTTP_TIMEOUT", DEFAULT_API_HTTP_TIMEOUT),
         metavar="sec",
         type=float,
-        help=f"Common timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
+        help=f"Common timeout in seconds (default: {DEFAULT_API_HTTP_TIMEOUT})",
     )
-
-
-def add_api_arguments(parser: ArgumentParser) -> None:
-    api_token = get_eval("API_TOKEN", get_eval("OSOM_API_KEY", ""))
     parser.add_argument(
         "--api-token",
-        default=api_token,
+        default=get_eval("API_TOKEN", generate_hexdigits(256)),
         metavar="token",
         help="API authentication token. if not specified, a random value is assigned.",
     )
@@ -158,6 +154,21 @@ def add_api_arguments(parser: ArgumentParser) -> None:
         default=get_eval("API_OPENAPI_URL", DEFAULT_API_OPENAPI_URL),
         metavar="url",
         help=f"OpenAPI spec path (default: '{DEFAULT_API_OPENAPI_URL}')",
+    )
+
+
+def add_module_arguments(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--module-path",
+        default=get_eval("MODULE_PATH", DEFAULT_MODULE_PATH),
+        metavar="path",
+        help=f"Import path of the module to use (default: '{DEFAULT_MODULE_PATH}')",
+    )
+    parser.add_argument(
+        "--module-isolate",
+        action="store_true",
+        default=get_eval("MODULE_ISOLATE", False),
+        help="Enable isolated module",
     )
 
 
@@ -324,18 +335,6 @@ def add_openai_arguments(
     )
 
 
-def add_command_arguments(
-    parser: ArgumentParser,
-    command_prefix=COMMAND_PREFIX,
-) -> None:
-    parser.add_argument(
-        "--command-prefix",
-        default=get_eval("COMMAND_PREFIX", command_prefix),
-        metavar="prefix",
-        help=f"Command prefix. (default: '{command_prefix}')",
-    )
-
-
 def add_telegram_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--telegram-token",
@@ -360,15 +359,7 @@ def add_discord_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def _add_context_arguments(parser: ArgumentParser) -> None:
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
-    add_openai_arguments(parser)
-    add_command_arguments(parser)
-
-
-def add_cmd_discord_parser(subparsers) -> None:
+def add_discord_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_DISCORD,
@@ -377,11 +368,11 @@ def add_cmd_discord_parser(subparsers) -> None:
         epilog=CMD_DISCORD_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_context_arguments(parser)
+    add_redis_arguments(parser)
     add_discord_arguments(parser)
 
 
-def add_cmd_telegram_parser(subparsers) -> None:
+def add_telegram_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_TELEGRAM,
@@ -390,11 +381,11 @@ def add_cmd_telegram_parser(subparsers) -> None:
         epilog=CMD_TELEGRAM_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_context_arguments(parser)
+    add_redis_arguments(parser)
     add_telegram_arguments(parser)
 
 
-def add_cmd_master_parser(subparsers) -> None:
+def add_master_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_MASTER,
@@ -403,12 +394,11 @@ def add_cmd_master_parser(subparsers) -> None:
         epilog=CMD_MASTER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_context_arguments(parser)
-    add_http_arguments(parser)
+    add_redis_arguments(parser)
     add_api_arguments(parser)
 
 
-def add_cmd_worker_parser(subparsers) -> None:
+def add_worker_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
         name=CMD_WORKER,
@@ -417,19 +407,10 @@ def add_cmd_worker_parser(subparsers) -> None:
         epilog=CMD_WORKER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    _add_context_arguments(parser)
-    parser.add_argument(
-        "--module-path",
-        default=get_eval("MODULE_PATH", DEFAULT_MODULE_PATH),
-        metavar="path",
-        help=f"Import path of the module to use (default: '{DEFAULT_MODULE_PATH}')",
-    )
-    parser.add_argument(
-        "--isolate-module",
-        action="store_true",
-        default=get_eval("ISOLATE_MODULE", False),
-        help="Enable isolated module",
-    )
+    add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
+    add_module_arguments(parser)
 
 
 def default_argument_parser() -> ArgumentParser:
@@ -441,6 +422,13 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     add_dotenv_arguments(parser)
+
+    parser.add_argument(
+        "--command-prefix",
+        default=get_eval("COMMAND_PREFIX", COMMAND_PREFIX),
+        metavar="prefix",
+        help=f"Command prefix. (default: '{COMMAND_PREFIX}')",
+    )
 
     logging_group = parser.add_mutually_exclusive_group()
     logging_group.add_argument(
@@ -519,10 +507,10 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="cmd")
-    add_cmd_discord_parser(subparsers)
-    add_cmd_telegram_parser(subparsers)
-    add_cmd_master_parser(subparsers)
-    add_cmd_worker_parser(subparsers)
+    add_discord_parser(subparsers)
+    add_telegram_parser(subparsers)
+    add_master_parser(subparsers)
+    add_worker_parser(subparsers)
     return parser
 
 

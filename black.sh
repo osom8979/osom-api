@@ -34,4 +34,5 @@ print_message "black ${ARGS[*]}"
 "$ROOT_DIR/python" -m black "${ARGS[@]}" \
     "$ROOT_DIR/osom_api/" \
     "$ROOT_DIR/tester/" \
-    "$ROOT_DIR/setup.py"
+    "$ROOT_DIR/setup.py" \
+    "$@"

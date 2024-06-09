@@ -31,7 +31,7 @@ from osom_api.worker.module import Module
 
 class WorkerContext(Context):
     def __init__(self, args: Namespace):
-        self._config = WorkerConfig.from_namespace(args)
+        self._config = WorkerConfig(args)
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
         self._register_request_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
         subscribe_paths = self._broadcast_path, self._register_request_path
