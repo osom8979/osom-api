@@ -6,16 +6,14 @@ from typing import Optional
 # noinspection PyPackageRequirements
 from uvicorn.config import LoopSetupType
 
-from osom_api.config.base import BaseConfig
-from osom_api.config.mixins import ApiProps, CommonProps, RedisProps
+from osom_api.args import ApiArgs
+from osom_api.context.base import BaseContextConfig
 
 
-class MasterConfig(BaseConfig, ApiProps, CommonProps, RedisProps):
+class MasterConfig(BaseContextConfig, ApiArgs):
     def __init__(self, args: Namespace):
         super().__init__(**self.namespace_to_dict(args))
         self.assert_api_properties()
-        self.assert_common_properties()
-        self.assert_redis_properties()
 
     @property
     def loop_setup_type(self) -> LoopSetupType:

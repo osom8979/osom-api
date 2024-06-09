@@ -2,8 +2,10 @@
 
 from typing import Optional
 
+from osom_api.args._common import CommonArgs
 
-class ApiProps:
+
+class ApiArgs(CommonArgs):
     api_http_host: str
     api_http_port: str
     api_http_timeout: float

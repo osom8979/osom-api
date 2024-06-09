@@ -8,8 +8,7 @@ from overrides import override
 from osom_api.arguments import VERBOSE_LEVEL_1
 from osom_api.arguments import version as osom_version
 from osom_api.commands import EndpointCommands
-from osom_api.config.base import BaseConfig
-from osom_api.context import Context
+from osom_api.context.base import BaseContext, BaseContextConfig
 from osom_api.exceptions import MsgError
 from osom_api.logging.logging import logger
 from osom_api.msg import MsgProvider, MsgRequest, MsgResponse
@@ -40,26 +39,31 @@ class CommandCallable:
         return await self.callback(request, self.request_path)
 
 
-class EndpointContext(Context):
+class EndpointContext(BaseContext):
     _workers: Dict[str, MsgWorker]
     _commands: Dict[str, CommandCallable]
 
-    def __init__(self, provider: MsgProvider, config: BaseConfig):
+    def __init__(self, provider: MsgProvider, config: BaseContextConfig):
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
         self._register_worker_path = encode_path(MQ_REGISTER_WORKER_PATH)
         self._unregister_worker_path = encode_path(MQ_UNREGISTER_WORKER_PATH)
-        subscribe_paths = (
+        self._subscribe_paths = (
             self._broadcast_path,
             self._register_worker_path,
             self._unregister_worker_path,
         )
-        super().__init__(config=config, subscribe_paths=subscribe_paths)
+        super().__init__(provider, config, self._subscribe_paths)
 
-        self._provider = provider
         self._workers = dict()
         self._commands = dict()
         self._commands[EndpointCommands.version] = CommandCallable(self._cmd_version)
         self._commands[EndpointCommands.help] = CommandCallable(self._cmd_help)
+
+    async def open_common_context(self) -> None:
+        await self._mq.open()
+
+    async def close_common_context(self) -> None:
+        await self._mq.close()
 
     def register_worker(self, worker: MsgWorker) -> None:
         self._workers[worker.name] = worker
@@ -75,9 +79,9 @@ class EndpointContext(Context):
                 self._commands.pop(cmd.key)
 
     async def publish_register_worker_request(self) -> None:
-        await self.publish(
+        await self._mq.publish(
             key=MQ_REGISTER_WORKER_REQUEST_PATH,
-            data=self._provider.encode(),
+            data=self.provider.encode(),
         )
         logger.info("Published a packet requesting worker information ...")
 
@@ -97,6 +101,10 @@ class EndpointContext(Context):
                 self.on_unregister_worker(data)
             case _:
                 pass
+
+    @override
+    async def on_mq_done(self) -> None:
+        logger.warning("Redis task is done")
 
     def on_register_worker(self, data: bytes) -> None:
         try:
@@ -125,10 +133,6 @@ class EndpointContext(Context):
             self.unregister_worker(name)
         else:
             logger.warning(f"Unregister worker: '{name}' (but does not exist)")
-
-    @override
-    async def on_mq_done(self) -> None:
-        logger.warning("Redis task is done")
 
     @property
     def version(self):

@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
+from io import BytesIO
 from math import floor
+from typing import Iterable
 
 from overrides import override
 
 from osom_api.aio.run import aio_run
 from osom_api.apps.worker.config import WorkerConfig
 from osom_api.arguments import VERBOSE_LEVEL_1
-from osom_api.context import Context
+from osom_api.context.base import BaseContext
 from osom_api.exceptions import (
     CommandRuntimeError,
     InvalidMessageIdError,
@@ -19,7 +21,15 @@ from osom_api.exceptions import (
     PollingTimeoutError,
 )
 from osom_api.logging.logging import logger
-from osom_api.msg import MsgRequest, MsgResponse, MsgWorker
+from osom_api.msg import (
+    MsgFile,
+    MsgFlow,
+    MsgProvider,
+    MsgRequest,
+    MsgResponse,
+    MsgStorage,
+    MsgWorker,
+)
 from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
@@ -29,13 +39,13 @@ from osom_api.utils.path.mq import encode_path
 from osom_api.worker.module import Module
 
 
-class WorkerContext(Context):
+class WorkerContext(BaseContext):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig(args)
         self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
         self._register_request_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
-        subscribe_paths = self._broadcast_path, self._register_request_path
-        super().__init__(config=self._config, subscribe_paths=subscribe_paths)
+        self._subscribe_paths = self._broadcast_path, self._register_request_path
+        super().__init__(MsgProvider.worker, self._config, self._subscribe_paths)
 
         self._module = Module(self._config.module_path, self._config.isolate_module)
         self._register = MsgWorker(
@@ -48,16 +58,8 @@ class WorkerContext(Context):
         self._register_packet = self._register.encode()
 
     async def publish_register_worker(self) -> None:
-        await self.publish(MQ_REGISTER_WORKER_PATH, self._register_packet)
+        await self._mq.publish(MQ_REGISTER_WORKER_PATH, self._register_packet)
         logger.info("Published register worker packet!")
-
-    @property
-    def timeout(self):
-        return floor(self._config.redis_blocking_timeout)
-
-    @property
-    def expire(self):
-        return floor(self._config.redis_expire_medium)
 
     @override
     async def on_mq_connect(self) -> None:
@@ -74,6 +76,101 @@ class WorkerContext(Context):
     async def on_mq_done(self) -> None:
         logger.warning("Redis task is done")
 
+    async def open_common_context(self) -> None:
+        await self._mq.open()
+        await self._db.open()
+        await self._s3.open()
+
+    async def close_common_context(self) -> None:
+        await self._s3.close()
+        await self._db.close()
+        await self._mq.close()
+
+    async def upload_msg_file(
+        self,
+        file: MsgFile,
+        msg_uuid: str,
+        flow: MsgFlow,
+        storage=MsgStorage.r2,
+    ) -> None:
+        if file.content is None:
+            raise BufferError("Empty file content")
+
+        await self._s3.upload_data(
+            data=BytesIO(file.content),
+            key=file.path,
+            content_type=file.content_type,
+        )
+        logger.info(f"Successfully uploaded file to S3: '{file.path}'")
+
+        await self._db.insert_file(
+            file_uuid=file.file_uuid,
+            provider=file.provider,
+            storage=storage,
+            name=file.name,
+            content_type=file.content_type,
+            native_id=file.native_id,
+            created_at=file.created_at.isoformat(),
+        )
+        logger.info(
+            "Successfully inserted file info to DB: "
+            f"'{file.file_uuid}' -> '{file.path}'"
+        )
+
+        await self._db.insert_msg2file(
+            msg_uuid=msg_uuid,
+            file_uuid=file.file_uuid,
+            flow=flow,
+        )
+        logger.info(
+            "Successfully inserted msg2file info to DB: "
+            f"'{msg_uuid}' -> {file.file_uuid}"
+        )
+
+    async def upload_msg_files(
+        self,
+        files: Iterable[MsgFile],
+        msg_uuid: str,
+        flow: MsgFlow,
+        storage=MsgStorage.r2,
+    ) -> None:
+        for file in files:
+            await self.upload_msg_file(file, msg_uuid, flow, storage)
+
+    async def upload_msg_request(self, message: MsgRequest) -> None:
+        await self._db.insert_msg(
+            msg_uuid=message.msg_uuid,
+            provider=message.provider,
+            message_id=message.message_id,
+            channel_id=message.channel_id,
+            username=message.username,
+            nickname=message.nickname,
+            content=message.content,
+            created_at=message.created_at.isoformat(),
+        )
+        logger.info(f"Successfully inserted msg_request to DB: '{message.msg_uuid}'")
+
+        await self.upload_msg_files(
+            files=message.files,
+            msg_uuid=message.msg_uuid,
+            flow=MsgFlow.request,
+        )
+
+    async def upload_msg_response(self, message: MsgResponse) -> None:
+        await self._db.insert_reply(
+            msg=message.msg_uuid,
+            content=message.content,
+            error=message.error,
+            created_at=message.created_at.isoformat(),
+        )
+        logger.info(f"Successfully inserted msg_response to DB: '{message.msg_uuid}'")
+
+        await self.upload_msg_files(
+            files=message.files,
+            msg_uuid=message.msg_uuid,
+            flow=MsgFlow.response,
+        )
+
     async def open_module(self) -> None:
         logger.debug("Open modules ...")
         await self._module.open(self)
@@ -85,7 +182,8 @@ class WorkerContext(Context):
         logger.info("Closed modules")
 
     async def polling_iter(self) -> None:
-        packet = await self.mq.brpop_bytes(self._module.path, self.timeout)
+        timeout = floor(self._config.redis_blocking_timeout)
+        packet = await self._mq.brpop_bytes(self._module.path, timeout)
         if packet is None:
             raise PollingTimeoutError("Blocking Right POP operation timeout")
 
@@ -119,7 +217,7 @@ class WorkerContext(Context):
             response = await self.on_message(request)
         except BaseException as e:
             logger.error(f"Msg({request.msg_uuid}) Request message upload failed: {e}")
-            if self.debug:
+            if self._config.debug:
                 logger.exception(e)
             response = MsgResponse(request.msg_uuid, error=str(e))
 
@@ -131,7 +229,9 @@ class WorkerContext(Context):
 
         assert isinstance(response_packet, bytes)
         response_path = request.get_response_path()
-        await self.mq.lpush_bytes(response_path, response_packet, self.expire)
+
+        expire = floor(self._config.redis_expire_medium)
+        await self._mq.lpush_bytes(response_path, response_packet, expire)
 
     async def on_message(self, request: MsgRequest) -> MsgResponse:
         await self.upload_msg_request(request)

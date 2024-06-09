@@ -6,6 +6,7 @@ from typing import Any, BinaryIO, Dict, Optional
 from boto3 import client as boto3_client
 from botocore.exceptions import ClientError
 
+from osom_api.args.redis import RedisArgs
 from osom_api.context.s3.protocol.client import ALLOWED_UPLOAD_ARGS, Client
 from osom_api.exceptions import AlreadyInitializedError, NotInitializedError
 from osom_api.logging.logging import logger
@@ -28,6 +29,16 @@ class S3Client:
         self._region = region
         self._bucket = bucket if bucket else str()
         self._client = None
+
+    @classmethod
+    def from_args(cls, args: RedisArgs):
+        return cls(
+            endpoint=args.s3_endpoint,
+            access=args.s3_access,
+            secret=args.s3_secret,
+            region=args.s3_region,
+            bucket=args.s3_bucket,
+        )
 
     async def open(self) -> None:
         if self._client is not None:

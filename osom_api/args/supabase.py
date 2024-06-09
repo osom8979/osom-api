@@ -2,8 +2,10 @@
 
 from typing import Optional
 
+from osom_api.args._common import CommonArgs
 
-class SupabaseProps:
+
+class SupabaseArgs(CommonArgs):
     supabase_url: Optional[str]
     supabase_key: Optional[str]
     supabase_postgrest_timeout: float

@@ -8,6 +8,7 @@ from overrides import override
 from supabase._async.client import AsyncClient, AsyncMemoryStorage, create_client
 from supabase.lib.client_options import ClientOptions
 
+from osom_api.args.supabase import SupabaseArgs
 from osom_api.arguments import (
     DEFAULT_SUPABASE_POSTGREST_TIMEOUT,
     DEFAULT_SUPABASE_STORAGE_TIMEOUT,
@@ -38,6 +39,23 @@ class DbClient(DbMixins):
             postgrest_client_timeout=postgrest_client_timeout,
             storage_client_timeout=storage_client_timeout,
             storage=AsyncMemoryStorage(),  # noqa
+        )
+
+    @classmethod
+    def from_args(
+        cls,
+        args: SupabaseArgs,
+        *,
+        auto_refresh_token=True,
+        persist_session=True,
+    ):
+        return cls(
+            supabase_url=args.supabase_url,
+            supabase_key=args.supabase_key,
+            auto_refresh_token=auto_refresh_token,
+            persist_session=persist_session,
+            postgrest_client_timeout=args.supabase_postgrest_timeout,
+            storage_client_timeout=args.supabase_storage_timeout,
         )
 
     async def open(self) -> None:

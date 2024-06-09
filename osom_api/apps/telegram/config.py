@@ -2,11 +2,11 @@
 
 from argparse import Namespace
 
-from osom_api.config.base import BaseConfig
-from osom_api.config.mixins import CommonProps, RedisProps, TelegramProps
+from osom_api.args import TelegramArgs
+from osom_api.context.base import BaseContextConfig
 
 
-class TelegramConfig(BaseConfig, CommonProps, RedisProps, TelegramProps):
+class TelegramConfig(BaseContextConfig, TelegramArgs):
     def __init__(self, args: Namespace):
         super().__init__(**self.namespace_to_dict(args))
         self.assert_common_properties()

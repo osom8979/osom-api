@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from osom_api.args._common import CommonArgs
 
-class DiscordProps:
+
+class DiscordArgs(CommonArgs):
     discord_application_id: str
     discord_token: str
 

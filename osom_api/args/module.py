@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from osom_api.args._common import CommonArgs
 
-class ModuleProps:
+
+class ModuleArgs(CommonArgs):
     module_path: str
     module_isolate: bool
 

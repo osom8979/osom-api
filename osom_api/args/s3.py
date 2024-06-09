@@ -2,8 +2,10 @@
 
 from typing import Optional
 
+from osom_api.args._common import CommonArgs
 
-class S3Props:
+
+class S3Args(CommonArgs):
     s3_endpoint: Optional[str] = None
     s3_access: Optional[str] = None
     s3_secret: Optional[str] = None

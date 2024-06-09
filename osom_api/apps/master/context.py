@@ -12,18 +12,17 @@ from osom_api.apps.master.exception_handlers.supabase import (
     add_supabase_exception_handler,
 )
 from osom_api.apps.master.middlewares.authorization import add_authorization_middleware
-from osom_api.apps.master.routers.anonymous.progress import AnonymousProgressRouter
 from osom_api.arguments import version
-from osom_api.context import Context
+from osom_api.context.base import BaseContext
 from osom_api.logging.logging import logger
+from osom_api.msg import MsgProvider
 
 
-class MasterContext(Context):
+class MasterContext(BaseContext):
     def __init__(self, args: Namespace):
         self._config = MasterConfig(args)
         self._config.logging_params()
-
-        super().__init__(self._config)
+        super().__init__(MsgProvider.master, self._config)
 
         self._router = APIRouter()
         self._router.add_api_route("/health", self.health, methods=["GET"])
@@ -38,10 +37,8 @@ class MasterContext(Context):
             lifespan=self._lifespan,
         )
         self._app.include_router(self._router)
-        self._app.include_router(AnonymousProgressRouter(self))
 
         add_authorization_middleware(self._app, self._config.opt_api_token)
-
         add_supabase_exception_handler(self._app)
 
     @asynccontextmanager

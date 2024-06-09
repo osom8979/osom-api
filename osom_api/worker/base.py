@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from overrides import override
 
-from osom_api.context import Context
+from osom_api.context.base import BaseContext
 from osom_api.exceptions import InvalidCommandError
 from osom_api.logging.logging import logger
 from osom_api.msg import MsgRequest, MsgResponse
@@ -15,7 +15,7 @@ from osom_api.worker.interface import WorkerInterface
 
 
 class WorkerBase(WorkerInterface):
-    _context: Optional[Context]
+    _context: Optional[BaseContext]
     _commands: Dict[str, WorkerCommand]
 
     def __init__(
@@ -89,7 +89,7 @@ class WorkerBase(WorkerInterface):
         return self._context is not None
 
     @property
-    def context(self) -> Context:
+    def context(self) -> BaseContext:
         assert self._context is not None
         return self._context
 

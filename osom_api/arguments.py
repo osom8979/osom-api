@@ -4,7 +4,7 @@ from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from functools import lru_cache
 from os import R_OK, access, getcwd
 from os.path import isfile, join
-from typing import Final, List, Optional
+from typing import Final, List, Literal, Optional, Sequence, get_args
 
 from osom_api.commands import COMMAND_PREFIX
 from osom_api.logging.logging import (
@@ -62,6 +62,10 @@ DEFAULT_API_HTTP_HOST: Final[str] = "0.0.0.0"
 DEFAULT_API_HTTP_PORT: Final[int] = 10503
 DEFAULT_API_HTTP_TIMEOUT: Final[float] = 8.0
 DEFAULT_API_OPENAPI_URL: Final[str] = "/spec/openapi.json"
+
+RedisSslCertReqsLiteral = Literal["none", "optional", "required"]
+REDIS_SSL_CERT_REQS: Final[Sequence[str]] = get_args(RedisSslCertReqsLiteral)
+DEFAULT_REDIS_SSL_CERT_REQS: Final[str] = "none"
 
 DEFAULT_REDIS_BLOCKING_TIMEOUT: Final[float] = 0.0
 DEFAULT_REDIS_CLOSE_TIMEOUT: Final[float] = 4.0
@@ -179,6 +183,7 @@ def add_redis_arguments(
     expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
     expire_long=DEFAULT_REDIS_EXPIRE_LONG,
     close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
+    ssl_cert_reqs=DEFAULT_REDIS_SSL_CERT_REQS,
 ) -> None:
     parser.add_argument(
         "--redis-url",
@@ -236,6 +241,13 @@ def add_redis_arguments(
         metavar="sec",
         type=float,
         help=f"Redis long expire seconds (default: {expire_long:.2f})",
+    )
+
+    parser.add_argument(
+        "--redis-ssl-cert-reqs",
+        choices=REDIS_SSL_CERT_REQS,
+        default=get_eval("REDIS_SSL_CERT_REQS", ssl_cert_reqs),
+        help=f"Verify mode of SSL Context (default: '{ssl_cert_reqs}')",
     )
 
 

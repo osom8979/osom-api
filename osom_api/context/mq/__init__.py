@@ -10,13 +10,17 @@ from typing import Any, AnyStr, Dict, Literal, Optional, Sequence
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub, Redis
+from redis.exceptions import RedisError
 
 from osom_api.aio.shield_any import shield_any
+from osom_api.args.redis import RedisArgs
 from osom_api.arguments import (
     DEFAULT_REDIS_CLOSE_TIMEOUT,
     DEFAULT_REDIS_EXPIRE_LONG,
     DEFAULT_REDIS_EXPIRE_MEDIUM,
     DEFAULT_REDIS_EXPIRE_SHORT,
+    DEFAULT_REDIS_SSL_CERT_REQS,
+    REDIS_SSL_CERT_REQS,
 )
 from osom_api.arguments import VERBOSE_LEVEL_1 as VL1
 from osom_api.arguments import VERBOSE_LEVEL_2 as VL2
@@ -64,14 +68,14 @@ class MqClient:
         url: Optional[str] = None,
         connection_timeout: Optional[float] = None,
         subscribe_timeout: Optional[float] = None,
-        close_timeout=DEFAULT_REDIS_CLOSE_TIMEOUT,
-        redis_expire_short=DEFAULT_REDIS_EXPIRE_SHORT,
-        redis_expire_medium=DEFAULT_REDIS_EXPIRE_MEDIUM,
-        redis_expire_long=DEFAULT_REDIS_EXPIRE_LONG,
+        close_timeout: Optional[float] = DEFAULT_REDIS_CLOSE_TIMEOUT,
+        expire_short: Optional[float] = DEFAULT_REDIS_EXPIRE_SHORT,
+        expire_medium: Optional[float] = DEFAULT_REDIS_EXPIRE_MEDIUM,
+        expire_long: Optional[float] = DEFAULT_REDIS_EXPIRE_LONG,
         callback: Optional[MqClientCallback] = None,
         done: Optional[Event] = None,
         task_name: Optional[str] = None,
-        ssl_cert_reqs: Literal["none", "optional", "required"] = "none",
+        ssl_cert_reqs: Optional[str] = DEFAULT_REDIS_SSL_CERT_REQS,
         subscribe_paths: Optional[Sequence[AnyStr]] = None,
         debug=False,
         verbose=0,
@@ -80,7 +84,11 @@ class MqClient:
             options: Dict[str, Any] = dict()
             if connection_timeout is not None:
                 options["socket_connect_timeout"] = connection_timeout
-            if url.startswith("rediss://"):
+            if url.startswith("rediss://") and ssl_cert_reqs:
+                if ssl_cert_reqs not in REDIS_SSL_CERT_REQS:
+                    raise RedisError(
+                        f"Invalid SSL certificate requirements flag: {ssl_cert_reqs}"
+                    )
                 options["ssl_cert_reqs"] = ssl_cert_reqs
             self._redis = from_url(url, **options)
         else:
@@ -88,9 +96,9 @@ class MqClient:
 
         self._subscribe_timeout = subscribe_timeout
         self._close_timeout = close_timeout
-        self._redis_expire_short = redis_expire_short
-        self._redis_expire_medium = redis_expire_medium
-        self._redis_expire_long = redis_expire_long
+        self._expire_short = expire_short
+        self._expire_medium = expire_medium
+        self._expire_long = expire_long
         self._callback = callback
         self._done = done if done is not None else Event()
         self._debug = debug
@@ -111,6 +119,33 @@ class MqClient:
                     raise TypeError(f"Unexpected type {type(sp).__name__}")
         else:
             self._subscribe_paths.add(encode_path(MQ_BROADCAST_PATH))
+
+    @classmethod
+    def from_args(
+        cls,
+        args: RedisArgs,
+        *,
+        mq_callback: Optional[MqClientCallback] = None,
+        mq_asyncio_event: Optional[Event] = None,
+        mq_task_name: Optional[str] = None,
+        mq_subscribe_paths: Optional[Sequence[AnyStr]] = None,
+    ):
+        return cls(
+            url=args.redis_url,
+            connection_timeout=args.redis_connection_timeout,
+            subscribe_timeout=args.redis_subscribe_timeout,
+            close_timeout=args.redis_close_timeout,
+            expire_short=args.redis_expire_short,
+            expire_medium=args.redis_expire_medium,
+            expire_long=args.redis_expire_long,
+            callback=mq_callback,
+            done=mq_asyncio_event,
+            task_name=mq_task_name,
+            ssl_cert_reqs=args.redis_ssl_cert_reqs,
+            subscribe_paths=mq_subscribe_paths,
+            debug=args.debug,
+            verbose=args.verbose,
+        )
 
     @property
     def redis(self):
