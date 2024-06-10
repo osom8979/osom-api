@@ -34,6 +34,21 @@ class WorkerTestCase(TestCase):
         self.assertEqual(param0.doc, param1.doc)
         self.assertEqual(param0.default, param1.default)
 
+    def test_error_case_01(self):
+        data = b"\x1f\x8b\x08\x00)\x8eff\x00\xffM\x8cK\x0e\x830\x0cD\xaf\x12y\x8d\x08\xdb\xb2nOQ\xb1\xb0\x12\x97 \x1aL\xe3\xd0\xaaB\xb9;\xee\xbf\xcb\x99\xf7fVp\xd1\x0b\xb4\xc7\x15<;h\xe1\xe0\x02\x9b\x1c\xc8\xb8\x80\xd9D\x12\xc1\x9e\xa0\x82\x91\xeeJI\xa9\x86\x19\x13\xc6\xff\xd5W\xf8\x0cJW\xba\xea\r\xf7t\xc2\xe5\x9c\r\x0bGs\xe34RR\x7f\xc2H\n\xfd\x0b>Os\xd0\xc2>4\x8b\xf3`\x13]\x16\x92l\x7f\xca\x95\x92\x0c<\xa9\xd5\xd4M\xbd\x83\xb2\x01\xab\xddq\x13\xbf\x00\x00\x00"  # noqa
+        # ParamDesc.__init__() missing 1 required positional argument: 'default'", '[0]'
+        msg = MsgWorker.decode(data)
+        self.assertEqual("default", msg.name)
+        self.assertEqual("/osom/api/request/default", msg.path)
+        self.assertEqual("0.0.9", msg.version)
+        self.assertEqual(1, len(msg.cmds))
+        self.assertEqual("echo", msg.cmds[0].key)
+        self.assertEqual("Echo the chat message", msg.cmds[0].doc)
+        self.assertEqual(1, len(msg.cmds[0].params))
+        self.assertEqual("message", msg.cmds[0].params[0].key)
+        self.assertEqual("", msg.cmds[0].params[0].doc)
+        self.assertEqual(None, msg.cmds[0].params[0].default)
+
 
 if __name__ == "__main__":
     main()

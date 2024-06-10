@@ -52,7 +52,11 @@ class WorkerContext(BaseContext):
             },
         )
 
-        self._module = Module(self._config.module_path, self._config.module_isolate)
+        self._module = Module(
+            self._config.module_path,
+            self._config.module_isolate,
+            *self._config.opts,
+        )
         self._register = MsgWorker(
             name=self._module.name,
             version=self._module.version,
@@ -83,7 +87,7 @@ class WorkerContext(BaseContext):
     async def on_broadcast(self, data: bytes) -> None:
         pass
 
-    async def on_register_worker_request(self, data: bytes) -> None:
+    async def on_register_worker_request(self, _: bytes) -> None:
         await self.publish_register_worker()
 
     async def upload_msg_file(

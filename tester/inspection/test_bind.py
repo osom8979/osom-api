@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from unittest import TestCase, main
+from unittest import IsolatedAsyncioTestCase, main
 
 from osom_api.inspection.bind import force_bind
 
 
-class BindTestCase(TestCase):
+class BindTestCase(IsolatedAsyncioTestCase):
     def test_force_bind_empty(self):
         def _test_func():
             pass
@@ -83,8 +83,8 @@ class BindTestCase(TestCase):
         self.assertEqual(ba.kwargs["b"], 100)
         self.assertIsNone(ba())
 
-    def test_force_bind_complex(self):
-        def _test_func(a, b=100, /, c=200, d=300, *args, e, f=999, g, **kwargs):
+    async def test_force_bind_complex(self):
+        async def _test_func(a, b=100, /, c=200, d=300, *args, e, f=999, g, **kwargs):
             pass
 
         ba = force_bind(_test_func, 1, "2", 20, 30, c=3, f=4, e="5", k=80, b=14)
@@ -101,7 +101,7 @@ class BindTestCase(TestCase):
         self.assertEqual(ba.kwargs["g"], None)
         self.assertEqual(ba.kwargs["b"], 14)
         self.assertEqual(ba.kwargs["k"], 80)
-        self.assertIsNone(ba())
+        self.assertIsNone(await ba())
 
 
 if __name__ == "__main__":

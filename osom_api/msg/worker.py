@@ -32,6 +32,19 @@ class MsgWorker:
         self.path = path
         self.cmds = cmds
 
+    def __str__(self):
+        return f"{self.__class__.__name__}<{self.name}>"
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}"
+            f"<name={self.name}"
+            f",version={self.version}"
+            f",doc={self.doc}"
+            f",path={self.path}"
+            f",cmds={self.cmds}>"
+        )
+
     def encode(self, level=COMPRESS_LEVEL_TRADEOFF, coding=DEFAULT_BYTE_CODING_TYPE):
         return encode(self, level=level, coding=coding)
 

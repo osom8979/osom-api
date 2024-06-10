@@ -76,7 +76,7 @@ class MsgRequest:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}"
-            f"<provider={self.provider.name}"
+            f"<provider={self.provider}"
             f",message_id={self.message_id}"
             f",channel_id={self.channel_id}"
             f",username={self.username}"

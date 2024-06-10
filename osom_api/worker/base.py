@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 from overrides import override
 
 from osom_api.context.base import BaseContext
-from osom_api.exceptions import InvalidCommandError
+from osom_api.exceptions import InvalidCommandError, InvalidContextError
 from osom_api.logging.logging import logger
 from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.utils.path.mq import make_request_path
@@ -64,8 +64,10 @@ class WorkerBase(WorkerInterface):
         return list(cmd.as_desc() for cmd in self._commands.values())
 
     @override
-    async def open(self, context) -> None:
-        self._context = context
+    async def open(self, *args, **kwargs) -> None:
+        self._context = kwargs.get("context", None)
+        if self._context is None:
+            raise InvalidContextError("No context provided")
 
     @override
     async def close(self) -> None:
@@ -92,6 +94,22 @@ class WorkerBase(WorkerInterface):
     def context(self) -> BaseContext:
         assert self._context is not None
         return self._context
+
+    @property
+    def provider(self):
+        return self.context.provider
+
+    @property
+    def command_prefix(self):
+        return self.context.command_prefix
+
+    @property
+    def verbose(self) -> int:
+        return self.context.verbose
+
+    @property
+    def debug(self) -> bool:
+        return self.context.debug
 
     def register_command(
         self,

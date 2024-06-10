@@ -34,7 +34,7 @@ class WorkerInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def open(self, context) -> None:
+    async def open(self, *args, **kwargs) -> None:
         raise NotImplementedError
 
     @abstractmethod

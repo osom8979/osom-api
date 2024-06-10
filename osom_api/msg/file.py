@@ -50,7 +50,7 @@ class MsgFile:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}"
-            f"<provider={self.provider.name}"
+            f"<provider={self.provider}"
             f",file_id={self.native_id}"
             f",file_name={self.name}"
             f",content_size={self.content_size}"

@@ -147,7 +147,7 @@ class WorkerCommand:
                     if issubclass(hint, BodyParam):
                         value = BodyParam(request.msg_cmd.body)
                     elif issubclass(hint, ContentParam):
-                        value = ContentParam(request.content)
+                        value = ContentParam(request.content if request.content else "")
                     elif issubclass(hint, CreatedAtParam):
                         value = CreatedAtParam.from_datetime(request.created_at)
                     elif issubclass(hint, FileParam):
@@ -171,6 +171,8 @@ class WorkerCommand:
                         value = MsgUUIDParam(request.msg_uuid)
                     else:
                         raise CommandRuntimeError(f"Invalid parameter hint: {hint}")
+                elif issubclass(hint, str):
+                    value = request.content if request.content else ""
                 else:
                     assert issubclass(hint, MsgRequest)
                     value = request

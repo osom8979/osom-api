@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-from io import StringIO
 from typing import Iterable, List, Optional
 
 from type_serialize import decode, encode
@@ -37,8 +36,7 @@ class MsgResponse:
         return f"{self.__class__.__name__}<{self.msg_uuid}>"
 
     def __repr__(self):
-        buffer = StringIO()
-        buffer.write(
+        return (
             f"{self.__class__.__name__}"
             f"<msg_uuid={self.msg_uuid}"
             f",content={self.content}"
@@ -46,7 +44,6 @@ class MsgResponse:
             f",files=[{files_repr(self.files)}]"
             f",created_at={self.created_at}>"
         )
-        return buffer.getvalue()
 
     @property
     def has_error(self) -> bool:

@@ -13,6 +13,7 @@ from osom_api.exceptions import (
     NotACoroutineError,
     NotInitializedError,
 )
+from osom_api.inspection.bind import force_bind
 from osom_api.msg import MsgRequest, MsgResponse
 from osom_api.worker.interface import CmdDesc, WorkerInterface
 
@@ -31,12 +32,11 @@ class ModuleKeys(StrEnum):
 
 
 class Module(ModuleBase):
-    def __init__(self, module: Union[str, ModuleType], isolate=False, *args, **kwargs):
+    def __init__(self, module: Union[str, ModuleType], isolate=False, *opts):
         self._module = self.init_module(module, isolate)
         self._opened = False
 
-        self.args = args
-        self.kwargs = kwargs
+        self.opts = opts
         self.keys = ModuleKeys
 
         if self.has(self.keys.worker):
@@ -120,7 +120,7 @@ class Module(ModuleBase):
 
         try:
             if callback is not None:
-                await callback(context)
+                await force_bind(callback, *self.opts, context=context)()
         except BaseException as e:
             raise RuntimeError(
                 f"Raised a runtime error: {self.module_name}.{self.keys.open}"
