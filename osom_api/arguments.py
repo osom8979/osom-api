@@ -371,6 +371,12 @@ def add_discord_arguments(parser: ArgumentParser) -> None:
     )
 
 
+def _add_base_context_arguments(parser: ArgumentParser) -> None:
+    add_redis_arguments(parser)
+    add_s3_arguments(parser)
+    add_supabase_arguments(parser)
+
+
 def add_discord_parser(subparsers) -> None:
     # noinspection SpellCheckingInspection
     parser = subparsers.add_parser(
@@ -380,7 +386,7 @@ def add_discord_parser(subparsers) -> None:
         epilog=CMD_DISCORD_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
+    _add_base_context_arguments(parser)
     add_discord_arguments(parser)
 
 
@@ -393,7 +399,7 @@ def add_telegram_parser(subparsers) -> None:
         epilog=CMD_TELEGRAM_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
+    _add_base_context_arguments(parser)
     add_telegram_arguments(parser)
 
 
@@ -406,7 +412,7 @@ def add_master_parser(subparsers) -> None:
         epilog=CMD_MASTER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
+    _add_base_context_arguments(parser)
     add_api_arguments(parser)
 
 
@@ -419,9 +425,7 @@ def add_worker_parser(subparsers) -> None:
         epilog=CMD_WORKER_EPILOG,
     )
     assert isinstance(parser, ArgumentParser)
-    add_redis_arguments(parser)
-    add_s3_arguments(parser)
-    add_supabase_arguments(parser)
+    _add_base_context_arguments(parser)
     add_module_arguments(parser)
 
 

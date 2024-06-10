@@ -34,6 +34,7 @@ from osom_api.paths import (
     MQ_BROADCAST_PATH,
     MQ_REGISTER_WORKER_PATH,
     MQ_REGISTER_WORKER_REQUEST_PATH,
+    MQ_UNREGISTER_WORKER_PATH,
 )
 from osom_api.utils.path.mq import encode_path
 from osom_api.worker.module import Module
@@ -51,7 +52,7 @@ class WorkerContext(BaseContext):
             },
         )
 
-        self._module = Module(self._config.module_path, self._config.isolate_module)
+        self._module = Module(self._config.module_path, self._config.module_isolate)
         self._register = MsgWorker(
             name=self._module.name,
             version=self._module.version,
@@ -65,10 +66,19 @@ class WorkerContext(BaseContext):
         await self._mq.publish(MQ_REGISTER_WORKER_PATH, self._register_packet)
         logger.info("Published register worker packet!")
 
+    async def publish_unregister_worker(self) -> None:
+        await self._mq.publish(MQ_UNREGISTER_WORKER_PATH, self._module.name.encode())
+        logger.info("Published register worker packet!")
+
     @override
     async def on_mq_connect(self) -> None:
-        logger.info("Connection to redis was successful in the worker context")
+        logger.info("Connection to redis was successful in the Worker context")
         await self.publish_register_worker()
+
+    @override
+    async def on_mq_closing(self) -> None:
+        logger.warning("Just before closing the Redis task in the Worker context")
+        await self.publish_unregister_worker()
 
     async def on_broadcast(self, data: bytes) -> None:
         pass

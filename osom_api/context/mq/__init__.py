@@ -54,6 +54,10 @@ class MqClientCallback(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    async def on_mq_closing(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def on_mq_done(self) -> None:
         raise NotImplementedError
 
@@ -229,6 +233,8 @@ class MqClient:
             try:
                 await self._redis_subscribe_main(pubsub)
             finally:
+                if self._callback is not None:
+                    await shield_any(self._callback.on_mq_closing(), logger)
                 await pubsub.close()
         except CancelledError:
             logger.warning("A cancellation signal was detected in a Redis Task")
@@ -276,7 +282,8 @@ class MqClient:
 
             channel = msg.channel
             data = msg.data
-            logger.debug(f"Data was received on channel {channel} -> {data}")
+            if self._debug:
+                logger.debug(f"Data was received on channel {channel} -> {data}")
 
             if self._callback is not None:
                 await shield_any(self._callback.on_mq_subscribe(channel, data), logger)

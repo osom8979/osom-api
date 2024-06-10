@@ -68,15 +68,21 @@ class BaseContext(MqClientCallback):
 
     @override
     async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
+        logger.info(f"On subscribe: {channel!r} ({len(data)}bytes)")
+
         coro = self._subscribers.get(channel, None)
-        if coro is not None:
-            logger.info(f"Recv subscribed message: {channel!r} -> {data!r}")
-            if iscoroutinefunction(coro):
-                await coro(data)
-            else:
-                coro(data)
-        else:
+        if coro is None:
             logger.warning(f"Couldn't find subscriber for channel: {channel!r}")
+            return
+
+        if iscoroutinefunction(coro):
+            await coro(data)
+        else:
+            coro(data)
+
+    @override
+    async def on_mq_closing(self) -> None:
+        logger.warning("Just before closing the Redis task")
 
     @override
     async def on_mq_done(self) -> None:

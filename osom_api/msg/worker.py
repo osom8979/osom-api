@@ -43,10 +43,16 @@ class MsgWorker:
 
     def as_help(self, command_prefix=COMMAND_PREFIX) -> str:
         buffer = StringIO()
+        for cmd in self.cmds:
+            buffer.write(f"{command_prefix}{cmd.key} - {cmd.doc}\n")
+        return buffer.getvalue().strip()
+
+    def as_details(self, command_prefix=COMMAND_PREFIX) -> str:
+        buffer = StringIO()
         buffer.write(f"{self.name} ({self.version})\n")
         buffer.write(self.doc + "\n")
         for cmd in self.cmds:
             buffer.write(f"  {command_prefix}{cmd.key} - {cmd.doc}\n")
             for param in cmd.params:
                 buffer.write(f"    - {param.key}[{param.default}] - {param.doc}")
-        return buffer.getvalue()
+        return buffer.getvalue().strip()
