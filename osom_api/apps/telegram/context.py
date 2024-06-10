@@ -85,11 +85,11 @@ class TelegramContext(EndpointContext):
         await message.reply(response.reply_content)
 
     async def main(self) -> None:
-        await self.open_common_context()
+        await self.open_base_context()
         try:
             await self._dispatcher.start_polling(self._bot)
         finally:
-            await self.close_common_context()
+            await self.close_base_context()
 
     def run(self) -> None:
         aio_run(self.main(), self._config.use_uvloop)

@@ -90,11 +90,11 @@ class DiscordContext(EndpointContext):
         await message.channel.send(response.reply_content)
 
     async def main(self) -> None:
-        await self.open_common_context()
+        await self.open_base_context()
         try:
             await self._bot.start(token=self._config.discord_token)
         finally:
-            await self.close_common_context()
+            await self.close_base_context()
 
     def run(self) -> None:
         aio_run(self.main(), self._config.use_uvloop)

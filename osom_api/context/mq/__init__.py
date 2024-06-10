@@ -6,7 +6,7 @@ from asyncio.exceptions import CancelledError, TimeoutError
 from asyncio.timeouts import timeout as async_timeout
 from datetime import datetime
 from os import R_OK, access, path
-from typing import Any, AnyStr, Dict, Literal, Optional, Sequence
+from typing import Any, Dict, Literal, Optional, Sequence, Union
 
 from redis.asyncio import from_url
 from redis.asyncio.client import PubSub, Redis
@@ -76,7 +76,7 @@ class MqClient:
         done: Optional[Event] = None,
         task_name: Optional[str] = None,
         ssl_cert_reqs: Optional[str] = DEFAULT_REDIS_SSL_CERT_REQS,
-        subscribe_paths: Optional[Sequence[AnyStr]] = None,
+        subscribe_paths: Optional[Sequence[Union[str, bytes]]] = None,
         debug=False,
         verbose=0,
     ):
@@ -128,7 +128,7 @@ class MqClient:
         mq_callback: Optional[MqClientCallback] = None,
         mq_asyncio_event: Optional[Event] = None,
         mq_task_name: Optional[str] = None,
-        mq_subscribe_paths: Optional[Sequence[AnyStr]] = None,
+        mq_subscribe_paths: Optional[Sequence[Union[str, bytes]]] = None,
     ):
         return cls(
             url=args.redis_url,
@@ -175,6 +175,7 @@ class MqClient:
             not self._task.cancelled()
             and self._subscribe_begin is not None
             and self._subscribe_timeout is not None
+            and self._close_timeout is not None
         ):
             # If the waiting time is longer than the close timeout,
             # Forcefully cancels the task.

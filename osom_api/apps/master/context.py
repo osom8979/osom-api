@@ -44,9 +44,9 @@ class MasterContext(BaseContext):
     @asynccontextmanager
     async def _lifespan(self, app):
         assert self._app == app
-        await self.open_common_context()
+        await self.open_base_context()
         yield
-        await self.close_common_context()
+        await self.close_base_context()
 
     async def health(self):
         return {"mq": await self.mq.ping(1.0)}

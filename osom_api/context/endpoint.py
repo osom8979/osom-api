@@ -44,39 +44,20 @@ class EndpointContext(BaseContext):
     _commands: Dict[str, CommandCallable]
 
     def __init__(self, provider: MsgProvider, config: BaseContextConfig):
-        self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
-        self._register_worker_path = encode_path(MQ_REGISTER_WORKER_PATH)
-        self._unregister_worker_path = encode_path(MQ_UNREGISTER_WORKER_PATH)
-        self._subscribe_paths = (
-            self._broadcast_path,
-            self._register_worker_path,
-            self._unregister_worker_path,
+        super().__init__(
+            provider=provider,
+            config=config,
+            subscribers={
+                MQ_BROADCAST_PATH: self.on_broadcast,
+                MQ_REGISTER_WORKER_PATH: self.on_register_worker,
+                MQ_UNREGISTER_WORKER_PATH: self.on_unregister_worker,
+            },
         )
-        super().__init__(provider, config, self._subscribe_paths)
 
         self._workers = dict()
         self._commands = dict()
-        self._commands[EndpointCommands.version] = CommandCallable(self._cmd_version)
-        self._commands[EndpointCommands.help] = CommandCallable(self._cmd_help)
-
-    async def open_common_context(self) -> None:
-        await self._mq.open()
-
-    async def close_common_context(self) -> None:
-        await self._mq.close()
-
-    def register_worker(self, worker: MsgWorker) -> None:
-        self._workers[worker.name] = worker
-        for cmd in worker.cmds:
-            self._commands[cmd.key] = CommandCallable(self._cmd_worker, worker.path)
-
-    def unregister_worker(self, worker_name: str) -> None:
-        if worker_name not in self._workers:
-            return
-
-        for cmd in self._workers.pop(worker_name).cmds:
-            if cmd.key in self._commands:
-                self._commands.pop(cmd.key)
+        self._commands[EndpointCommands.version] = CommandCallable(self.on_cmd_version)
+        self._commands[EndpointCommands.help] = CommandCallable(self.on_cmd_help)
 
     async def publish_register_worker_request(self) -> None:
         await self._mq.publish(
@@ -87,26 +68,13 @@ class EndpointContext(BaseContext):
 
     @override
     async def on_mq_connect(self) -> None:
-        logger.info("Connection to redis was successful!")
+        logger.info("Connection to redis was successful in the endpoint context")
         await self.publish_register_worker_request()
 
-    @override
-    async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
-        logger.info(f"Recv subscribed message: {channel!r} -> {data!r}")
+    async def on_broadcast(self, data: bytes) -> None:
+        pass
 
-        match channel:
-            case self._register_worker_path:
-                self.on_register_worker(data)
-            case self._unregister_worker_path:
-                self.on_unregister_worker(data)
-            case _:
-                pass
-
-    @override
-    async def on_mq_done(self) -> None:
-        logger.warning("Redis task is done")
-
-    def on_register_worker(self, data: bytes) -> None:
+    async def on_register_worker(self, data: bytes) -> None:
         try:
             worker = MsgWorker.decode(data)
         except BaseException as e:
@@ -121,7 +89,7 @@ class EndpointContext(BaseContext):
 
         self.register_worker(worker)
 
-    def on_unregister_worker(self, data: bytes) -> None:
+    async def on_unregister_worker(self, data: bytes) -> None:
         try:
             name = str(data, encoding="utf-8")
         except BaseException as e:
@@ -133,6 +101,19 @@ class EndpointContext(BaseContext):
             self.unregister_worker(name)
         else:
             logger.warning(f"Unregister worker: '{name}' (but does not exist)")
+
+    def register_worker(self, worker: MsgWorker) -> None:
+        self._workers[worker.name] = worker
+        for cmd in worker.cmds:
+            self._commands[cmd.key] = CommandCallable(self.on_cmd_worker, worker.path)
+
+    def unregister_worker(self, worker_name: str) -> None:
+        if worker_name not in self._workers:
+            return
+
+        for cmd in self._workers.pop(worker_name).cmds:
+            if cmd.key in self._commands:
+                self._commands.pop(cmd.key)
 
     @property
     def version(self):
@@ -153,15 +134,15 @@ class EndpointContext(BaseContext):
 
         return buffer.getvalue()
 
-    async def _cmd_version(self, request: MsgRequest, path: str) -> MsgResponse:
+    async def on_cmd_version(self, request: MsgRequest, path: str) -> MsgResponse:
         assert not path
         return MsgResponse(request.msg_uuid, self.version)
 
-    async def _cmd_help(self, request: MsgRequest, path: str) -> MsgResponse:
+    async def on_cmd_help(self, request: MsgRequest, path: str) -> MsgResponse:
         assert not path
         return MsgResponse(request.msg_uuid, self.help)
 
-    async def _cmd_worker(self, request: MsgRequest, path: str) -> MsgResponse:
+    async def on_cmd_worker(self, request: MsgRequest, path: str) -> MsgResponse:
         request_data = request.encode()
         await self._mq.lpush_bytes(path, request_data, expire=30)
 

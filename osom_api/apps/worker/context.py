@@ -42,10 +42,14 @@ from osom_api.worker.module import Module
 class WorkerContext(BaseContext):
     def __init__(self, args: Namespace):
         self._config = WorkerConfig(args)
-        self._broadcast_path = encode_path(MQ_BROADCAST_PATH)
-        self._register_request_path = encode_path(MQ_REGISTER_WORKER_REQUEST_PATH)
-        self._subscribe_paths = self._broadcast_path, self._register_request_path
-        super().__init__(MsgProvider.worker, self._config, self._subscribe_paths)
+        super().__init__(
+            provider=MsgProvider.worker,
+            config=self._config,
+            subscribers={
+                MQ_BROADCAST_PATH: self.on_broadcast,
+                MQ_REGISTER_WORKER_REQUEST_PATH: self.on_register_worker_request,
+            },
+        )
 
         self._module = Module(self._config.module_path, self._config.isolate_module)
         self._register = MsgWorker(
@@ -63,28 +67,14 @@ class WorkerContext(BaseContext):
 
     @override
     async def on_mq_connect(self) -> None:
-        logger.info("Connection to redis was successful!")
+        logger.info("Connection to redis was successful in the worker context")
         await self.publish_register_worker()
 
-    @override
-    async def on_mq_subscribe(self, channel: bytes, data: bytes) -> None:
-        logger.info(f"Recv sub msg channel: {channel!r} -> {data!r}")
-        if self._register_request_path == channel:
-            await self.publish_register_worker()
+    async def on_broadcast(self, data: bytes) -> None:
+        pass
 
-    @override
-    async def on_mq_done(self) -> None:
-        logger.warning("Redis task is done")
-
-    async def open_common_context(self) -> None:
-        await self._mq.open()
-        await self._db.open()
-        await self._s3.open()
-
-    async def close_common_context(self) -> None:
-        await self._s3.close()
-        await self._db.close()
-        await self._mq.close()
+    async def on_register_worker_request(self, data: bytes) -> None:
+        await self.publish_register_worker()
 
     async def upload_msg_file(
         self,
@@ -263,7 +253,7 @@ class WorkerContext(BaseContext):
                 logger.debug(e)
 
     async def main(self) -> None:
-        await self.open_common_context()
+        await self.open_base_context()
         await self.open_module()
         try:
             logger.info("Start polling ...")
@@ -271,7 +261,7 @@ class WorkerContext(BaseContext):
         finally:
             logger.info("Polling is done...")
             await self.close_module()
-            await self.close_common_context()
+            await self.close_base_context()
 
     def run(self) -> None:
         aio_run(self.main(), self._config.use_uvloop)
