@@ -10,6 +10,7 @@ from plugpack.module.mixin._base import ModuleBase
 
 from osom_api.exceptions import (
     AlreadyInitializedError,
+    IsACoroutineError,
     NotACoroutineError,
     NotInitializedError,
 )
@@ -26,6 +27,7 @@ class ModuleKeys(StrEnum):
     doc = "__worker_doc__"
     path = "__worker_path__"
     cmds = "__worker_cmds__"
+    init = auto()
     open = auto()
     close = auto()
     run = auto()
@@ -55,6 +57,8 @@ class Module(ModuleBase):
             if not self.has(self.keys.cmds):
                 self.set(self.keys.cmds, worker.cmds)
 
+            if not self.has(self.keys.init):
+                self.set(self.keys.init, worker.init)
             if not self.has(self.keys.open):
                 self.set(self.keys.open, worker.open)
             if not self.has(self.keys.close):
@@ -105,6 +109,23 @@ class Module(ModuleBase):
     def opened(self):
         return self._opened
 
+    def init(self) -> None:
+        callback = self.get(self.keys.init)
+        if callback is not None and iscoroutinefunction(callback):
+            raise IsACoroutineError(
+                f"Is a coroutine function: {self.module_name}.{self.keys.init}"
+            )
+
+        try:
+            if callback is not None:
+                force_bind(callback, *self.opts)()
+        except SystemExit:
+            raise
+        except BaseException as e:
+            raise RuntimeError(
+                f"Raised a runtime error: {self.module_name}.{self.keys.open}"
+            ) from e
+
     async def open(self, context) -> None:
         if self._opened:
             raise AlreadyInitializedError(
@@ -112,7 +133,6 @@ class Module(ModuleBase):
             )
 
         callback = self.get(self.keys.open)
-
         if callback is not None and not iscoroutinefunction(callback):
             raise NotACoroutineError(
                 f"Not a coroutine function: {self.module_name}.{self.keys.open}"
@@ -120,7 +140,7 @@ class Module(ModuleBase):
 
         try:
             if callback is not None:
-                await force_bind(callback, *self.opts, context=context)()
+                await callback(context)
         except BaseException as e:
             raise RuntimeError(
                 f"Raised a runtime error: {self.module_name}.{self.keys.open}"

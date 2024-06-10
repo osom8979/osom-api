@@ -24,17 +24,11 @@ class WorkerBase(WorkerInterface):
         version: Optional[str] = None,
         docs: Optional[str] = None,
         path: Optional[str] = None,
-        *args,
-        **kwargs,
     ):
         self._name = name if name else str()
         self._version = version if version else str()
         self._docs = docs if docs else str()
         self._path = path if path else make_request_path(self._name)
-
-        self.args = list(args)
-        self.kwargs = dict(**kwargs)
-
         self._commands = dict()
         self._context = None
 
@@ -64,13 +58,19 @@ class WorkerBase(WorkerInterface):
         return list(cmd.as_desc() for cmd in self._commands.values())
 
     @override
-    async def open(self, *args, **kwargs) -> None:
-        self._context = kwargs.get("context", None)
+    def init(self, *args) -> None:
+        logger.debug(f"Initialize the worker module: {args}")
+
+    @override
+    async def open(self, context) -> None:
+        logger.warning("Open the worker module")
+        self._context = context
         if self._context is None:
             raise InvalidContextError("No context provided")
 
     @override
     async def close(self) -> None:
+        logger.warning("Close the worker module")
         self._context = None
 
     @override

@@ -80,5 +80,9 @@ class MsgError(OsomApiError):
         self.msg_uuid = msg_uuid
 
 
+class IsACoroutineError(OsomApiError):
+    pass
+
+
 class NotACoroutineError(OsomApiError):
     pass

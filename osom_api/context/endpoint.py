@@ -129,8 +129,11 @@ class EndpointContext(BaseContext):
         buffer.write(f"{version_command} - Show help message\n")
         buffer.write(f"{help_command} - Show version number\n")
 
-        for worker in self._workers.values():
-            buffer.write(worker.as_help(self.command_prefix))
+        workers = list(self._workers.values())
+        if len(workers) >= 1:
+            buffer.write(workers[0].as_help(self.command_prefix).strip())
+        for worker in workers[1:]:
+            buffer.write("\n" + worker.as_help(self.command_prefix).strip())
 
         return buffer.getvalue()
 

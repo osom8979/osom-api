@@ -36,6 +36,11 @@ def run_app(cmd: str, args: Namespace) -> int:
         logger.debug("An cancelled signal was detected")
     except KeyboardInterrupt:
         logger.warning("An interrupt signal was detected")
+    except SystemExit as e:
+        assert isinstance(e.code, int)
+        if e.code != 0:
+            logger.warning(f"A system shutdown has been detected ({e.code})")
+        return e.code
     except BaseException as e:
         logger.exception(e)
         return 1
