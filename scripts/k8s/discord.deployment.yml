@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: osom-api
+  name: osom-api-deployment-discord
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: osom-api-discord
+  template:
+    metadata:
+      labels:
+        app: osom-api-discord
+    spec:
+      containers:
+        - name: osom-api-discord
+          image: ghcr.io/osom8979/osom-api:master
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: osom-api-env
+          args: ["-D", "discord"]

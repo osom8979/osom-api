@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: osom-api
+  name: osom-api-deployment-telegram
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: osom-api-telegram
+  template:
+    metadata:
+      labels:
+        app: osom-api-telegram
+    spec:
+      containers:
+        - name: osom-api-telegram
+          image: ghcr.io/osom8979/osom-api:master
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: osom-api-env
+          args: ["-D", "telegram"]

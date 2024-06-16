@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: osom-api
+  name: osom-api-deployment-worker-default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: osom-api-worker-default
+  template:
+    metadata:
+      labels:
+        app: osom-api-worker-default
+    spec:
+      containers:
+        - name: osom-api-worker-default
+          image: ghcr.io/osom8979/osom-api:master
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: osom-api-env
+          args: ["-D", "worker"]
